@@ -24,17 +24,23 @@ export type User = {
   password_hash: string;
 };
 
-// Only the fields a session/JWT actually needs — password_hash never travels past this layer.
-export type SessionRecord = Pick<User, "id" | "email" | "is_admin" | "is_host">;
+// Fields a session/JWT needs — password_hash never travels past this layer.
+export type PublicUser = Pick<User, "id" | "email" | "name" | "is_admin" | "is_host">;
+
+export type SessionRecord = PublicUser;
+
+// What a decoded access token carries (see createAccessToken's payload).
+export type CurrentUser = PublicUser;
 
 export async function createAccessToken(
-  user: Pick<User, "id" | "email" | "is_admin" | "is_host">,
+  user: PublicUser,
 ): Promise<ServiceResult<{ token: string }>> {
   try {
     const token = signToken(
       {
         user_id: user.id,
         email: user.email,
+        name: user.name,
         is_admin: user.is_admin,
         is_host: user.is_host,
       },
@@ -51,8 +57,7 @@ export async function createAccessToken(
 
     return { ok: true, data: { token } };
   } catch (error) {
-    // Logged with full detail server-side; callers only need to know it failed
-    // so they can stop and report it instead of pretending login succeeded.
+    // Full detail stays server-side; callers only need to know it failed.
     console.error("[createAccessToken]", error);
     return {
       ok: false,
@@ -62,16 +67,10 @@ export async function createAccessToken(
   }
 }
 
-/**
- * Issues a new refresh token and persists its hash as a session row.
- *
- * Pass `oldTokenHash` when this is called as part of rotation (i.e. from the
- * /api/auth/refresh flow): the old session row is deleted in the SAME
- * statement that inserts the new one, so the refresh token that was just
- * used can never be exchanged again afterwards. That's what makes reuse of a
- * stolen refresh token detectable later — once rotated, its hash simply
- * won't match any row anymore, so getUserSession() will reject it.
- */
+// Issues a refresh token and persists its hash as a session row. Pass
+// `oldTokenHash` during rotation (/api/auth/refresh): the old row is deleted
+// in the same statement that inserts the new one, so a reused/stolen token
+// can't be exchanged twice — getUserSession() will simply find no match.
 export async function createRefreshToken(
   user_id: string,
   oldTokenHash?: string,
@@ -81,8 +80,7 @@ export async function createRefreshToken(
     const hashed = hashToken(token);
 
     if (oldTokenHash) {
-      // A single statement (via a data-modifying CTE) keeps the delete+insert
-      // atomic — there's no window where both rows or neither row exists.
+      // CTE keeps delete+insert atomic — no window with both or neither row.
       await db.query(
         `WITH deleted AS (
            DELETE FROM sessions WHERE token_hash = $1
@@ -116,29 +114,24 @@ export async function createRefreshToken(
   }
 }
 
-/**
- * Looks up the exact session matching (userId, tokenHash) and confirms it
- * hasn't expired. Filtering by hash — not just userId — matters because a
- * user can have several active sessions (multiple devices/browsers); without
- * it, this could match an unrelated session instead of the one the caller
- * actually presented a refresh token for.
- */
+// Looks up the session matching (userId, tokenHash) and confirms it hasn't
+// expired. Filtering by hash (not just userId) matters since a user can have
+// several active sessions — it pins down the one the caller's token is for.
 export async function getUserSession(
   userId: string,
   tokenHash: string,
 ): Promise<ServiceResult<SessionRecord>> {
   try {
     const result = await db.query<SessionRecord>(
-      `SELECT u.id, u.email, u.is_admin, u.is_host, s.expires_at
+      `SELECT u.id, u.email, u.name, u.is_admin, u.is_host, s.expires_at
        FROM sessions s
        JOIN users u ON u.id = s.user_id
        WHERE s.user_id = $1 AND s.token_hash = $2 AND s.expires_at > NOW()`,
       [userId, tokenHash],
     );
 
-    // No row = the hash doesn't match, the session expired, or it was already
-    // rotated out by an earlier refresh. We don't distinguish which one to
-    // the caller — all three mean the same thing: log in again.
+    // No row = bad hash, expired, or already rotated out — all mean the same
+    // thing to the caller: log in again, so we don't distinguish between them.
     if (result.rowCount === 0)
       return {
         ok: false,
@@ -148,8 +141,7 @@ export async function getUserSession(
 
     return { ok: true, data: result.rows[0] };
   } catch (error) {
-    // Never forward raw DB error messages to the client — they can leak
-    // table/column/constraint names. Log the detail, return a generic one.
+    // Never forward raw DB error messages — they can leak schema details.
     console.error("[getUserSession]", error);
     return { ok: false, error: "Unexpected error", code: "UNEXPECTED" };
   }
@@ -158,10 +150,8 @@ export async function getUserSession(
 export async function createUser(
   formData: FormData,
 ): Promise<ServiceResult<Pick<User, "id" | "email">>> {
-  // The form already validates this shape before submitting, but a Server
-  // Action is a public endpoint by nature (callable directly, not just from
-  // this form) — so the service layer re-validates from scratch and never
-  // trusts the client.
+  // A Server Action is callable directly, not just from this form, so the
+  // service layer re-validates from scratch rather than trusting the client.
   const { success, error, data } = signUpSchema.safeParse(
     formDataToObject(formData),
   );
@@ -234,10 +224,8 @@ export async function authUser(
         code: "UNAUTHORIZED",
       };
 
-    // Both must succeed for the login to actually be usable. If either
-    // fails, bail out and report it instead of returning ok with a
-    // half-set session (e.g. a cookie with no matching DB row, or a DB row
-    // with no cookie to go with it).
+    // Both must succeed, or the session ends up half-set (cookie without a
+    // matching DB row, or vice versa) — bail out and report it instead.
     const access = await createAccessToken(user);
     if (!access.ok) return access;
 
@@ -250,6 +238,27 @@ export async function authUser(
   } catch (error) {
     console.error("[authUser]", error);
     return { ok: false, error: "Unexpected error", code: "UNEXPECTED" };
+  }
+}
+
+// Decodes the access token cookie without hitting the DB — proxy.ts already
+// rejects missing/invalid tokens before a page renders. Returns null instead
+// of throwing in case it expired between that check and this call.
+export async function getCurrentUser(): Promise<CurrentUser | null> {
+  const token = (await cookies()).get("token")?.value;
+  if (!token) return null;
+
+  try {
+    const decoded = verifyToken(token) as JwtPayload;
+    return {
+      id: decoded.user_id,
+      email: decoded.email,
+      name: decoded.name,
+      is_host: decoded.is_host,
+      is_admin: decoded.is_admin,
+    };
+  } catch {
+    return null;
   }
 }
 

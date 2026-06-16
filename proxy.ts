@@ -19,8 +19,7 @@ export function proxy(req: NextRequest) {
     }
   }
 
-  // Already logged in: sign-in/sign-up no longer make sense — resubmitting
-  // the login form there would just create another redundant session row.
+  // Already logged in: sign-in/sign-up no longer make sense
   if (isAuthPath) {
     return isAuthenticated
       ? NextResponse.redirect(new URL("/profile", req.url))
