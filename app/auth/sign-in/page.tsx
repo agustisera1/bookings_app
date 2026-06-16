@@ -24,10 +24,13 @@ export default function SignInPage() {
 
     const formData = new FormData(e.currentTarget);
 
-    const parsed = signInSchema.safeParse(formDataToObject(formData));
-    if (!parsed.success) {
+    const { success, error } = signInSchema.safeParse(
+      formDataToObject(formData),
+    );
+
+    if (!success) {
       setStatus("error");
-      setFieldErrors(fieldErrorsFrom(parsed.error));
+      setFieldErrors(fieldErrorsFrom(error));
       return;
     }
 

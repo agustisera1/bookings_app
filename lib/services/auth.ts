@@ -3,13 +3,14 @@ import * as db from "../db";
 import { hash, compare } from "bcryptjs";
 import { DatabaseError } from "pg";
 import type { ServiceResult } from "../types";
-import { hashToken, signToken } from "../jwt";
+import { hashToken, signToken, verifyToken } from "../jwt";
 import { cookies } from "next/headers";
 import {
   formDataToObject,
   signInSchema,
   signUpSchema,
 } from "../validation/auth";
+import { JwtPayload } from "jsonwebtoken";
 
 const SALT_ROUNDS = 10;
 
@@ -24,14 +25,7 @@ export type User = {
 };
 
 // Only the fields a session/JWT actually needs — password_hash never travels past this layer.
-export type SessionRecord = Pick<
-  User,
-  "id" | "email" | "is_admin" | "is_host"
-> & {
-  // Informational only — validity is already enforced by the `expires_at > NOW()`
-  // filter inside getUserSession's query, so callers don't need to re-check this.
-  expires_at: string;
-};
+export type SessionRecord = Pick<User, "id" | "email" | "is_admin" | "is_host">;
 
 export async function createAccessToken(
   user: Pick<User, "id" | "email" | "is_admin" | "is_host">,
@@ -168,15 +162,18 @@ export async function createUser(
   // Action is a public endpoint by nature (callable directly, not just from
   // this form) — so the service layer re-validates from scratch and never
   // trusts the client.
-  const parsed = signUpSchema.safeParse(formDataToObject(formData));
-  if (!parsed.success)
+  const { success, error, data } = signUpSchema.safeParse(
+    formDataToObject(formData),
+  );
+
+  if (!success)
     return {
       ok: false,
-      error: parsed.error.issues[0].message,
+      error: error.issues[0].message,
       code: "VALIDATION",
     };
 
-  const { email, password, name } = parsed.data;
+  const { email, password, name } = data;
   const password_hash = await hash(password, SALT_ROUNDS);
 
   try {
@@ -202,15 +199,17 @@ export async function createUser(
 export async function authUser(
   formData: FormData,
 ): Promise<ServiceResult<Omit<User, "password_hash">>> {
-  const parsed = signInSchema.safeParse(formDataToObject(formData));
-  if (!parsed.success)
+  const { success, error, data } = signInSchema.safeParse(
+    formDataToObject(formData),
+  );
+  if (!success)
     return {
       ok: false,
-      error: parsed.error.issues[0].message,
+      error: error.issues[0].message,
       code: "VALIDATION",
     };
 
-  const { email, password } = parsed.data;
+  const { email, password } = data;
 
   try {
     const result = await db.query<User>(
@@ -251,5 +250,33 @@ export async function authUser(
   } catch (error) {
     console.error("[authUser]", error);
     return { ok: false, error: "Unexpected error", code: "UNEXPECTED" };
+  }
+}
+
+//** WARNING: This is removing all the sessions rather than a specific session. Refactor this fn to handle
+// token hash for finding the right row to delete from the sessions table */
+export async function logoutUser(): Promise<ServiceResult> {
+  const cookieStore = await cookies();
+  try {
+    const token = cookieStore.get("token")?.value;
+    const { user_id } = verifyToken(token!) as JwtPayload;
+    const result = await db.query(`DELETE FROM sessions WHERE user_id = $1`, [
+      user_id,
+    ]);
+
+    if (result.rowCount === 0) throw new Error();
+    if (cookieStore.has("refresh_token")) cookieStore.delete("refresh_token");
+    cookieStore.delete("token");
+
+    return {
+      ok: true,
+      data: null,
+    };
+  } catch {
+    return {
+      ok: false,
+      error: "Something happened while removing the user session",
+      code: "UNEXPECTED",
+    };
   }
 }

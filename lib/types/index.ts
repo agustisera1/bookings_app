@@ -24,6 +24,6 @@ export type ErrorCode =
   | "CONFLICT"
   | "UNEXPECTED";
 
-export type ServiceResult<T> =
+export type ServiceResult<T = unknown> =
   | { ok: true; data: T }
   | { ok: false; error: string; code: ErrorCode };

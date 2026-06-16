@@ -26,10 +26,12 @@ export default function SignUpPage() {
     // password, malformed email) surface instantly, without a round trip.
     // The server runs the exact same schema again — this is just UX, not
     // the security boundary.
-    const parsed = signUpSchema.safeParse(formDataToObject(formData));
-    if (!parsed.success) {
+    const { success, error } = signUpSchema.safeParse(
+      formDataToObject(formData),
+    );
+    if (!success) {
       setStatus("error");
-      setFieldErrors(fieldErrorsFrom(parsed.error));
+      setFieldErrors(fieldErrorsFrom(error));
       return;
     }
 
@@ -51,7 +53,9 @@ export default function SignUpPage() {
       onSubmit={handleSubmit}
       className="bg-gray-900 p-6 rounded-md gap-4 flex flex-col items-end w-80"
     >
-      <h1 className="w-full text-lg font-semibold text-white">Create account</h1>
+      <h1 className="w-full text-lg font-semibold text-white">
+        Create account
+      </h1>
 
       <div className="flex flex-col w-full">
         <label className="text-xs text-gray-400" htmlFor="name">

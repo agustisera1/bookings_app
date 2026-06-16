@@ -1,6 +1,23 @@
-﻿export default function ProfilePage() {
+﻿"use client";
+import { logoutUser } from "@/lib/services/auth";
+import { redirect } from "next/navigation";
+export default function ProfilePage() {
+  async function handleLogout() {
+    const { ok } = await logoutUser();
+    if (ok) redirect("/auth/sign-in");
+    else alert("Please try again");
+  }
+
   return (
     <div className="w-full max-w-xl flex flex-col gap-6">
+      <nav className="flex justify-end">
+        <button
+          onClick={handleLogout}
+          className="bg-gray-700 p-2 text-sm rounded-md cursor-pointer"
+        >
+          Logout
+        </button>
+      </nav>
       <div className="bg-gray-900 rounded-md p-6 flex items-center gap-4">
         <div className="w-14 h-14 rounded-full bg-gray-700 flex items-center justify-center text-white text-xl font-semibold">
           ?
