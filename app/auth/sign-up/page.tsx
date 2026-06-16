@@ -2,22 +2,41 @@
 
 import { useState } from "react";
 import { createUser } from "@/lib/services/auth";
+import {
+  fieldErrorsFrom,
+  formDataToObject,
+  signUpSchema,
+} from "@/lib/validation/auth";
 
 type Status = "idle" | "loading" | "success" | "error";
 
 export default function SignUpPage() {
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setStatus("loading");
     setMessage("");
+    setFieldErrors({});
 
     const formData = new FormData(e.currentTarget);
+
+    // Validate client-side first so obvious mistakes (empty name, short
+    // password, malformed email) surface instantly, without a round trip.
+    // The server runs the exact same schema again — this is just UX, not
+    // the security boundary.
+    const parsed = signUpSchema.safeParse(formDataToObject(formData));
+    if (!parsed.success) {
+      setStatus("error");
+      setFieldErrors(fieldErrorsFrom(parsed.error));
+      return;
+    }
+
+    setStatus("loading");
     const response = await createUser(formData);
 
-    if (response.error) {
+    if (!response.ok) {
       setStatus("error");
       setMessage(response.error);
     } else {
@@ -43,6 +62,9 @@ export default function SignUpPage() {
           name="name"
           className="text-sm bg-gray-700 rounded-sm p-2 mt-1 text-white"
         />
+        {fieldErrors.name && (
+          <p className="text-xs text-red-400 mt-1">{fieldErrors.name}</p>
+        )}
       </div>
 
       <div className="flex flex-col w-full">
@@ -56,6 +78,9 @@ export default function SignUpPage() {
           className="text-sm bg-gray-700 rounded-sm p-2 mt-1 text-white"
           placeholder="you@example.com"
         />
+        {fieldErrors.email && (
+          <p className="text-xs text-red-400 mt-1">{fieldErrors.email}</p>
+        )}
       </div>
 
       <div className="flex flex-col w-full">
@@ -68,7 +93,11 @@ export default function SignUpPage() {
           type="password"
           className="text-sm bg-gray-700 rounded-sm p-2 mt-1 text-white"
         />
-        <p className="text-xs text-gray-500 mt-1">At least 8 characters</p>
+        {fieldErrors.password ? (
+          <p className="text-xs text-red-400 mt-1">{fieldErrors.password}</p>
+        ) : (
+          <p className="text-xs text-gray-500 mt-1">At least 8 characters</p>
+        )}
       </div>
 
       {message && (

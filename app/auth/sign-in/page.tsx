@@ -1,6 +1,11 @@
-﻿"use client";
+"use client";
 
 import { authUser } from "@/lib/services/auth";
+import {
+  fieldErrorsFrom,
+  formDataToObject,
+  signInSchema,
+} from "@/lib/validation/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
@@ -10,16 +15,26 @@ export default function SignInPage() {
   const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [message, setMessage] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setStatus("loading");
     setMessage("");
+    setFieldErrors({});
 
     const formData = new FormData(e.currentTarget);
+
+    const parsed = signInSchema.safeParse(formDataToObject(formData));
+    if (!parsed.success) {
+      setStatus("error");
+      setFieldErrors(fieldErrorsFrom(parsed.error));
+      return;
+    }
+
+    setStatus("loading");
     const response = await authUser(formData);
 
-    if (response.error) {
+    if (!response.ok) {
       setStatus("error");
       setMessage(response.error);
     } else {
@@ -45,6 +60,9 @@ export default function SignInPage() {
           className="text-sm bg-gray-700 rounded-sm p-2 mt-1 text-white"
           placeholder="you@example.com"
         />
+        {fieldErrors.email && (
+          <p className="text-xs text-red-400 mt-1">{fieldErrors.email}</p>
+        )}
       </div>
 
       <div className="flex flex-col w-full">
@@ -57,6 +75,9 @@ export default function SignInPage() {
           type="password"
           className="text-sm bg-gray-700 rounded-sm p-2 mt-1 text-white"
         />
+        {fieldErrors.password && (
+          <p className="text-xs text-red-400 mt-1">{fieldErrors.password}</p>
+        )}
       </div>
 
       {message && (
