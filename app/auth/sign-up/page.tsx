@@ -44,7 +44,7 @@ export default function SignUpPage() {
     } else {
       setStatus("success");
       setMessage("Account created! You can now sign in.");
-      e.currentTarget.reset();
+      e.currentTarget?.reset();
     }
   }
 

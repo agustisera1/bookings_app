@@ -1,12 +1,9 @@
 import { getCurrentUser } from "@/lib/services/auth";
-import {
-  getUserRoles,
-  ROLE_LABELS,
-  ROLE_PERMISSIONS,
-  type Role,
-} from "@/lib/permissions";
+import { ROLE_LABELS, ROLE_PERMISSIONS, type Role } from "@/lib/permissions";
+import { PERMISSION_ACTIONS } from "@/lib/services/permission-map";
 import { redirect } from "next/navigation";
 import LogoutButton from "./logout-button";
+import { PermissionButton } from "./permission-button";
 
 const ROLE_BADGE_STYLES: Record<Role, string> = {
   guest: "bg-gray-700 text-gray-300",
@@ -16,9 +13,8 @@ const ROLE_BADGE_STYLES: Record<Role, string> = {
 
 export default async function ProfilePage() {
   const user = await getCurrentUser();
-  if (!user) redirect("/auth/sign-in");
 
-  const roles = getUserRoles(user);
+  if (!user) redirect("/auth/sign-in");
 
   return (
     <div className="w-full max-w-xl flex flex-col gap-6">
@@ -42,7 +38,7 @@ export default async function ProfilePage() {
           Roles
         </h2>
         <div className="flex gap-2">
-          {roles.map((role) => (
+          {user.roles.map((role) => (
             <span
               key={role}
               className={`text-xs px-3 py-1 rounded-full ${ROLE_BADGE_STYLES[role]}`}
@@ -53,14 +49,21 @@ export default async function ProfilePage() {
         </div>
       </div>
 
-      {roles.map((role) => (
+      {(Object.keys(ROLE_PERMISSIONS) as Role[]).map((role) => (
         <div
           key={role}
           className="bg-gray-900 rounded-md p-6 flex flex-col gap-3"
         >
-          <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-            Permisos — {ROLE_LABELS[role]}
-          </h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              Permisos — {ROLE_LABELS[role]}
+            </h2>
+            {!user.roles.includes(role) && (
+              <span className="text-[10px] text-gray-600 italic">
+                fuera de scope
+              </span>
+            )}
+          </div>
           <ul className="flex flex-col gap-3">
             {ROLE_PERMISSIONS[role].map((permission) => (
               <li
@@ -84,6 +87,10 @@ export default async function ProfilePage() {
                       {permission.phase}
                     </span>
                   )}
+                  <PermissionButton
+                    action={PERMISSION_ACTIONS[permission.key]}
+                    permissionKey={permission.key}
+                  />
                 </div>
               </li>
             ))}

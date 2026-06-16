@@ -11,6 +11,7 @@ import {
   signUpSchema,
 } from "../validation/auth";
 import { JwtPayload } from "jsonwebtoken";
+import { getPermissionsForRoles, getUserRoles, Role } from "../permissions";
 
 const SALT_ROUNDS = 10;
 
@@ -25,17 +26,25 @@ export type User = {
 };
 
 // Fields a session/JWT needs — password_hash never travels past this layer.
-export type PublicUser = Pick<User, "id" | "email" | "name" | "is_admin" | "is_host">;
+export type PublicUser = Pick<
+  User,
+  "id" | "email" | "name" | "is_admin" | "is_host"
+>;
 
 export type SessionRecord = PublicUser;
 
 // What a decoded access token carries (see createAccessToken's payload).
-export type CurrentUser = PublicUser;
+export type CurrentUser = PublicUser & {
+  permissions: string[];
+  roles: Role[];
+};
 
 export async function createAccessToken(
   user: PublicUser,
 ): Promise<ServiceResult<{ token: string }>> {
   try {
+    const roles = getUserRoles(user);
+    const permissions = getPermissionsForRoles(roles);
     const token = signToken(
       {
         user_id: user.id,
@@ -43,6 +52,8 @@ export async function createAccessToken(
         name: user.name,
         is_admin: user.is_admin,
         is_host: user.is_host,
+        roles,
+        permissions: permissions.map(({ key }) => key),
       },
       { expiresIn: "1h" },
     );
@@ -256,6 +267,8 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       name: decoded.name,
       is_host: decoded.is_host,
       is_admin: decoded.is_admin,
+      roles: decoded.roles,
+      permissions: decoded.permissions,
     };
   } catch {
     return null;
