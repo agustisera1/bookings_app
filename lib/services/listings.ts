@@ -1,12 +1,17 @@
 "use server";
 import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
+import mongoClientPromise from "@/lib/mongo";
 
 export async function searchListings(): Promise<ServiceResult> {
   const auth = await authorize("listings:search");
   if (!auth.ok) return auth;
-  console.log("[searchListings]: invocado");
-  return { ok: true, data: null };
+
+  const client = await mongoClientPromise;
+  const db = client.db("listingsdb");
+  const listings = await db.collection("listings").find({}).limit(10).toArray();
+
+  return { ok: true, data: listings };
 }
 
 export async function viewListing(): Promise<ServiceResult> {
