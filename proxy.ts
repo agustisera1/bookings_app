@@ -8,7 +8,6 @@ export function proxy(req: NextRequest) {
   const isAuthPath = AUTH_PATHS.some((path) =>
     req.nextUrl.pathname.startsWith(path),
   );
-
   let isAuthenticated = false;
   if (token) {
     try {
@@ -39,6 +38,6 @@ export const config = {
      * included (unlike before) so authenticated users can be redirected
      * away from sign-in/sign-up instead of just letting them through.
      */
-    "/((?!_next/static|_next/image|favicon\\.ico).*)",
+    "/((?!_next/static|_next/image|favicon\\.ico|api/).*)",
   ],
 };

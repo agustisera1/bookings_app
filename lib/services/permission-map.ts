@@ -6,7 +6,11 @@ import {
   manageListing,
   createExtendedListing,
 } from "./listings";
-import { createBooking, cancelBooking, getBookingsForListing } from "./bookings";
+import {
+  createBooking,
+  cancelBooking,
+  getBookingsForListing,
+} from "./bookings";
 import { createReview, replyToReview } from "./reviews";
 import {
   accessAdminPanel,

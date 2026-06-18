@@ -1,0 +1,22 @@
+type Location {
+  coordinates: [Float!]
+  city: String
+  country: String
+  meeting_point: String
+}
+
+type Listing {
+  _id: String
+  type: String
+  host_id: String
+  title: String
+  description: String
+  price: Int
+  location: Location
+  photos: [String]
+  rating_avg: Float
+}
+
+type Query {
+  listings: [Listing!]
+}

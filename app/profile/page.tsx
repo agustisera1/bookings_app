@@ -2,8 +2,8 @@ import { getCurrentUser } from "@/lib/services/auth";
 import { ROLE_LABELS, ROLE_PERMISSIONS, type Role } from "@/lib/permissions";
 import { PERMISSION_ACTIONS } from "@/lib/services/permission-map";
 import { redirect } from "next/navigation";
-import LogoutButton from "./logout-button";
 import { PermissionButton } from "./permission-button";
+import LogoutButton from "./logout-button";
 
 const ROLE_BADGE_STYLES: Record<Role, string> = {
   guest: "bg-gray-700 text-gray-300",
