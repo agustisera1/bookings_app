@@ -1,28 +1,44 @@
 "use server";
+import { BookingFormValues } from "@/components/bookings/booking-form";
 import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
+import * as db from "../db";
 
 export async function createBooking(
-  from: string,
-  to: string,
+  params: BookingFormValues & { listingId: string; totalPrice: number },
 ): Promise<ServiceResult> {
   const auth = await authorize("bookings:create");
   if (!auth.ok) return auth;
 
-  // 1. Retrieve booking and user data
-  const listing_id = 1;
-  const guest_id = 1;
-  const start_date = from;
-  const end_date = from;
-  const total_price = "";
+  try {
+    // 1. Acquire lock (Phase 3 — Redis)
 
-  // 2. Aquire lock
+    // 2. Write on DB
+    const result = await db.query(
+      ` INSERT INTO bookings (listing_id, guest_id, start_date, end_date, total_price, guests)
+        VALUES ($1,$2,$3,$4,$5,$6)
+        RETURNING id, created_at`,
+      [
+        params.listingId,
+        auth.data.id,
+        params.checkIn.toISOString(),
+        params.checkOut.toISOString(),
+        params.totalPrice,
+        params.guests,
+      ],
+    );
 
-  // 3. Write on DB
+    if (!result.rowCount || result.rowCount === 0)
+      return { ok: false, error: "Could not create the booking", code: "UNEXPECTED" };
 
-  // 4. Return booking data
-
-  return { ok: true, data: null };
+    return { ok: true, data: result.rows[0] };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Could not create the booking",
+      code: db.pgErrorToCode(error),
+    };
+  }
 }
 
 export async function cancelBooking(): Promise<ServiceResult> {

@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
 import { formatDate, calcNights, datePickerTriggerClass } from "@/lib/dates";
+import { createBooking } from "@/lib/services/bookings";
 
 const bookingSchema = z
   .object({
@@ -33,17 +34,6 @@ const bookingSchema = z
   });
 
 export type BookingFormValues = z.infer<typeof bookingSchema>;
-
-async function mockCreateBooking(data: {
-  listingId: string;
-  checkIn: string;
-  checkOut: string;
-  guests: number;
-}) {
-  await new Promise((r) => setTimeout(r, 900));
-  console.log("[mock] createBooking", data);
-}
-
 
 export function BookingForm({
   listingId,
@@ -73,11 +63,12 @@ export function BookingForm({
   const total = nights * pricePerNight;
 
   async function onSubmit(data: BookingFormValues) {
-    await mockCreateBooking({
+    await createBooking({
       listingId,
-      checkIn: data.checkIn.toISOString(),
-      checkOut: data.checkOut.toISOString(),
+      checkIn: data.checkIn,
+      checkOut: data.checkOut,
       guests: data.guests,
+      totalPrice: total,
     });
     setSuccess(true);
   }
@@ -104,7 +95,9 @@ export function BookingForm({
             name="checkIn"
             render={({ field }) => (
               <Popover open={checkInOpen} onOpenChange={setCheckInOpen}>
-                <PopoverTrigger className={datePickerTriggerClass(!!field.value)}>
+                <PopoverTrigger
+                  className={datePickerTriggerClass(!!field.value)}
+                >
                   <span className="inline-flex items-center gap-2">
                     <CalendarIcon className="size-4 shrink-0" />
                     {field.value ? formatDate(field.value) : "Add date"}
@@ -145,7 +138,9 @@ export function BookingForm({
             name="checkOut"
             render={({ field }) => (
               <Popover open={checkOutOpen} onOpenChange={setCheckOutOpen}>
-                <PopoverTrigger className={datePickerTriggerClass(!!field.value)}>
+                <PopoverTrigger
+                  className={datePickerTriggerClass(!!field.value)}
+                >
                   <span className="inline-flex items-center gap-2">
                     <CalendarIcon className="size-4 shrink-0" />
                     {field.value ? formatDate(field.value) : "Add date"}
