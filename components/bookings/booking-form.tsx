@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useForm, Controller, useWatch } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import { CalendarIcon, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +15,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import { cn } from "@/lib/utils";
+import { formatDate, calcNights, datePickerTriggerClass } from "@/lib/dates";
+
+const bookingSchema = z
+  .object({
+    checkIn: z.date({ error: "Select a check-in date" }),
+    checkOut: z.date({ error: "Select a check-out date" }),
+    guests: z
+      .number({ error: "Enter the number of guests" })
+      .int()
+      .min(1, "At least 1 guest")
+      .max(16, "Max 16 guests"),
+  })
+  .refine((d) => d.checkOut > d.checkIn, {
+    message: "Check-out must be after check-in",
+    path: ["checkOut"],
+  });
+
+export type BookingFormValues = z.infer<typeof bookingSchema>;
 
 async function mockCreateBooking(data: {
   listingId: string;
@@ -24,24 +44,6 @@ async function mockCreateBooking(data: {
   console.log("[mock] createBooking", data);
 }
 
-function formatDate(date: Date) {
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
-function calcNights(from: Date | undefined, to: Date | undefined): number {
-  if (!from || !to) return 0;
-  return Math.floor((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
-}
-
-const triggerClass = (hasValue: boolean) =>
-  cn(
-    "h-10 w-full justify-start rounded-lg border border-input bg-transparent px-3 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
-    !hasValue && "text-muted-foreground"
-  );
 
 export function BookingForm({
   listingId,
@@ -50,40 +52,33 @@ export function BookingForm({
   listingId: string;
   pricePerNight: number;
 }) {
-  const [checkIn, setCheckIn] = useState<Date | undefined>(undefined);
-  const [checkOut, setCheckOut] = useState<Date | undefined>(undefined);
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [checkOutOpen, setCheckOutOpen] = useState(false);
-  const [guests, setGuests] = useState(1);
-  const [pending, setPending] = useState(false);
   const [success, setSuccess] = useState(false);
 
+  const {
+    control,
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<BookingFormValues>({
+    resolver: zodResolver(bookingSchema),
+    defaultValues: { guests: 1 },
+  });
+
+  const checkIn = useWatch({ control, name: "checkIn" });
+  const checkOut = useWatch({ control, name: "checkOut" });
   const nights = calcNights(checkIn, checkOut);
   const total = nights * pricePerNight;
 
-  function handleCheckInSelect(date: Date | undefined) {
-    setCheckIn(date);
-    if (checkOut && date && checkOut <= date) setCheckOut(undefined);
-    setCheckInOpen(false);
-    if (date) setCheckOutOpen(true);
-  }
-
-  function handleCheckOutSelect(date: Date | undefined) {
-    setCheckOut(date);
-    setCheckOutOpen(false);
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!checkIn || !checkOut) return;
-    setPending(true);
+  async function onSubmit(data: BookingFormValues) {
     await mockCreateBooking({
       listingId,
-      checkIn: checkIn.toISOString(),
-      checkOut: checkOut.toISOString(),
-      guests,
+      checkIn: data.checkIn.toISOString(),
+      checkOut: data.checkOut.toISOString(),
+      guests: data.guests,
     });
-    setPending(false);
     setSuccess(true);
   }
 
@@ -100,48 +95,85 @@ export function BookingForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-2">
           <Label>Check-in</Label>
-          <Popover open={checkInOpen} onOpenChange={setCheckInOpen}>
-            <PopoverTrigger className={triggerClass(!!checkIn)}>
-              <span className="inline-flex items-center gap-2">
-                <CalendarIcon className="size-4 shrink-0" />
-                {checkIn ? formatDate(checkIn) : "Add date"}
-              </span>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start" side="bottom">
-              <Calendar
-                mode="single"
-                selected={checkIn}
-                onSelect={handleCheckInSelect}
-                disabled={{ before: new Date() }}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Controller
+            control={control}
+            name="checkIn"
+            render={({ field }) => (
+              <Popover open={checkInOpen} onOpenChange={setCheckInOpen}>
+                <PopoverTrigger className={datePickerTriggerClass(!!field.value)}>
+                  <span className="inline-flex items-center gap-2">
+                    <CalendarIcon className="size-4 shrink-0" />
+                    {field.value ? formatDate(field.value) : "Add date"}
+                  </span>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="start"
+                  side="bottom"
+                >
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={(date) => {
+                      field.onChange(date);
+                      if (checkOut && date && checkOut <= date)
+                        setValue("checkOut", undefined as unknown as Date, {
+                          shouldValidate: true,
+                        });
+                      setCheckInOpen(false);
+                      if (date) setCheckOutOpen(true);
+                    }}
+                    disabled={{ before: new Date() }}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+          {errors.checkIn && (
+            <p className="text-xs text-destructive">{errors.checkIn.message}</p>
+          )}
         </div>
 
         <div className="flex flex-col gap-2">
           <Label>Check-out</Label>
-          <Popover open={checkOutOpen} onOpenChange={setCheckOutOpen}>
-            <PopoverTrigger className={triggerClass(!!checkOut)}>
-              <span className="inline-flex items-center gap-2">
-                <CalendarIcon className="size-4 shrink-0" />
-                {checkOut ? formatDate(checkOut) : "Add date"}
-              </span>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0" align="start" side="bottom">
-              <Calendar
-                mode="single"
-                selected={checkOut}
-                onSelect={handleCheckOutSelect}
-                disabled={{ before: checkIn ?? new Date() }}
-                initialFocus
-              />
-            </PopoverContent>
-          </Popover>
+          <Controller
+            control={control}
+            name="checkOut"
+            render={({ field }) => (
+              <Popover open={checkOutOpen} onOpenChange={setCheckOutOpen}>
+                <PopoverTrigger className={datePickerTriggerClass(!!field.value)}>
+                  <span className="inline-flex items-center gap-2">
+                    <CalendarIcon className="size-4 shrink-0" />
+                    {field.value ? formatDate(field.value) : "Add date"}
+                  </span>
+                </PopoverTrigger>
+                <PopoverContent
+                  className="w-auto p-0"
+                  align="start"
+                  side="bottom"
+                >
+                  <Calendar
+                    mode="single"
+                    selected={field.value}
+                    onSelect={(date) => {
+                      field.onChange(date);
+                      setCheckOutOpen(false);
+                    }}
+                    disabled={{ before: checkIn ?? new Date() }}
+                  />
+                </PopoverContent>
+              </Popover>
+            )}
+          />
+          {errors.checkOut && (
+            <p className="text-xs text-destructive">
+              {errors.checkOut.message}
+            </p>
+          )}
         </div>
       </div>
 
@@ -154,12 +186,13 @@ export function BookingForm({
             type="number"
             min={1}
             max={16}
-            value={guests}
-            onChange={(e) => setGuests(Number(e.target.value))}
             className="pl-9 h-10"
-            required
+            {...register("guests", { valueAsNumber: true })}
           />
         </div>
+        {errors.guests && (
+          <p className="text-xs text-destructive">{errors.guests.message}</p>
+        )}
       </div>
 
       {nights > 0 && (
@@ -183,10 +216,10 @@ export function BookingForm({
       <Button
         type="submit"
         size="lg"
-        disabled={pending || !checkIn || !checkOut}
+        disabled={isSubmitting}
         className="w-full"
       >
-        {pending ? "Requesting…" : "Book now"}
+        {isSubmitting ? "Requesting…" : "Book now"}
       </Button>
     </form>
   );
