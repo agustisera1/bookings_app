@@ -1,6 +1,8 @@
 "use client";
+
 import { logoutUser } from "@/lib/services/auth";
 import { redirect } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 export default function LogoutButton() {
   async function handleLogout() {
@@ -10,11 +12,8 @@ export default function LogoutButton() {
   }
 
   return (
-    <button
-      onClick={handleLogout}
-      className="bg-gray-700 p-2 text-sm rounded-md cursor-pointer"
-    >
+    <Button variant="outline" size="sm" onClick={handleLogout}>
       Logout
-    </button>
+    </Button>
   );
 }

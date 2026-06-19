@@ -8,6 +8,11 @@ import {
 } from "@/lib/validation/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -46,62 +51,44 @@ export default function SignInPage() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="bg-gray-900 p-6 rounded-md gap-4 flex flex-col items-end w-80"
-    >
-      <h1 className="w-full text-lg font-semibold text-white">Sign in</h1>
+    <Card className="w-80">
+      <CardHeader>
+        <CardTitle>Sign in</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              name="email"
+              placeholder="you@example.com"
+            />
+            {fieldErrors.email && (
+              <p className="text-xs text-destructive">{fieldErrors.email}</p>
+            )}
+          </div>
 
-      <div className="flex flex-col w-full">
-        <label className="text-xs text-gray-400" htmlFor="email">
-          Email
-        </label>
-        <input
-          id="email"
-          type="email"
-          name="email"
-          className="text-sm bg-gray-700 rounded-sm p-2 mt-1 text-white"
-          placeholder="you@example.com"
-        />
-        {fieldErrors.email && (
-          <p className="text-xs text-red-400 mt-1">{fieldErrors.email}</p>
-        )}
-      </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="password">Password</Label>
+            <Input id="password" name="password" type="password" />
+            {fieldErrors.password && (
+              <p className="text-xs text-destructive">{fieldErrors.password}</p>
+            )}
+          </div>
 
-      <div className="flex flex-col w-full">
-        <label className="text-xs text-gray-400" htmlFor="password">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          className="text-sm bg-gray-700 rounded-sm p-2 mt-1 text-white"
-        />
-        {fieldErrors.password && (
-          <p className="text-xs text-red-400 mt-1">{fieldErrors.password}</p>
-        )}
-      </div>
+          {message && (
+            <Alert variant={status === "success" ? "default" : "destructive"}>
+              <AlertDescription>{message}</AlertDescription>
+            </Alert>
+          )}
 
-      {message && (
-        <p
-          className={`w-full text-xs rounded-sm px-3 py-2 ${
-            status === "success"
-              ? "bg-green-900/50 text-green-300"
-              : "bg-red-900/50 text-red-300"
-          }`}
-        >
-          {message}
-        </p>
-      )}
-
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="cursor-pointer bg-gray-700 hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-md text-sm text-white transition-colors"
-      >
-        {status === "loading" ? "Signing in…" : "Sign In"}
-      </button>
-    </form>
+          <Button type="submit" disabled={status === "loading"} className="w-full">
+            {status === "loading" ? "Signing in…" : "Sign In"}
+          </Button>
+        </form>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,6 +1,8 @@
 "use client";
+
 import { useTransition } from "react";
 import type { ServiceResult } from "@/lib/types";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   action: () => Promise<ServiceResult>;
@@ -22,12 +24,14 @@ export function PermissionButton({ action, permissionKey }: Props) {
   }
 
   return (
-    <button
+    <Button
+      variant="outline"
+      size="sm"
       onClick={handleClick}
       disabled={isPending}
-      className="text-xs px-2 py-1 rounded bg-gray-700 text-gray-300 hover:bg-gray-600 disabled:opacity-50 transition-colors cursor-pointer"
+      className="text-xs"
     >
       Check permission
-    </button>
+    </Button>
   );
 }

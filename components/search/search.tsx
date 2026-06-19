@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChangeEvent, useCallback, useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
 
 export function Search() {
   const searchParams = useSearchParams();
@@ -32,10 +33,12 @@ export function Search() {
   }, [input, updateParams]);
 
   return (
-    <input
-      className="bg-gray-700 text-white p-2"
+    <Input
       type="search"
+      placeholder="Search listings…"
+      value={input}
       onChange={handleChange}
+      className="max-w-sm"
     />
   );
 }
