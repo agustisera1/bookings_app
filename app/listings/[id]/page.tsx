@@ -5,6 +5,8 @@ import { BookingForm } from "@/components/bookings/booking-form";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { MapPin, Star, ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { query } from "@/lib/apollo/client";
+import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
 
 const TYPE_GRADIENTS: Record<string, string> = {
   accommodation: "from-violet-500 to-indigo-600",
@@ -12,38 +14,25 @@ const TYPE_GRADIENTS: Record<string, string> = {
   equipment: "from-teal-400 to-cyan-600",
 };
 
-type MockListing = {
-  _id: string;
-  type: "accommodation" | "experience" | "equipment";
-  title: string;
-  description: string;
-  price: number;
-  location: { city: string; country: string };
-  rating_avg: number;
-};
-
-async function getMockListing(id: string): Promise<MockListing> {
-  return {
-    _id: id,
-    type: "accommodation",
-    title: "Bright loft in Palermo Soho",
-    description:
-      "A sun-drenched loft in the heart of Palermo Soho. Walking distance from the best restaurants, bars, and parks in Buenos Aires. The apartment features high ceilings, a fully equipped kitchen, fast Wi-Fi, and a private terrace perfect for morning coffee.",
-    price: 95,
-    location: { city: "Buenos Aires", country: "Argentina" },
-    rating_avg: 4.8,
-  };
-}
-
 export default async function ListingDetailPage({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const listing = await getMockListing(id);
+  const {
+    data: { listing },
+    error,
+  } = await query({
+    query: GetListingDocument,
+    variables: { listing_id: id },
+  });
 
-  const gradient = TYPE_GRADIENTS[listing.type] ?? "from-gray-400 to-gray-600";
+  if (error || listing === null) {
+    return <div className="min-h-screen">Listing not found</div>;
+  }
+
+  const gradient = TYPE_GRADIENTS[listing.type!] ?? "from-gray-400 to-gray-600";
 
   return (
     <div className="min-h-screen">
@@ -79,7 +68,8 @@ export default async function ListingDetailPage({
               <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                 <MapPin className="size-3.5" />
                 <span>
-                  {listing.location.city}, {listing.location.country}
+                  {listing.location?.city || "Location not specified"},{" "}
+                  {listing.location?.country || "Country not specified"}
                 </span>
               </div>
             </div>

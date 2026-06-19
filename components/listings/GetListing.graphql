@@ -1,0 +1,17 @@
+query GetListing($listing_id: String!) {
+  listing(listing_id: $listing_id) {
+    _id
+    description
+    host_id
+    location {
+      city
+      country
+      address
+    }
+    photos
+    price
+    rating_avg
+    title
+    type
+  }
+}

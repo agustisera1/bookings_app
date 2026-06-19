@@ -202,7 +202,7 @@ function makeExperience(index) {
       ],
       city: loc.city,
       country: loc.country,
-      meeting_point: `Plaza central de ${loc.city}`,
+      address: `Plaza central de ${loc.city}`,
     },
     attributes: {
       duration_minutes: pick([60, 90, 120, 180, 240, 360]),
@@ -234,7 +234,7 @@ function makeEquipment(index) {
     location: {
       city: loc.city,
       country: loc.country,
-      pickup_address: `Depósito ${loc.city}, Calle ${randomInt(100, 999)}`,
+      address: `Depósito ${loc.city}, Calle ${randomInt(100, 999)}`,
     },
     attributes: {
       units_available: randomInt(1, 5),
@@ -266,6 +266,7 @@ for (let i = 0; i < 15; i++)  listings.push(makeEquipment(i));
 
 const db = db.getSiblingDB(DB_NAME);
 db.createCollection(COLLECTION);
+db[COLLECTION].createIndex({ title: "text", description: "text" });
 
 const result = db[COLLECTION].insertMany(listings);
 
