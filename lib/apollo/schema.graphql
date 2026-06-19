@@ -18,5 +18,5 @@ type Listing {
 }
 
 type Query {
-  listings: [Listing!]
+  listings(limit: Int, term: String): [Listing!]
 }

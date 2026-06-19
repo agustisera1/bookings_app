@@ -10,6 +10,10 @@ const config: CodegenConfig = {
         useIndexSignature: true,
       },
     },
+    "./lib/apollo/__generated__/operations.ts": {
+      documents: ["components/**/*.graphql", "app/**/*.graphql"],
+      plugins: ["typescript", "typescript-operations", "typed-document-node"],
+    },
   },
 };
 

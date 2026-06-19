@@ -1,20 +1,19 @@
 import mongoClientPromise from "../mongo";
 import { GraphQLError } from "graphql";
 import type { Resolvers } from "./__generated__/resolvers-types";
-import { getCurrentUser } from "../services/auth";
 
 export const resolvers: Resolvers = {
   Query: {
-    listings: async () => {
+    listings: async (_, { limit, term }) => {
       try {
-        const user = await getCurrentUser();
-        if (!user) throw new GraphQLError("Unauthorized");
+        // TODO: Check for user authentication
+        const textFiltering = term ? { $text: { $search: term } } : {};
         const mongoClient = await mongoClientPromise;
-        const docs = await mongoClient
+        const cursor = mongoClient
           .db("listingsdb")
           .collection("listings")
-          .find({})
-          .toArray();
+          .find(textFiltering);
+        const docs = await (limit ? cursor.limit(limit) : cursor).toArray();
         return docs.map((doc) => ({ ...doc, _id: doc._id.toString() }));
       } catch (error) {
         throw new GraphQLError("Failed to fetch listings", {

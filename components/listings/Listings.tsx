@@ -1,13 +1,4 @@
-"use client";
-
-import { useEffect, useState } from "react";
-
-type Listing = {
-  _id: string;
-  title: string;
-  type: string;
-  price: number;
-};
+import { GetListingsQuery } from "@/lib/apollo/__generated__/operations";
 
 const TYPE_GRADIENTS: Record<string, string> = {
   accommodation: "from-violet-500 to-indigo-600",
@@ -15,40 +6,16 @@ const TYPE_GRADIENTS: Record<string, string> = {
   equipment: "from-teal-400 to-cyan-600",
 };
 
-export function Listings() {
-  const [listings, setListings] = useState<Listing[]>([]);
-
-  useEffect(() => {
-    let ignore = false;
-
-    async function fetchListings() {
-      const response = await fetch("http://localhost:3000/api/graphql", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: `{ listings { _id title type price } }`,
-        }),
-      });
-
-      const {
-        data: { listings },
-      } = await response.json();
-
-      if (!ignore) setListings(listings);
-    }
-
-    fetchListings();
-
-    return () => {
-      ignore = true;
-    };
-  }, []);
-
+export async function Listings({
+  listings,
+}: {
+  listings: GetListingsQuery["listings"];
+}) {
   return (
     <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {listings.map((listing) => {
+      {listings?.map((listing) => {
         const gradient =
-          TYPE_GRADIENTS[listing.type] ?? "from-gray-400 to-gray-600";
+          TYPE_GRADIENTS[listing.type!] ?? "from-gray-400 to-gray-600";
 
         return (
           <li

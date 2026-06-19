@@ -37,6 +37,12 @@ export type Query = {
   listings?: Maybe<Array<Listing>>;
 };
 
+
+export type QueryListingsArgs = {
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  term?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type WithIndex<TObject> = TObject & Record<string, any>;
 export type ResolversObject<TObject> = WithIndex<TObject>;
 
@@ -151,7 +157,7 @@ export type LocationResolvers<ContextType = ApolloContext, ParentType extends Re
 }>;
 
 export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
-  listings?: Resolver<Maybe<Array<ResolversTypes['Listing']>>, ParentType, ContextType>;
+  listings?: Resolver<Maybe<Array<ResolversTypes['Listing']>>, ParentType, ContextType, Partial<QueryListingsArgs>>;
 }>;
 
 export type Resolvers<ContextType = ApolloContext> = ResolversObject<{
