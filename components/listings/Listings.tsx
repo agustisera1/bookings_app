@@ -30,7 +30,7 @@ export async function Listings({
                 </Badge>
               </div>
               <CardContent className="p-4 flex flex-col gap-2">
-                <h3 className="font-semibold leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                <h3 className="font-semibold text-xl leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                   {listing.title}
                 </h3>
                 <p className="text-sm text-muted-foreground mt-auto">
