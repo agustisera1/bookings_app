@@ -84,7 +84,11 @@ export default function SignInPage() {
             </Alert>
           )}
 
-          <Button type="submit" disabled={status === "loading"} className="w-full">
+          <Button
+            type="submit"
+            disabled={status === "loading"}
+            className="w-full"
+          >
             {status === "loading" ? "Signing in…" : "Sign In"}
           </Button>
         </form>
