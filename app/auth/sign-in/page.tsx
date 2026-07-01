@@ -46,7 +46,7 @@ export default function SignInPage() {
       setStatus("error");
       setMessage(response.error);
     } else {
-      router.push("/profile");
+      router.push("/listings");
     }
   }
 

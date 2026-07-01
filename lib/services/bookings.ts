@@ -2,7 +2,7 @@
 import { BookingFormValues } from "@/components/bookings/booking-form";
 import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
-import * as db from "../db";
+import * as db from "../postgres";
 
 export async function createBooking(
   params: BookingFormValues & { listingId: string; totalPrice: number },
@@ -29,13 +29,18 @@ export async function createBooking(
     );
 
     if (!result.rowCount || result.rowCount === 0)
-      return { ok: false, error: "Could not create the booking", code: "UNEXPECTED" };
+      return {
+        ok: false,
+        error: "Could not create the booking",
+        code: "UNEXPECTED",
+      };
 
     return { ok: true, data: result.rows[0] };
   } catch (error) {
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Could not create the booking",
+      error:
+        error instanceof Error ? error.message : "Could not create the booking",
       code: db.pgErrorToCode(error),
     };
   }

@@ -1,7 +1,6 @@
 "use server";
-import * as db from "../db";
+import * as db from "../postgres";
 import { hash, compare } from "bcryptjs";
-import { DatabaseError } from "pg";
 import type { ServiceResult } from "../types";
 import { hashToken, signToken, verifyToken } from "../jwt";
 import { cookies } from "next/headers";
@@ -186,14 +185,12 @@ export async function createUser(
     );
     return { ok: true, data: result.rows[0] };
   } catch (error) {
-    if (error instanceof DatabaseError && error.code === "23505")
-      return {
-        ok: false,
-        error: "An account with that email already exists",
-        code: "CONFLICT",
-      };
-    console.error("[createUser]", error);
-    return { ok: false, error: "Unexpected error", code: "UNEXPECTED" };
+    return {
+      ok: false,
+      code: db.pgErrorToCode(error),
+      error:
+        error instanceof Error ? error.message : "Could not create the user",
+    };
   }
 }
 

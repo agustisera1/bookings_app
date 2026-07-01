@@ -7,6 +7,8 @@ import { MapPin, Star, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { query } from "@/lib/apollo/client";
 import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
+import { getListingReviews } from "@/lib/services/reviews";
+import { ListingReviews } from "@/components/reviews/listing-reviews";
 
 const TYPE_GRADIENTS: Record<string, string> = {
   accommodation: "from-violet-500 to-indigo-600",
@@ -27,6 +29,8 @@ export default async function ListingDetailPage({
     query: GetListingDocument,
     variables: { listing_id: id },
   });
+
+  const reviewsPromise = getListingReviews(id);
 
   if (error || listing === null) {
     return <div className="min-h-screen">Listing not found</div>;
@@ -82,7 +86,7 @@ export default async function ListingDetailPage({
           </div>
 
           <div className="lg:col-span-1">
-            <Card className="sticky top-6">
+            <Card className="sticky top-6 max-w-md mx-auto lg:max-w-none">
               <CardHeader>
                 <CardTitle className="flex items-baseline gap-1.5">
                   <span className="text-2xl font-bold">${listing.price}</span>
@@ -103,16 +107,26 @@ export default async function ListingDetailPage({
 
         <Separator className="my-10" />
 
-        <div className="max-w-lg flex flex-col gap-4">
-          <div className="flex flex-col gap-1">
-            <h2 className="text-xl font-heading font-semibold">
+        <div className="flex flex-col lg:flex-row gap-4 lg:gap-12">
+          <div className="flex flex-col gap-1 lg:w-1/2">
+            <h2 className="text-3xl font-heading font-semibold">
               Leave a review
             </h2>
             <p className="text-sm text-muted-foreground">
               Share your experience to help other guests.
             </p>
+            <ReviewForm listingId={listing._id} />
           </div>
-          <ReviewForm listingId={listing._id} />
+
+          <div className="flex flex-col gap-1 lg:w-1/2">
+            <h2 className="text-3xl font-heading font-semibold">
+              Other reviews
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Check out other customer comments
+            </p>
+            <ListingReviews reviewsPromise={reviewsPromise} />
+          </div>
         </div>
       </div>
     </div>

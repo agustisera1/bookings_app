@@ -9,7 +9,7 @@ export async function searchListings(): Promise<ServiceResult> {
 
   const client = await mongoClientPromise;
   const db = client.db("listingsdb");
-  const listings = await db.collection("listings").find({}).limit(10).toArray();
+  const listings = await db.collection("listings").find({}).limit(20).toArray();
 
   return { ok: true, data: listings };
 }
