@@ -1,20 +1,17 @@
 import type { Listing, Resolvers } from "./__generated__/resolvers-types";
 import { GraphQLError } from "graphql";
-import { Document, Filter, ObjectId } from "mongodb";
 import { Booking, getUserBookings, GuestBooking } from "../services/bookings";
-import mongoClientPromise from "../mongo";
+import {
+  getListing,
+  getListings,
+  getListingsByIds,
+} from "../services/listings";
 
 export const resolvers: Resolvers = {
   Query: {
     listing: async (_, { listing_id }) => {
       try {
-        const client = await mongoClientPromise;
-        const doc = await client
-          .db("listingsdb")
-          .collection("listings")
-          .findOne({ _id: new ObjectId(listing_id) });
-
-        return doc ? ({ ...doc, _id: doc._id.toString() } as Listing) : null;
+        return (await getListing(listing_id)) as Listing | null;
       } catch (error) {
         throw new GraphQLError("Failed to fetch listing detail", {
           originalError: error instanceof Error ? error : undefined,
@@ -24,21 +21,7 @@ export const resolvers: Resolvers = {
     },
     listings: async (_, { limit, term }) => {
       try {
-        // TODO: Check for user authentication
-        const filtering: Filter<Document> = {};
-        if (term) filtering["$text"] = { $search: term };
-
-        const mongoClient = await mongoClientPromise;
-        const cursor = mongoClient
-          .db("listingsdb")
-          .collection("listings")
-          .find(filtering);
-
-        const docs = await (limit ? cursor.limit(limit) : cursor).toArray();
-        return docs.map((doc) => ({
-          ...doc,
-          _id: doc._id.toString(),
-        })) as Listing[];
+        return (await getListings({ limit, term })) as Listing[];
       } catch (error) {
         throw new GraphQLError("Failed to fetch listings", {
           originalError: error instanceof Error ? error : undefined,
@@ -46,10 +29,10 @@ export const resolvers: Resolvers = {
         });
       }
     },
-    guestBookings: async (_, { guest_id }) => {
+    guestBookings: async () => {
       let ids: string[] = [];
       // 1. Search the guest bookings
-      const userBookingsResult = await getUserBookings(guest_id!);
+      const userBookingsResult = await getUserBookings();
       if (!userBookingsResult.ok) {
         throw new Error("Error while retrieving user bookings");
       } else {
@@ -59,16 +42,7 @@ export const resolvers: Resolvers = {
       }
 
       // 2. Search documents the guest booked listings
-      const filtering: Filter<Document> = {};
-      if (!!ids?.length)
-        filtering["_id"] = { $in: ids.map((id) => new ObjectId(id!)) };
-      const mongoClient = await mongoClientPromise;
-      const cursor = mongoClient
-        .db("listingsdb")
-        .collection("listings")
-        .find(filtering);
-
-      const docs = await cursor.toArray();
+      const docs = await getListingsByIds(ids);
       const bookings = userBookingsResult.data;
 
       return bookings

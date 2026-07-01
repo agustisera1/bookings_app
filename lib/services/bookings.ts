@@ -29,16 +29,15 @@ export type Booking = {
   guests: number;
 };
 
-//** WARNING: This function is not handling authorization properly */
-export async function getUserBookings(
-  userId: string,
-): Promise<ServiceResult<Booking[]>> {
-  // const auth = await authorize("bookings:view-own-listings");
-  // if (!auth.ok) return auth;
-
+export async function getUserBookings(): Promise<ServiceResult<Booking[]>> {
+  const auth = await authorize("bookings:view-own-listings");
+  if (!auth.ok) return auth;
   try {
     // 1. Get all bookings made from the user
-    // const user = auth.data;
+    const {
+      data: { id: userId },
+    } = auth;
+
     const result = await db.query(
       `
       SELECT *
@@ -61,11 +60,11 @@ export async function getUserBookings(
       ok: true,
       data: bookings,
     };
-  } catch {
-    console.error("Error while retrieving guest bookings");
+  } catch (error) {
+    console.error("[getUserBookings]", error);
     return {
       ok: false,
-      error: "error",
+      error: "Could not retrieve your bookings",
       code: "UNEXPECTED",
     };
   }

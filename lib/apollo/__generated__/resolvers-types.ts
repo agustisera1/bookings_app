@@ -54,11 +54,6 @@ export type Query = {
 };
 
 
-export type QueryGuestBookingsArgs = {
-  guest_id?: InputMaybe<Scalars['String']['input']>;
-};
-
-
 export type QueryListingArgs = {
   listing_id: Scalars['String']['input'];
 };
@@ -199,7 +194,7 @@ export type LocationResolvers<ContextType = ApolloContext, ParentType extends Re
 }>;
 
 export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
-  guestBookings?: Resolver<Maybe<Array<Maybe<ResolversTypes['GuestBooking']>>>, ParentType, ContextType, Partial<QueryGuestBookingsArgs>>;
+  guestBookings?: Resolver<Maybe<Array<Maybe<ResolversTypes['GuestBooking']>>>, ParentType, ContextType>;
   listing?: Resolver<Maybe<ResolversTypes['Listing']>, ParentType, ContextType, RequireFields<QueryListingArgs, 'listing_id'>>;
   listings?: Resolver<Maybe<Array<ResolversTypes['Listing']>>, ParentType, ContextType, Partial<QueryListingsArgs>>;
 }>;

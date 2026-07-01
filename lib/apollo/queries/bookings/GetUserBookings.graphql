@@ -1,5 +1,5 @@
-query GetUserBookings($guest_id: String!) {
-  guestBookings(guest_id: $guest_id) {
+query GetUserBookings {
+  guestBookings {
     type
     title
     created_at

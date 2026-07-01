@@ -16,6 +16,20 @@ export type Review = {
   created_at: string;
 };
 
+async function verifyGuest(userId: string, listingId: string) {
+  // Ensure the guest had a booking for that listing at least
+  const result = await db.query(
+    `
+    SELECT 1 FROM bookings
+    WHERE guest_id = $1 AND listing_id = $2
+    LIMIT 1
+    `,
+    [userId, listingId],
+  );
+
+  return result.rows;
+}
+
 export async function createReview({
   rating,
   comment,
@@ -28,26 +42,13 @@ export async function createReview({
   if (!user)
     return { ok: false, error: "User unauthenticated", code: "UNAUTHORIZED" };
 
-  async function verifyGuest() {
-    // Ensure the guest had a booking for that listing at least
-    const result = await db.query(
-      `
-      SELECT 1 FROM bookings
-      WHERE guest_id = $1 AND listing_id = $2
-      LIMIT 1
-      `,
-      [user!.id, listing_id],
-    );
-
-    return result.rows;
-  }
-
   try {
-    const bookings = await verifyGuest();
+    const bookings = await verifyGuest(user.id, listing_id);
     if (bookings.length === 0)
       return {
         ok: false,
-        error: "You need a completed booking for this listing to leave a review",
+        error:
+          "You need a completed booking for this listing to leave a review",
         code: "FORBIDDEN",
       };
 
@@ -75,8 +76,13 @@ export async function createReview({
       ok: true,
     };
   } catch (error) {
+    const code = db.pgErrorToCode(error);
     console.error("[createReview]", error);
-    return { ok: false, error: "Could not create the review", code: db.pgErrorToCode(error) };
+    return {
+      ok: false,
+      error: "Could not create the review",
+      code,
+    };
   }
 }
 
@@ -107,6 +113,10 @@ export async function getListingReviews(
     };
   } catch (error) {
     console.error("[getListingReviews]", error);
-    return { ok: false, error: "Could not retrieve the reviews", code: db.pgErrorToCode(error) };
+    return {
+      ok: false,
+      error: "Could not retrieve the reviews",
+      code: db.pgErrorToCode(error),
+    };
   }
 }

@@ -294,7 +294,8 @@ export async function logoutUser(): Promise<ServiceResult> {
       ok: true,
       data: null,
     };
-  } catch {
+  } catch (error) {
+    console.error("[logoutUser]", error);
     return {
       ok: false,
       error: "Something happened while removing the user session",
