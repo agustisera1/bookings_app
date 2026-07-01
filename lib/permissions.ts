@@ -56,6 +56,13 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
       description: "Recuperar el listado de reseñas de un alojamiento o evento",
       ref: "RF-XX",
     },
+    {
+      key: "bookings:view-own-listings",
+      label: "Ver el listado de bookings realizados por el usuario",
+      description:
+        "Recupera el listado de reservas hechos por el guest, junto con la información de cada listing",
+      ref: "RF-XX",
+    },
   ],
   host: [
     {

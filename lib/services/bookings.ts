@@ -4,6 +4,73 @@ import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
 import * as db from "../postgres";
 
+//** Object type representing the zipped data between the booking and listing */
+export type GuestBooking = {
+  type: string;
+  title: string;
+  created_at: string; // Reservation date
+  start_date: string;
+  end_date: string;
+  status: string;
+  total_price: number;
+  id: string;
+  guests: number;
+};
+
+export type Booking = {
+  start_date: string;
+  end_date: string;
+  status: string;
+  total_price: string;
+  created_at: string;
+  id: string;
+  listing_id: string;
+  guest_id: string;
+  guests: number;
+};
+
+//** WARNING: This function is not handling authorization properly */
+export async function getUserBookings(
+  userId: string,
+): Promise<ServiceResult<Booking[]>> {
+  // const auth = await authorize("bookings:view-own-listings");
+  // if (!auth.ok) return auth;
+
+  try {
+    // 1. Get all bookings made from the user
+    // const user = auth.data;
+    const result = await db.query(
+      `
+      SELECT *
+      FROM bookings 
+      WHERE $1 = guest_id
+      `,
+      [userId],
+    );
+
+    const noBookings = result.rowCount === null || result.rowCount === 0;
+    if (noBookings)
+      return {
+        ok: false,
+        error: "The user has no bookings",
+        code: "VALIDATION",
+      };
+
+    const bookings = result.rows.map((row) => row as Booking);
+    return {
+      ok: true,
+      data: bookings,
+    };
+  } catch {
+    console.error("Error while retrieving guest bookings");
+    return {
+      ok: false,
+      error: "error",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
 export async function createBooking(
   params: BookingFormValues & { listingId: string; totalPrice: number },
 ): Promise<ServiceResult> {
@@ -39,7 +106,12 @@ export async function createBooking(
   } catch (error) {
     const code = db.pgErrorToCode(error);
     if (code === "CONFLICT")
-      return { ok: false, error: "These dates are no longer available. Please select different dates.", code };
+      return {
+        ok: false,
+        error:
+          "These dates are no longer available. Please select different dates.",
+        code,
+      };
     console.error("[createBooking]", error);
     return { ok: false, error: "Could not complete your booking", code };
   }
@@ -49,12 +121,5 @@ export async function cancelBooking(): Promise<ServiceResult> {
   const auth = await authorize("bookings:cancel-own");
   if (!auth.ok) return auth;
   console.log("[cancelBooking]: invocado");
-  return { ok: true, data: null };
-}
-
-export async function getBookingsForListing(): Promise<ServiceResult> {
-  const auth = await authorize("bookings:view-own-listings");
-  if (!auth.ok) return auth;
-  console.log("[getBookingsForListing]: invocado");
   return { ok: true, data: null };
 }

@@ -57,6 +57,32 @@ pnpm build    # build de producción
 pnpm lint     # linting
 ```
 
+## Librería compartida — `/lib`
+
+Antes de escribir cualquier utilidad, formatter o constante en un componente, **verificar si ya existe en `/lib`**. Si no existe y es reutilizable, agregarla ahí. No duplicar lógica.
+
+| Archivo | Qué contiene |
+|---------|-------------|
+| `lib/utils.ts` | `cn` (classnames), `formatPrice`, `bookingStatusVariant` |
+| `lib/dates.ts` | `parseTs`, `formatDate`, `calcNights`, `datePickerTriggerClass` |
+| `lib/types/index.ts` | Tipos compartidos (`ServiceResult`, etc.) |
+| `lib/services/*` | Lógica de negocio server-side (siempre retornan `ServiceResult`) |
+| `lib/apollo/*` | Cliente Apollo, resolvers, schema, tipos generados |
+| `lib/postgres.ts` | Cliente PostgreSQL y helpers de error |
+| `lib/mongo.ts` | Cliente MongoDB |
+| `lib/permissions.ts` | Roles, permisos y helpers de autorización |
+| `lib/jwt.ts` | Sign/verify de tokens |
+
+### Regla DRY
+
+- **Formatters de fecha** (`formatDate`, `calcNights`, `parseTs`) → siempre de `lib/dates.ts`
+- **Formatters de precio** (`formatPrice`) → siempre de `lib/utils.ts`
+- **Variantes de badge por status** (`bookingStatusVariant`) → siempre de `lib/utils.ts`
+- **Tipos de dominio** → siempre de `lib/types/index.ts` o del service correspondiente
+- Si una función aparece en más de un componente → moverla a `/lib` antes de copiarla
+
+---
+
 ## Patrón de error handling en servicios
 
 Todo service en `lib/services/*` devuelve `ServiceResult` (ver `lib/types/index.ts`). El manejo de errores sigue este esquema, que separa errores de negocio conocidos de errores inesperados del sistema.

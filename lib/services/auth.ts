@@ -187,7 +187,11 @@ export async function createUser(
   } catch (error) {
     const code = db.pgErrorToCode(error);
     if (code === "CONFLICT")
-      return { ok: false, error: "An account with that email already exists", code };
+      return {
+        ok: false,
+        error: "An account with that email already exists",
+        code,
+      };
     console.error("[createUser]", error);
     return { ok: false, error: "Could not create your account", code };
   }

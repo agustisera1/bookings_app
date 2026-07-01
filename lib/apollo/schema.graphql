@@ -17,7 +17,20 @@ type Listing {
   rating_avg: Float
 }
 
+type GuestBooking {
+  type: String
+  title: String
+  created_at: String
+  start_date: String
+  end_date: String
+  status: String
+  total_price: Float
+  id: ID
+  guests: Int
+}
+
 type Query {
   listings(limit: Int, term: String): [Listing!]
   listing(listing_id: String!): Listing
+  guestBookings(guest_id: String): [GuestBooking]
 }

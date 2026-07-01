@@ -1,16 +1,29 @@
 import { cn } from "@/lib/utils";
 
-export function formatDate(date: Date) {
-  return date.toLocaleDateString("en-US", {
+export function parseTs(ts: string | null | undefined): Date | null {
+  if (!ts) return null;
+  const d = new Date(Number(ts));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+export function formatDate(date: Date | string | null | undefined) {
+  const d = date instanceof Date ? date : parseTs(date as string | null);
+  if (!d) return "—";
+  return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
 }
 
-export function calcNights(from: Date | undefined, to: Date | undefined): number {
-  if (!from || !to) return 0;
-  return Math.floor((to.getTime() - from.getTime()) / (1000 * 60 * 60 * 24));
+export function calcNights(
+  from: Date | string | null | undefined,
+  to: Date | string | null | undefined,
+): number {
+  const s = from instanceof Date ? from : parseTs(from as string | null);
+  const e = to instanceof Date ? to : parseTs(to as string | null);
+  if (!s || !e) return 0;
+  return Math.round((e.getTime() - s.getTime()) / 86_400_000);
 }
 
 export const datePickerTriggerClass = (hasValue: boolean) =>
