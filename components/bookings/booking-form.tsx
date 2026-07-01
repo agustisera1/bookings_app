@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { toast } from "sonner";
 import { CalendarIcon, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -63,13 +64,17 @@ export function BookingForm({
   const total = nights * pricePerNight;
 
   async function onSubmit(data: BookingFormValues) {
-    await createBooking({
+    const result = await createBooking({
       listingId,
       checkIn: data.checkIn,
       checkOut: data.checkOut,
       guests: data.guests,
       totalPrice: total,
     });
+    if (!result.ok) {
+      toast.error(result.error ?? "Could not complete your booking");
+      throw new Error(result.error);
+    }
     setSuccess(true);
   }
 

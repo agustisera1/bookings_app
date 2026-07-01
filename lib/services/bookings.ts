@@ -37,12 +37,11 @@ export async function createBooking(
 
     return { ok: true, data: result.rows[0] };
   } catch (error) {
-    return {
-      ok: false,
-      error:
-        error instanceof Error ? error.message : "Could not create the booking",
-      code: db.pgErrorToCode(error),
-    };
+    const code = db.pgErrorToCode(error);
+    if (code === "CONFLICT")
+      return { ok: false, error: "These dates are no longer available. Please select different dates.", code };
+    console.error("[createBooking]", error);
+    return { ok: false, error: "Could not complete your booking", code };
   }
 }
 

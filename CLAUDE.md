@@ -57,6 +57,79 @@ pnpm build    # build de producción
 pnpm lint     # linting
 ```
 
+## Patrón de error handling en servicios
+
+Todo service en `lib/services/*` devuelve `ServiceResult` (ver `lib/types/index.ts`). El manejo de errores sigue este esquema, que separa errores de negocio conocidos de errores inesperados del sistema.
+
+### Regla fundamental
+
+**Nunca reenviar `error.message` al cliente.** Los mensajes de error de PostgreSQL o de Node exponen detalles de implementación (nombres de constraints, columnas, tablas, stack traces). Solo los mensajes escritos explícitamente en el service llegan al cliente.
+
+### Estructura obligatoria del catch
+
+```ts
+} catch (error) {
+  const code = db.pgErrorToCode(error);
+
+  // Errores de negocio conocidos: devolver mensaje friendly específico
+  if (code === "CONFLICT") {
+    return { ok: false, error: "Mensaje específico para el usuario", code };
+  }
+
+  // Error inesperado: loguear server-side, devolver genérico al cliente
+  console.error("[nombreDeLaFuncion]", error);
+  return { ok: false, error: "Could not complete the operation", code };
+}
+```
+
+### Tabla de códigos PG → ErrorCode
+
+| Código PG | Causa | `ErrorCode` | Acción en el catch |
+|-----------|-------|-------------|-------------------|
+| `23505` unique_violation | Email/campo único duplicado | `CONFLICT` | Devolver mensaje friendly |
+| `23P01` exclusion_violation | Solapamiento de fechas (reservas) | `CONFLICT` | Devolver mensaje friendly |
+| `23503` foreign_key_violation | FK referencia un registro inexistente | `NOT_FOUND` | Devolver mensaje friendly |
+| `23502` not_null_violation | Campo requerido faltante | `VALIDATION` | Devolver mensaje friendly |
+| `23514` check_violation | Valor fuera del rango permitido | `VALIDATION` | Devolver mensaje friendly |
+| Cualquier otro | Error del sistema | `UNEXPECTED` | `console.error` + mensaje genérico |
+
+### Errores de negocio fuera del try/catch
+
+Los errores de lógica que se detectan **antes** de tocar la base de datos se devuelven directamente como `ServiceResult`, sin throw. El throw dentro de un try/catch es solo para hacer que el flujo caiga al catch; como manejamos el flujo con early returns, no es necesario.
+
+```ts
+// ✅ Correcto: early return, no throw
+if (bookings.length === 0)
+  return { ok: false, error: "You need a completed booking to leave a review", code: "FORBIDDEN" };
+
+// ❌ Incorrecto: throw que cae al catch con error.message expuesto
+throw new Error("No bookings found");
+```
+
+### Reglas adicionales
+
+| Situación | Solución |
+|-----------|----------|
+| Error inesperado | `console.error("[fn]", error)` siempre antes del return |
+| Formato del log | `"[nombreDeLaFuncion]"` entre corchetes |
+| Mensaje al cliente en UNEXPECTED | Siempre genérico ("Could not …") — nunca `error.message` |
+| Consumer (componente/route handler) | Mostrar `result.error` tal cual — ya es un string friendly |
+
+### Consumer: manejo en formularios
+
+```ts
+async function onSubmit(data: FormValues) {
+  const result = await myService(data);
+  if (!result.ok) {
+    toast.error(result.error);  // ya es friendly, se puede mostrar directo
+    throw new Error(result.error);  // evita que RHF marque isSubmitSuccessful = true
+  }
+  // happy path
+}
+```
+
+---
+
 ## Patrón de formularios (RHF + Zod)
 
 Todo formulario en este proyecto sigue este patrón. Referencias canónicas:

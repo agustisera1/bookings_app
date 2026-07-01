@@ -75,12 +75,8 @@ export async function createReview({
       ok: true,
     };
   } catch (error) {
-    return {
-      ok: false,
-      error:
-        error instanceof Error ? error.message : "Could not create the review",
-      code: db.pgErrorToCode(error),
-    };
+    console.error("[createReview]", error);
+    return { ok: false, error: "Could not create the review", code: db.pgErrorToCode(error) };
   }
 }
 
@@ -110,11 +106,7 @@ export async function getListingReviews(
       ok: true,
     };
   } catch (error) {
-    return {
-      ok: false,
-      error:
-        error instanceof Error ? error.message : "Could not retrieve the reviews",
-      code: db.pgErrorToCode(error),
-    };
+    console.error("[getListingReviews]", error);
+    return { ok: false, error: "Could not retrieve the reviews", code: db.pgErrorToCode(error) };
   }
 }

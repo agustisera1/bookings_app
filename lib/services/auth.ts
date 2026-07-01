@@ -185,12 +185,11 @@ export async function createUser(
     );
     return { ok: true, data: result.rows[0] };
   } catch (error) {
-    return {
-      ok: false,
-      code: db.pgErrorToCode(error),
-      error:
-        error instanceof Error ? error.message : "Could not create the user",
-    };
+    const code = db.pgErrorToCode(error);
+    if (code === "CONFLICT")
+      return { ok: false, error: "An account with that email already exists", code };
+    console.error("[createUser]", error);
+    return { ok: false, error: "Could not create your account", code };
   }
 }
 
