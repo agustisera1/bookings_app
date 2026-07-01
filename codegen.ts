@@ -11,7 +11,7 @@ const config: CodegenConfig = {
       },
     },
     "./lib/apollo/__generated__/operations.ts": {
-      documents: ["components/**/*.graphql", "app/**/*.graphql"],
+      documents: ["lib/apollo/queries/**/*.graphql", "app/**/*.graphql"],
       plugins: ["typescript", "typescript-operations", "typed-document-node"],
     },
   },
