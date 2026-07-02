@@ -46,15 +46,18 @@ export async function hasGuestBookingForListing(
   return (result.rowCount ?? 0) > 0;
 }
 
-export async function cancelBooking(bookingId: string) {
-  const result = await db.query(
+export async function cancelBooking(
+  bookingId: string,
+  guestId: string,
+): Promise<string | null> {
+  const result = await db.query<{ id: string }>(
     `
     DELETE FROM bookings
-    WHERE $1 = id
+    WHERE id = $1 AND guest_id = $2
     RETURNING id
     `,
-    [bookingId],
+    [bookingId, guestId],
   );
 
-  return result.rows[0].id;
+  return result.rows[0]?.id ?? null;
 }

@@ -1,6 +1,5 @@
 import { getCurrentUser } from "@/lib/services/auth";
 import { ROLE_LABELS, ROLE_PERMISSIONS, type Role } from "@/lib/permissions";
-import { PERMISSION_ACTIONS } from "@/lib/services/permission-map";
 import { redirect } from "next/navigation";
 import { PermissionButton } from "./permission-button";
 import { Badge } from "@/components/ui/badge";
@@ -89,10 +88,7 @@ export default async function ProfilePage() {
                             {permission.phase}
                           </Badge>
                         )}
-                        <PermissionButton
-                          action={PERMISSION_ACTIONS[permission.key]}
-                          permissionKey={permission.key}
-                        />
+                        <PermissionButton permissionKey={permission.key} />
                       </div>
                     </div>
                   </li>

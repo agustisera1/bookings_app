@@ -1,20 +1,19 @@
 "use client";
 
 import { useTransition } from "react";
-import type { ServiceResult } from "@/lib/types";
+import { authorize } from "@/lib/authorize";
 import { Button } from "@/components/ui/button";
 
 type Props = {
-  action: () => Promise<ServiceResult>;
   permissionKey: string;
 };
 
-export function PermissionButton({ action, permissionKey }: Props) {
+export function PermissionButton({ permissionKey }: Props) {
   const [isPending, startTransition] = useTransition();
 
   function handleClick() {
     startTransition(async () => {
-      const result = await action();
+      const result = await authorize(permissionKey);
       if (result.ok) {
         alert(`[${permissionKey}]: invocado`);
       } else {

@@ -61,7 +61,7 @@ export const resolvers: Resolvers = {
               start_date: booking.start_date,
               end_date: booking.end_date,
               status: booking.status,
-              total_price: parseInt(booking.total_price),
+              total_price: parseFloat(booking.total_price),
               id: booking.id,
               guests: booking.guests,
             } as GuestBooking;

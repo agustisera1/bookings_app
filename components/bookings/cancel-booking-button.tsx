@@ -23,16 +23,14 @@ export function CancelBookingButton({ bookingId }: { bookingId: string }) {
   async function handleCancel(e: React.MouseEvent) {
     e.preventDefault();
     setIsPending(true);
-    try {
-      // TODO: connect to cancelBooking service action
-      await cancelBooking(bookingId);
-      setOpen(false);
-      toast.success("Booking cancelled successfully");
-    } catch {
-      toast.error("Could not cancel the booking. Please try again.");
-    } finally {
-      setIsPending(false);
+    const result = await cancelBooking(bookingId);
+    setIsPending(false);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
     }
+    setOpen(false);
+    toast.success("Booking cancelled successfully");
   }
 
   return (

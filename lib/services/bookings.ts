@@ -19,13 +19,6 @@ export async function getUserBookings(): Promise<ServiceResult<Booking[]>> {
 
     const bookings = await bookingsRepo.findBookingsByGuestId(userId);
 
-    if (bookings.length === 0)
-      return {
-        ok: false,
-        error: "The user has no bookings",
-        code: "VALIDATION",
-      };
-
     return { ok: true, data: bookings };
   } catch (error) {
     console.error("[getUserBookings]", error);
@@ -87,10 +80,17 @@ export async function cancelBooking(id: string): Promise<ServiceResult> {
   if (!auth.ok) return auth;
 
   try {
-    const deleted = await bookingsRepo.cancelBooking(id);
-    if (deleted !== id) throw new Error("Could not delete the booking");
+    const deleted = await bookingsRepo.cancelBooking(id, auth.data.id);
+
+    if (!deleted)
+      return {
+        ok: false,
+        error: "Booking not found or already cancelled",
+        code: "NOT_FOUND",
+      };
+
     revalidatePath("/bookings");
-    revalidatePath("/bookings/[:id]");
+    revalidatePath("/bookings/[id]", "page");
     return {
       ok: true,
       data: deleted,
@@ -98,10 +98,6 @@ export async function cancelBooking(id: string): Promise<ServiceResult> {
   } catch (error) {
     const code = db.pgErrorToCode(error);
     console.error("[cancelBooking]", error);
-    return {
-      error: error instanceof Error ? error.message : "Internal server error",
-      code,
-      ok: false,
-    };
+    return { ok: false, error: "Could not cancel the booking", code };
   }
 }
