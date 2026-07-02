@@ -1,17 +1,19 @@
 "use server";
 import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
-import mongoClientPromise from "@/lib/mongo";
+import * as listingsRepo from "../repositories/listings.mongo";
 
 export async function searchListings(): Promise<ServiceResult> {
   const auth = await authorize("listings:search");
   if (!auth.ok) return auth;
 
-  const client = await mongoClientPromise;
-  const db = client.db("listingsdb");
-  const listings = await db.collection("listings").find({}).limit(10).toArray();
-
-  return { ok: true, data: listings };
+  try {
+    const listings = await listingsRepo.findListings({ limit: 20 });
+    return { ok: true, data: listings };
+  } catch (error) {
+    console.error("[searchListings]", error);
+    return { ok: false, error: "Could not retrieve listings", code: "UNEXPECTED" };
+  }
 }
 
 export async function viewListing(): Promise<ServiceResult> {
@@ -40,4 +42,21 @@ export async function createExtendedListing(): Promise<ServiceResult> {
   if (!auth.ok) return auth;
   console.log("[createExtendedListing]: invocado");
   return { ok: true, data: null };
+}
+
+// Called by GraphQL resolvers — auth is enforced at the resolver layer.
+export async function getListing(listing_id: string) {
+  return listingsRepo.findListingById(listing_id);
+}
+
+export async function getListings(args: {
+  limit?: number | null;
+  term?: string | null;
+}) {
+  // TODO: Check for user authentication
+  return listingsRepo.findListings(args);
+}
+
+export async function getListingsByIds(ids: string[]) {
+  return listingsRepo.findListingsByIds(ids);
 }

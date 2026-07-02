@@ -2,6 +2,7 @@ import { GraphQLResolveInfo } from 'graphql';
 import { ApolloContext } from '../context';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
+export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
   ID: { input: string; output: string; }
@@ -11,30 +12,50 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type GuestBooking = {
+  __typename?: 'GuestBooking';
+  created_at?: Maybe<Scalars['String']['output']>;
+  end_date?: Maybe<Scalars['String']['output']>;
+  guests?: Maybe<Scalars['Int']['output']>;
+  id?: Maybe<Scalars['ID']['output']>;
+  start_date?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<Scalars['String']['output']>;
+  title?: Maybe<Scalars['String']['output']>;
+  total_price?: Maybe<Scalars['Float']['output']>;
+  type?: Maybe<Scalars['String']['output']>;
+};
+
 export type Listing = {
   __typename?: 'Listing';
-  _id?: Maybe<Scalars['String']['output']>;
-  description?: Maybe<Scalars['String']['output']>;
-  host_id?: Maybe<Scalars['String']['output']>;
+  _id: Scalars['String']['output'];
+  description: Scalars['String']['output'];
+  host_id: Scalars['String']['output'];
   location?: Maybe<Location>;
-  photos?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
-  price?: Maybe<Scalars['Int']['output']>;
+  photos?: Maybe<Array<Scalars['String']['output']>>;
+  price: Scalars['Int']['output'];
   rating_avg?: Maybe<Scalars['Float']['output']>;
-  title?: Maybe<Scalars['String']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
+  title: Scalars['String']['output'];
+  type: Scalars['String']['output'];
 };
 
 export type Location = {
   __typename?: 'Location';
+  address?: Maybe<Scalars['String']['output']>;
   city?: Maybe<Scalars['String']['output']>;
   coordinates?: Maybe<Array<Scalars['Float']['output']>>;
   country?: Maybe<Scalars['String']['output']>;
-  meeting_point?: Maybe<Scalars['String']['output']>;
 };
 
 export type Query = {
   __typename?: 'Query';
+  guestBookings?: Maybe<Array<Maybe<GuestBooking>>>;
+  listing?: Maybe<Listing>;
   listings?: Maybe<Array<Listing>>;
+};
+
+
+export type QueryListingArgs = {
+  listing_id: Scalars['String']['input'];
 };
 
 
@@ -119,6 +140,8 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 export type ResolversTypes = ResolversObject<{
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
+  GuestBooking: ResolverTypeWrapper<GuestBooking>;
+  ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   Listing: ResolverTypeWrapper<Listing>;
   Location: ResolverTypeWrapper<Location>;
@@ -130,6 +153,8 @@ export type ResolversTypes = ResolversObject<{
 export type ResolversParentTypes = ResolversObject<{
   Boolean: Scalars['Boolean']['output'];
   Float: Scalars['Float']['output'];
+  GuestBooking: GuestBooking;
+  ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   Listing: Listing;
   Location: Location;
@@ -137,30 +162,45 @@ export type ResolversParentTypes = ResolversObject<{
   String: Scalars['String']['output'];
 }>;
 
-export type ListingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Listing'] = ResolversParentTypes['Listing']> = ResolversObject<{
-  _id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  description?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  host_id?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  location?: Resolver<Maybe<ResolversTypes['Location']>, ParentType, ContextType>;
-  photos?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
-  price?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  rating_avg?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+export type GuestBookingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['GuestBooking'] = ResolversParentTypes['GuestBooking']> = ResolversObject<{
+  created_at?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  end_date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  guests?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  id?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  start_date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  total_price?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 }>;
 
+export type ListingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Listing'] = ResolversParentTypes['Listing']> = ResolversObject<{
+  _id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  host_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  location?: Resolver<Maybe<ResolversTypes['Location']>, ParentType, ContextType>;
+  photos?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  price?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  rating_avg?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+}>;
+
 export type LocationResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Location'] = ResolversParentTypes['Location']> = ResolversObject<{
+  address?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   city?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   coordinates?: Resolver<Maybe<Array<ResolversTypes['Float']>>, ParentType, ContextType>;
   country?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  meeting_point?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 }>;
 
 export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
+  guestBookings?: Resolver<Maybe<Array<Maybe<ResolversTypes['GuestBooking']>>>, ParentType, ContextType>;
+  listing?: Resolver<Maybe<ResolversTypes['Listing']>, ParentType, ContextType, RequireFields<QueryListingArgs, 'listing_id'>>;
   listings?: Resolver<Maybe<Array<ResolversTypes['Listing']>>, ParentType, ContextType, Partial<QueryListingsArgs>>;
 }>;
 
 export type Resolvers<ContextType = ApolloContext> = ResolversObject<{
+  GuestBooking?: GuestBookingResolvers<ContextType>;
   Listing?: ListingResolvers<ContextType>;
   Location?: LocationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;

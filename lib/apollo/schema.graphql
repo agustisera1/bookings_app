@@ -2,21 +2,35 @@ type Location {
   coordinates: [Float!]
   city: String
   country: String
-  meeting_point: String
+  address: String
 }
 
 type Listing {
-  _id: String
-  type: String
-  host_id: String
-  title: String
-  description: String
-  price: Int
+  _id: String!
+  type: String!
+  host_id: String!
+  title: String!
+  description: String!
+  price: Int!
   location: Location
-  photos: [String]
+  photos: [String!]
   rating_avg: Float
+}
+
+type GuestBooking {
+  type: String
+  title: String
+  created_at: String
+  start_date: String
+  end_date: String
+  status: String
+  total_price: Float
+  id: ID
+  guests: Int
 }
 
 type Query {
   listings(limit: Int, term: String): [Listing!]
+  listing(listing_id: String!): Listing
+  guestBookings: [GuestBooking]
 }

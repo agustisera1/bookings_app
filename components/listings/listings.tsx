@@ -1,6 +1,7 @@
 import { GetListingsQuery } from "@/lib/apollo/__generated__/operations";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import Link from "next/link";
 
 const TYPE_GRADIENTS: Record<string, string> = {
   accommodation: "from-violet-500 to-indigo-600",
@@ -21,6 +22,7 @@ export async function Listings({
 
         return (
           <li key={listing._id}>
+            <Link href={`/listings/${listing._id}`}>
             <Card className="group overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer p-0">
               <div
                 className={`h-40 bg-gradient-to-br ${gradient} flex items-end p-3`}
@@ -41,6 +43,7 @@ export async function Listings({
                 </p>
               </CardContent>
             </Card>
+            </Link>
           </li>
         );
       })}

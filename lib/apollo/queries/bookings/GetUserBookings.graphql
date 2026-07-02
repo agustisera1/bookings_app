@@ -1,0 +1,13 @@
+query GetUserBookings {
+  guestBookings {
+    type
+    title
+    created_at
+    start_date
+    end_date
+    status
+    total_price
+    id
+    guests
+  }
+}
