@@ -1,5 +1,6 @@
 allowBuilds:
   '@apollo/protobufjs': false
+  esbuild: false
   sharp: false
   unrs-resolver: false
 ignoredBuiltDependencies:
