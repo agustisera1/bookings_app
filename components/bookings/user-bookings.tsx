@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { ChevronRightIcon } from "lucide-react";
 import { formatDate, calcNights } from "@/lib/dates";
 import { formatPrice, bookingStatusVariant } from "@/lib/utils";
+import { CancelBookingButton } from "@/components/bookings/cancel-booking-button";
 
 export function UserBookings({
   userBookingsPromise,
@@ -46,7 +47,6 @@ export function UserBookings({
           <Item
             key={booking!.id}
             variant="outline"
-            render={<Link href={`/bookings/${booking!.id}`} />}
           >
             <ItemHeader>
               <ItemTitle>{booking!.title}</ItemTitle>
@@ -76,7 +76,10 @@ export function UserBookings({
                 </Badge>
               </div>
               <ItemActions>
-                <ChevronRightIcon className="size-4 text-muted-foreground" />
+                <CancelBookingButton bookingId={booking!.id ?? ""} />
+                <Link href={`/bookings/${booking!.id}`}>
+                  <ChevronRightIcon className="size-4 text-muted-foreground" />
+                </Link>
               </ItemActions>
             </ItemFooter>
           </Item>

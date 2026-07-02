@@ -1,7 +1,9 @@
 import * as db from "../postgres";
 import type { Booking } from "../types/booking";
 
-export async function findBookingsByGuestId(guestId: string): Promise<Booking[]> {
+export async function findBookingsByGuestId(
+  guestId: string,
+): Promise<Booking[]> {
   const result = await db.query<Booking>(
     `SELECT * FROM bookings WHERE guest_id = $1`,
     [guestId],
@@ -42,4 +44,17 @@ export async function hasGuestBookingForListing(
     [guestId, listingId],
   );
   return (result.rowCount ?? 0) > 0;
+}
+
+export async function cancelBooking(bookingId: string) {
+  const result = await db.query(
+    `
+    DELETE FROM bookings
+    WHERE $1 = id
+    RETURNING id
+    `,
+    [bookingId],
+  );
+
+  return result.rows[0].id;
 }

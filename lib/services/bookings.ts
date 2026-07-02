@@ -4,6 +4,7 @@ import type { ServiceResult } from "../types";
 import type { Booking } from "../types/booking";
 import * as db from "../postgres";
 import * as bookingsRepo from "../repositories/bookings.pg";
+import { revalidatePath } from "next/cache";
 
 export type { Booking, GuestBooking } from "../types/booking";
 
@@ -81,9 +82,26 @@ export async function createBooking(params: {
   }
 }
 
-export async function cancelBooking(): Promise<ServiceResult> {
+export async function cancelBooking(id: string): Promise<ServiceResult> {
   const auth = await authorize("bookings:cancel-own");
   if (!auth.ok) return auth;
-  console.log("[cancelBooking]: invocado");
-  return { ok: true, data: null };
+
+  try {
+    const deleted = await bookingsRepo.cancelBooking(id);
+    if (deleted !== id) throw new Error("Could not delete the booking");
+    revalidatePath("/bookings");
+    revalidatePath("/bookings/[:id]");
+    return {
+      ok: true,
+      data: deleted,
+    };
+  } catch (error) {
+    const code = db.pgErrorToCode(error);
+    console.error("[cancelBooking]", error);
+    return {
+      error: error instanceof Error ? error.message : "Internal server error",
+      code,
+      ok: false,
+    };
+  }
 }
