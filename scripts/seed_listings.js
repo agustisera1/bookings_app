@@ -5,7 +5,8 @@
 
 const DB_NAME = "listingsdb";
 const COLLECTION = "listings";
-const IMAGE_URL = "https://dummyimage.com/1200x800/000/fff.png&text=This+is+a+mock+image";
+const IMAGE_URL =
+  "https://dummyimage.com/1200x800/000/fff.png&text=This+is+a+mock+image";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -51,16 +52,16 @@ function photos(n) {
 // ---------------------------------------------------------------------------
 
 const CITIES = [
-  { city: "Buenos Aires",  country: "Argentina", lat: -34.6037,  lng: -58.3816  },
-  { city: "Córdoba",       country: "Argentina", lat: -31.4201,  lng: -64.1888  },
-  { city: "Rosario",       country: "Argentina", lat: -32.9442,  lng: -60.6505  },
-  { city: "Mendoza",       country: "Argentina", lat: -32.8908,  lng: -68.8272  },
-  { city: "Bariloche",     country: "Argentina", lat: -41.1335,  lng: -71.3103  },
-  { city: "Salta",         country: "Argentina", lat: -24.7859,  lng: -65.4116  },
-  { city: "Ushuaia",       country: "Argentina", lat: -54.8019,  lng: -68.3030  },
-  { city: "Mar del Plata", country: "Argentina", lat: -38.0055,  lng: -57.5426  },
-  { city: "Puerto Madryn", country: "Argentina", lat: -42.7692,  lng: -65.0385  },
-  { city: "Tucumán",       country: "Argentina", lat: -26.8083,  lng: -65.2176  },
+  { city: "Buenos Aires", country: "Argentina", lat: -34.6037, lng: -58.3816 },
+  { city: "Córdoba", country: "Argentina", lat: -31.4201, lng: -64.1888 },
+  { city: "Rosario", country: "Argentina", lat: -32.9442, lng: -60.6505 },
+  { city: "Mendoza", country: "Argentina", lat: -32.8908, lng: -68.8272 },
+  { city: "Bariloche", country: "Argentina", lat: -41.1335, lng: -71.3103 },
+  { city: "Salta", country: "Argentina", lat: -24.7859, lng: -65.4116 },
+  { city: "Ushuaia", country: "Argentina", lat: -54.8019, lng: -68.303 },
+  { city: "Mar del Plata", country: "Argentina", lat: -38.0055, lng: -57.5426 },
+  { city: "Puerto Madryn", country: "Argentina", lat: -42.7692, lng: -65.0385 },
+  { city: "Tucumán", country: "Argentina", lat: -26.8083, lng: -65.2176 },
 ];
 
 const ACCOMMODATION_TITLES = [
@@ -92,12 +93,24 @@ const ACCOMMODATION_DESCRIPTIONS = [
 ];
 
 const AMENITIES = [
-  "wifi", "aire_acondicionado", "calefaccion", "cocina", "lavarropas",
-  "estacionamiento", "piscina", "parrilla", "jacuzzi", "gimnasio",
-  "tv_smart", "balcon", "terraza", "jardín", "mascotas_permitidas",
+  "wifi",
+  "aire_acondicionado",
+  "calefaccion",
+  "cocina",
+  "lavarropas",
+  "estacionamiento",
+  "piscina",
+  "parrilla",
+  "jacuzzi",
+  "gimnasio",
+  "tv_smart",
+  "balcon",
+  "terraza",
+  "jardín",
+  "mascotas_permitidas",
 ];
 
-const CHECK_IN_TIMES  = ["12:00", "13:00", "14:00", "15:00", "16:00"];
+const CHECK_IN_TIMES = ["12:00", "13:00", "14:00", "15:00", "16:00"];
 const CHECK_OUT_TIMES = ["09:00", "10:00", "11:00", "12:00"];
 
 const EXPERIENCE_TITLES = [
@@ -147,9 +160,9 @@ const EQUIPMENT_DESCRIPTIONS = [
 // ---------------------------------------------------------------------------
 
 function makeAccommodation(index) {
-  const loc    = pick(CITIES);
-  const beds   = randomInt(1, 6);
-  const baths  = randomInt(1, 3);
+  const loc = pick(CITIES);
+  const beds = randomInt(1, 6);
+  const baths = randomInt(1, 3);
   const guests = beds * 2;
 
   return {
@@ -172,7 +185,7 @@ function makeAccommodation(index) {
       beds,
       bathrooms: baths,
       max_guests: guests,
-      check_in_time:  pick(CHECK_IN_TIMES),
+      check_in_time: pick(CHECK_IN_TIMES),
       check_out_time: pick(CHECK_OUT_TIMES),
       amenities: pickN(AMENITIES, randomInt(3, 8)),
       minimum_nights: pick([1, 2, 3]),
@@ -209,7 +222,14 @@ function makeExperience(index) {
       language: pick(LANGUAGES),
       max_participants: randomInt(4, 15),
       includes: pickN(
-        ["guía profesional", "transporte", "almuerzo", "equipamiento", "seguro", "fotos"],
+        [
+          "guía profesional",
+          "transporte",
+          "almuerzo",
+          "equipamiento",
+          "seguro",
+          "fotos",
+        ],
         randomInt(1, 3),
       ),
       difficulty: pick(["baja", "media", "alta"]),
@@ -256,9 +276,9 @@ function makeEquipment(index) {
 
 const listings = [];
 
-for (let i = 0; i < 70; i++)  listings.push(makeAccommodation(i));
-for (let i = 0; i < 20; i++)  listings.push(makeExperience(i));
-for (let i = 0; i < 15; i++)  listings.push(makeEquipment(i));
+for (let i = 0; i < 70; i++) listings.push(makeAccommodation(i));
+for (let i = 0; i < 20; i++) listings.push(makeExperience(i));
+for (let i = 0; i < 15; i++) listings.push(makeEquipment(i));
 
 // ---------------------------------------------------------------------------
 // Insert
@@ -270,4 +290,6 @@ db[COLLECTION].createIndex({ title: "text", description: "text" });
 
 const result = db[COLLECTION].insertMany(listings);
 
-print(`\n✓ Inserted ${result.insertedIds ? Object.keys(result.insertedIds).length : "?"} listings into ${DB_NAME}.${COLLECTION}\n`);
+print(
+  `\n✓ Inserted ${result.insertedIds ? Object.keys(result.insertedIds).length : "?"} listings into ${DB_NAME}.${COLLECTION}\n`,
+);

@@ -1,13 +1,14 @@
 "use client";
 
 import { logoutUser } from "@/lib/services/auth";
+import { SidebarFooter } from "@/components/ui/sidebar";
 import {
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-} from "@/components/ui/sidebar";
-import { LogOutIcon, UserIcon } from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronsUpDownIcon, LogOutIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -28,29 +29,37 @@ export function SidebarUserFooter({ name, email }: Props) {
 
   return (
     <SidebarFooter>
-      <div className="flex items-center gap-3 px-2 py-2">
-        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
-          {initials}
-        </div>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{name}</p>
-          <p className="truncate text-xs text-sidebar-foreground/60">{email}</p>
-        </div>
-      </div>
-      <SidebarMenu>
-        <SidebarMenuItem>
-          <SidebarMenuButton render={<Link href="/profile" />}>
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left outline-hidden hover:bg-sidebar-accent/50 data-popup-open:bg-sidebar-accent/50">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
+            {initials}
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">{name}</p>
+            <p className="truncate text-xs text-sidebar-foreground/60">
+              {email}
+            </p>
+          </div>
+          <ChevronsUpDownIcon className="size-4 shrink-0 text-sidebar-foreground/60" />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" side="top" className="p-1">
+          <DropdownMenuItem
+            className="cursor-pointer"
+            render={<Link href="/profile" />}
+          >
             <UserIcon />
             <span>Profile</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-        <SidebarMenuItem>
-          <SidebarMenuButton render={<button onClick={handleLogout} />}>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="cursor-pointer"
+            variant="destructive"
+            onClick={handleLogout}
+          >
             <LogOutIcon />
             <span>Log out</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
-      </SidebarMenu>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </SidebarFooter>
   );
 }

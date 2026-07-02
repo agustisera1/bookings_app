@@ -11,13 +11,15 @@ import { Book, SearchIcon } from "lucide-react";
 import Link from "next/link";
 import { SidebarUserFooter } from "./sidebar-user-footer";
 
-const navItems = [
-  { title: "My bookings", href: "/bookings", icon: Book },
-  { title: "Browse", href: "/listings", icon: SearchIcon },
-];
-
 export async function AppSidebar() {
   const user = await getCurrentUser();
+
+  const navItems = [
+    user?.is_host
+      ? { title: "My listings", href: "/listings/mine", icon: Book }
+      : { title: "My bookings", href: "/bookings", icon: Book },
+    { title: "Browse", href: "/listings", icon: SearchIcon },
+  ];
 
   return (
     <Sidebar>
@@ -27,8 +29,10 @@ export async function AppSidebar() {
       <SidebarContent>
         <SidebarMenu>
           {navItems.map((item) => (
-            <SidebarMenuItem key={item.href}>
-              <SidebarMenuButton render={<Link href={item.href} />}>
+            <SidebarMenuItem className="px-2" key={item.href}>
+              <SidebarMenuButton
+                render={<Link className="w-full" href={item.href} />}
+              >
                 <item.icon />
                 <span>{item.title}</span>
               </SidebarMenuButton>
