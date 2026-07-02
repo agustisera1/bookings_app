@@ -17,7 +17,8 @@ import {
 
 export const PERMISSION_ACTIONS: Record<
   string,
-  (...params) => Promise<ServiceResult>
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (...params: any[]) => Promise<ServiceResult>
 > = {
   "listings:search": searchListings,
   "listings:view": viewListing,

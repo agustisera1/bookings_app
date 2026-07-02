@@ -199,3 +199,93 @@ if (isSubmitSuccessful) return <SuccessUI />;
 | Estado puramente visual (hover, popover open) | `useState` local — no pertenece a RHF |
 | Mensajes de error | `{errors.field && <p className="text-xs text-destructive">{errors.field.message}</p>}` |
 | Atributo `required` en inputs | Omitir — Zod ya lo valida |
+
+---
+
+## Arquitectura de `lib/`
+
+### Capas y responsabilidades
+
+```
+components / app/          Entry points (Server Actions, GraphQL resolvers, route handlers)
+      ↓
+lib/services/              Lógica de negocio: auth, validación de permisos, reglas de dominio
+      ↓
+lib/repositories/          Acceso a datos: queries a una única DB, sin lógica de negocio
+      ↓
+lib/types/                 Tipos de dominio compartidos entre capas
+```
+
+Cada capa solo conoce a su vecina inmediata hacia abajo. Los componentes no importan de `repositories/`, los repositorios no importan de `services/`.
+
+---
+
+### `lib/types/` — Tipos de dominio
+
+Tipos que representan entidades del negocio, independientes de la DB y del cliente.
+
+| Archivo | Tipos |
+|---------|-------|
+| `index.ts` | `ServiceResult<T>`, `ErrorCode` |
+| `user.ts` | `User`, `PublicUser`, `SessionRecord`, `CurrentUser` |
+| `booking.ts` | `Booking`, `GuestBooking` |
+| `review.ts` | `Review` |
+
+**Regla:** los services re-exportan los tipos que consumen para mantener compatibilidad hacia arriba (`export type { Booking } from "../types/booking"`). Los consumers pueden importar del service o del archivo de types — ambos son válidos.
+
+---
+
+### `lib/repositories/` — Acceso a datos
+
+Una función por operación. El nombre del archivo indica la DB: `.pg.ts` para PostgreSQL, `.mongo.ts` para MongoDB.
+
+| Archivo | Operaciones |
+|---------|-------------|
+| `users.pg.ts` | `findUserByEmail`, `createUser` |
+| `sessions.pg.ts` | `findValidSession`, `createSession`, `rotateSession`, `deleteSessionsByUser` |
+| `bookings.pg.ts` | `findBookingsByGuestId`, `createBookingRecord`, `hasGuestBookingForListing` |
+| `reviews.pg.ts` | `findReviewsByListingId`, `createReviewRecord` |
+| `listings.mongo.ts` | `findListingById`, `findListings`, `findListingsByIds` |
+
+**Reglas:**
+- Sin `"use server"`, sin `authorize()`, sin lógica de negocio
+- Reciben y devuelven tipos de dominio (`lib/types/`), nunca tipos de DB crudos hacia afuera
+- No tienen try/catch — los errores propagan al service que los llama
+
+---
+
+### `lib/services/` — Lógica de negocio
+
+Todos los services son `"use server"`. Cada función sigue este flujo:
+
+```
+1. authorize(permissionKey)   → verifica identidad y permisos
+2. validación de negocio      → early return si aplica (sin throw)
+3. try { repo calls }         → delega el acceso a datos al repositorio
+   catch (error) {            → traduce errores de DB a mensajes friendly
+     pgErrorToCode(error)
+   }
+```
+
+**Regla de parámetros:** los services no importan tipos de componentes (`FormValues`). Reciben tipos planos (`{ checkIn: Date; guests: number; ... }`). Los componentes pasan sus form values que coinciden con esos shapes.
+
+---
+
+### Auth — cómo fluye la identidad
+
+**Server Actions / RSC directos:**
+`cookies()` de `next/headers` accede al JWT del request actual via AsyncLocalStorage. `authorize()` llama a `getCurrentUser()` que lee de ahí.
+
+**GraphQL (Apollo Server):**
+El Apollo Client (RSC) reenvía las cookies del request original en el header HTTP. El handler de `/api/graphql` las recibe en su propio contexto de Next.js, por lo que `authorize()` en los resolvers funciona igual que en Server Actions.
+
+```
+Browser → cookies → Next.js (AsyncLocalStorage store A)
+                        ↓ RSC Apollo Client reenvía cookies
+                    /api/graphql (AsyncLocalStorage store B: mismas cookies)
+                        ↓
+                    authorize() → getCurrentUser() → ✓
+```
+
+**Configurado en:** `lib/apollo/client.ts` (reenvío de cookies) y `lib/authorize.ts` (verificación de permisos).
+

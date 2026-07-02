@@ -9,7 +9,6 @@ export default async function BookingsPage() {
 
   const userBookingsPromise = query({
     query: GetUserBookingsDocument,
-    variables: { guest_id: user.id },
   });
 
   return (
