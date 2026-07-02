@@ -31,7 +31,7 @@ export type Listing = {
   description: Scalars['String']['output'];
   host_id: Scalars['String']['output'];
   location?: Maybe<Location>;
-  photos?: Maybe<Array<Scalars['String']['output']>>;
+  photos?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   price: Scalars['Int']['output'];
   rating_avg?: Maybe<Scalars['Float']['output']>;
   title: Scalars['String']['output'];
@@ -61,6 +61,7 @@ export type QueryListingArgs = {
 
 export type QueryListingsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
+  own?: InputMaybe<Scalars['Boolean']['input']>;
   term?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -179,7 +180,7 @@ export type ListingResolvers<ContextType = ApolloContext, ParentType extends Res
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   host_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   location?: Resolver<Maybe<ResolversTypes['Location']>, ParentType, ContextType>;
-  photos?: Resolver<Maybe<Array<ResolversTypes['String']>>, ParentType, ContextType>;
+  photos?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   price?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   rating_avg?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

@@ -16,15 +16,19 @@ export async function findListingById(id: string) {
 export async function findListings({
   limit,
   term,
+  host_id,
 }: {
   limit?: number | null;
   term?: string | null;
+  host_id?: string | null;
 }) {
   const collection = await getCollection();
-  const filtering: Filter<Document> = {};
-  if (term) filtering["$text"] = { $search: term };
+  const filters: Filter<Document> = {};
 
-  const cursor = collection.find(filtering);
+  if (host_id) filters["host_id"] = host_id;
+  if (term) filters["$text"] = { $search: term };
+
+  const cursor = collection.find(filters);
   const docs = await (limit ? cursor.limit(limit) : cursor).toArray();
   return docs.map((doc) => ({ ...doc, _id: doc._id.toString() }));
 }
@@ -46,14 +50,3 @@ export async function createListing(
   const document = await collection.insertOne(listing);
   return document;
 }
-
-// export async function editListing(
-//   id: string,
-//   values: Partial<ListingFormData>,
-// ): Promise<UpdateOneModel<Document>> {
-//   const collection = await getCollection();
-//   // // const filters = {};
-//   // updated = await collection.findOneAndUpdate();
-//   // return;
-//   return
-// }

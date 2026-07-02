@@ -19,9 +19,9 @@ export const resolvers: Resolvers = {
         });
       }
     },
-    listings: async (_, { limit, term }) => {
+    listings: async (_, { limit, term, own }) => {
       try {
-        return (await getListings({ limit, term })) as Listing[];
+        return (await getListings({ limit, term, own: !!own })) as Listing[];
       } catch (error) {
         throw new GraphQLError("Failed to fetch listings", {
           originalError: error instanceof Error ? error : undefined,

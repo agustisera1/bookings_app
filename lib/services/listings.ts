@@ -43,23 +43,6 @@ function formatListingValues(
   };
 }
 
-export async function searchListings(): Promise<ServiceResult> {
-  const auth = await authorize("listings:search");
-  if (!auth.ok) return auth;
-
-  try {
-    const listings = await listingsRepo.findListings({ limit: 20 });
-    return { ok: true, data: listings };
-  } catch (error) {
-    console.error("[searchListings]", error);
-    return {
-      ok: false,
-      error: "Could not retrieve listings",
-      code: "UNEXPECTED",
-    };
-  }
-}
-
 export async function viewListing(): Promise<ServiceResult> {
   const auth = await authorize("listings:view");
   if (!auth.ok) return auth;
@@ -112,9 +95,17 @@ export async function getListing(listing_id: string) {
 export async function getListings(args: {
   limit?: number | null;
   term?: string | null;
+  own?: boolean;
 }) {
   // TODO: Check for user authentication
-  return listingsRepo.findListings(args);
+  const { own, ...rest } = args;
+  const params: Parameters<typeof listingsRepo.findListings>[0] = { ...rest };
+  if (own) {
+    const auth = await authorize("listings:create");
+    if (auth.ok) params["host_id"] = auth.data.id;
+  }
+
+  return listingsRepo.findListings(params);
 }
 
 export async function getListingsByIds(ids: string[]) {

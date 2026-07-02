@@ -1,23 +1,46 @@
 import { getCurrentUser } from "@/lib/services/auth";
 import { forbidden } from "next/navigation";
-import Link from "next/link";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { query } from "@/lib/apollo/client";
+import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
+import { Listings } from "@/components/listings/listings";
+import Link from "next/link";
 
 export default async function MyListingsPage() {
   const user = await getCurrentUser();
   if (!user?.is_host) forbidden();
 
+  const {
+    data: { listings },
+    error,
+  } = await query({
+    query: GetListingsDocument,
+    variables: { own: true },
+  });
+
   return (
     <div className="p-10 flex flex-col gap-6">
+      {!!error && (
+        <div className="p-10 flex flex-col gap-6">Internal error.</div>
+      )}
+
+      {listings?.length === 0 && (
+        <div className="p-10 flex flex-col gap-6">
+          No listings found for {"term"}
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold tracking-tight">My listings</h1>
-        <Button nativeButton={false} render={<Link href="/listings/new" />}>
-          <Plus />
-          Create listing
+        <h1 className="text-2xl font-semibold tracking-tight">My listings</h1>
+        <Button
+          variant="secondary"
+          nativeButton={false}
+          render={<Link href="/listings/new" />}
+        >
+          Add new listing
         </Button>
       </div>
-      <p className="text-sm text-muted-foreground">Coming soon.</p>
+      {listings && listings?.length > 0 && <Listings listings={listings} />}
     </div>
   );
 }

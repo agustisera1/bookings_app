@@ -3,6 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createListing } from "@/lib/services/listings";
 import { Button } from "@/components/ui/button";
@@ -85,11 +86,13 @@ const createListingSchema = z.object({
 export type CreateListingFormValues = z.infer<typeof createListingSchema>;
 
 export function CreateListingForm() {
+  const router = useRouter();
+
   const {
     control,
     register,
     handleSubmit,
-    formState: { errors, isSubmitting, isSubmitSuccessful },
+    formState: { errors, isSubmitting },
   } = useForm<CreateListingFormValues>({
     resolver: zodResolver(createListingSchema),
     defaultValues: {
@@ -106,18 +109,8 @@ export function CreateListingForm() {
       toast.error(result.error);
       throw new Error(result.error);
     }
-  }
-
-  if (isSubmitSuccessful) {
-    return (
-      <div className="flex flex-col items-center gap-2 py-16 text-center">
-        <span className="text-3xl">🎉</span>
-        <p className="font-medium">Listing created!</p>
-        <p className="text-sm text-muted-foreground">
-          Your new listing is now live.
-        </p>
-      </div>
-    );
+    toast.success("Listing created!");
+    router.push("/listings/mine");
   }
 
   return (

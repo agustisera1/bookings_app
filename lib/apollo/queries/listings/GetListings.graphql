@@ -1,5 +1,5 @@
-query GetListings($limit: Int = 30, $term: String) {
-  listings(limit: $limit, term: $term) {
+query GetListings($limit: Int = 30, $term: String, $own: Boolean) {
+  listings(limit: $limit, term: $term, own: $own) {
     _id
     type
     price
