@@ -7,7 +7,8 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { XIcon, CheckIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { FormField } from "@/components/common/field";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -91,22 +92,23 @@ function BookingActionDialog({
             </AlertDialogDescription>
           </AlertDialogHeader>
 
-          <div className="flex flex-col gap-1.5 py-2">
-            <Label htmlFor={`host-message-${action}-${bookingId}`}>
-              {isAccept
-                ? "Message for the guest (optional)"
-                : "Reason (optional)"}
-            </Label>
-            <textarea
+          <FormField
+            className="py-2"
+            htmlFor={`host-message-${action}-${bookingId}`}
+            label={
+              isAccept ? "Message for the guest (optional)" : "Reason (optional)"
+            }
+          >
+            <Textarea
               id={`host-message-${action}-${bookingId}`}
               rows={3}
               placeholder={
                 isAccept ? "Any note for the guest…" : "Let the guest know why…"
               }
-              className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 resize-none"
+              className="resize-none"
               {...register("hostMessage")}
             />
-          </div>
+          </FormField>
 
           <AlertDialogFooter>
             <AlertDialogCancel type="button" disabled={isSubmitting}>

@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useForm, Controller, useWatch } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { FormField } from "@/components/common/field";
+import { StarRatingInput } from "@/components/common/star-rating";
 import { createReview } from "@/lib/services/reviews";
 
 const reviewSchema = z.object({
@@ -16,11 +17,7 @@ const reviewSchema = z.object({
 
 export type ReviewFormValues = z.infer<typeof reviewSchema>;
 
-const STARS = [1, 2, 3, 4, 5];
-
 export function ReviewForm({ listingId }: { listingId: string }) {
-  const [hovered, setHovered] = useState(0);
-
   const {
     reset,
     control,
@@ -32,8 +29,6 @@ export function ReviewForm({ listingId }: { listingId: string }) {
     defaultValues: { rating: 0, comment: "" },
   });
 
-  const rating = useWatch({ control, name: "rating" });
-
   async function onSubmit(data: ReviewFormValues) {
     const result = await createReview({ ...data, listing_id: listingId });
     if (!result.ok) {
@@ -44,58 +39,27 @@ export function ReviewForm({ listingId }: { listingId: string }) {
     reset();
   }
 
-  const active = hovered || rating;
-
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
-      <div className="flex flex-col gap-2">
-        <Label>Rating</Label>
+      <FormField label="Rating" error={errors.rating?.message}>
         <Controller
           control={control}
           name="rating"
           render={({ field }) => (
-            <div className="flex gap-1" onMouseLeave={() => setHovered(0)}>
-              {STARS.map((star) => (
-                <button
-                  key={star}
-                  type="button"
-                  onClick={() => field.onChange(star)}
-                  onMouseEnter={() => setHovered(star)}
-                  className="text-2xl leading-none transition-transform hover:scale-110 focus:outline-none"
-                  aria-label={`${star} star${star !== 1 ? "s" : ""}`}
-                >
-                  <span
-                    className={
-                      active >= star
-                        ? "text-yellow-400"
-                        : "text-muted-foreground/30"
-                    }
-                  >
-                    ★
-                  </span>
-                </button>
-              ))}
-            </div>
+            <StarRatingInput value={field.value} onChange={field.onChange} />
           )}
         />
-        {errors.rating && (
-          <p className="text-xs text-destructive">{errors.rating.message}</p>
-        )}
-      </div>
+      </FormField>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="comment">Comment</Label>
-        <textarea
+      <FormField label="Comment" htmlFor="comment" error={errors.comment?.message}>
+        <Textarea
           id="comment"
           rows={4}
           placeholder="Share your experience…"
-          className="w-full rounded-lg border border-input bg-transparent px-2.5 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 resize-none"
+          className="resize-none"
           {...register("comment")}
         />
-        {errors.comment && (
-          <p className="text-xs text-destructive">{errors.comment.message}</p>
-        )}
-      </div>
+      </FormField>
 
       <Button
         variant="outline"

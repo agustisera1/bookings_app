@@ -8,14 +8,13 @@ import { toast } from "sonner";
 import { CalendarIcon, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/common/field";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
 import { formatDate, calcNights, datePickerTriggerClass } from "@/lib/dates";
 import { createBooking } from "@/lib/services/bookings";
 
@@ -94,8 +93,7 @@ export function BookingForm({
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-2">
-          <Label>Check-in</Label>
+        <FormField label="Check-in" error={errors.checkIn?.message}>
           <Controller
             control={control}
             name="checkIn"
@@ -132,13 +130,9 @@ export function BookingForm({
               </Popover>
             )}
           />
-          {errors.checkIn && (
-            <p className="text-xs text-destructive">{errors.checkIn.message}</p>
-          )}
-        </div>
+        </FormField>
 
-        <div className="flex flex-col gap-2">
-          <Label>Check-out</Label>
+        <FormField label="Check-out" error={errors.checkOut?.message}>
           <Controller
             control={control}
             name="checkOut"
@@ -170,16 +164,10 @@ export function BookingForm({
               </Popover>
             )}
           />
-          {errors.checkOut && (
-            <p className="text-xs text-destructive">
-              {errors.checkOut.message}
-            </p>
-          )}
-        </div>
+        </FormField>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="guests">Guests</Label>
+      <FormField label="Guests" htmlFor="guests" error={errors.guests?.message}>
         <div className="relative">
           <Users className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 size-4 text-muted-foreground" />
           <Input
@@ -191,10 +179,7 @@ export function BookingForm({
             {...register("guests", { valueAsNumber: true })}
           />
         </div>
-        {errors.guests && (
-          <p className="text-xs text-destructive">{errors.guests.message}</p>
-        )}
-      </div>
+      </FormField>
 
       <div className="flex flex-col gap-1 text-sm">
         <div className="flex justify-between text-muted-foreground">

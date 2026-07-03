@@ -3,7 +3,7 @@ import Link from "next/link";
 import { GetListingsQuery } from "@/lib/apollo/__generated__/operations";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatPrice } from "@/lib/utils";
+import { PriceLabel } from "@/components/common/price-label";
 
 type ListingRow = NonNullable<GetListingsQuery["listings"]>[number];
 
@@ -38,12 +38,7 @@ export function ListingsGrid({ listings }: { listings: ListingRow[] }) {
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {listing.description}
                 </p>
-                <span className="text-sm font-semibold mt-auto">
-                  {formatPrice(listing.price)}{" "}
-                  <span className="font-normal text-muted-foreground">
-                    / night
-                  </span>
-                </span>
+                <PriceLabel price={listing.price} className="mt-auto" />
               </CardContent>
             </Card>
           </Link>

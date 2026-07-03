@@ -8,8 +8,8 @@ import { toast } from "sonner";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { FormField } from "@/components/common/field";
 import {
   Tooltip,
   TooltipContent,
@@ -119,22 +119,23 @@ export function EditListingButton({
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-col gap-4"
         >
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-listing-title">Title</Label>
+          <FormField
+            label="Title"
+            htmlFor="edit-listing-title"
+            error={errors.title?.message}
+          >
             <Input
               id="edit-listing-title"
               disabled={isSubmitting}
               {...register("title")}
             />
-            {errors.title && (
-              <p className="text-xs text-destructive">
-                {errors.title.message}
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-listing-description">Description</Label>
+          <FormField
+            label="Description"
+            htmlFor="edit-listing-description"
+            error={errors.description?.message}
+          >
             <Textarea
               id="edit-listing-description"
               rows={3}
@@ -142,15 +143,13 @@ export function EditListingButton({
               disabled={isSubmitting}
               {...register("description")}
             />
-            {errors.description && (
-              <p className="text-xs text-destructive">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-listing-price">Price per night (USD)</Label>
+          <FormField
+            label="Price per night (USD)"
+            htmlFor="edit-listing-price"
+            error={errors.price?.message}
+          >
             <Input
               id="edit-listing-price"
               type="number"
@@ -159,54 +158,43 @@ export function EditListingButton({
               disabled={isSubmitting}
               {...register("price", { valueAsNumber: true })}
             />
-            {errors.price && (
-              <p className="text-xs text-destructive">
-                {errors.price.message}
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="edit-listing-address">Address</Label>
+          <FormField
+            label="Address"
+            htmlFor="edit-listing-address"
+            error={errors.location?.address?.message}
+          >
             <Input
               id="edit-listing-address"
               disabled={isSubmitting}
               {...register("location.address")}
             />
-            {errors.location?.address && (
-              <p className="text-xs text-destructive">
-                {errors.location.address.message}
-              </p>
-            )}
-          </div>
+          </FormField>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-listing-city">City</Label>
+            <FormField
+              label="City"
+              htmlFor="edit-listing-city"
+              error={errors.location?.city?.message}
+            >
               <Input
                 id="edit-listing-city"
                 disabled={isSubmitting}
                 {...register("location.city")}
               />
-              {errors.location?.city && (
-                <p className="text-xs text-destructive">
-                  {errors.location.city.message}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="edit-listing-country">Country</Label>
+            </FormField>
+            <FormField
+              label="Country"
+              htmlFor="edit-listing-country"
+              error={errors.location?.country?.message}
+            >
               <Input
                 id="edit-listing-country"
                 disabled={isSubmitting}
                 {...register("location.country")}
               />
-              {errors.location?.country && (
-                <p className="text-xs text-destructive">
-                  {errors.location.country.message}
-                </p>
-              )}
-            </div>
+            </FormField>
           </div>
 
           <DialogFooter>

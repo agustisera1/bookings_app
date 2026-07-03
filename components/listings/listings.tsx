@@ -1,6 +1,7 @@
 import { GetListingsQuery } from "@/lib/apollo/__generated__/operations";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { PriceLabel } from "@/components/common/price-label";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
 
@@ -49,12 +50,7 @@ export async function Listings({
                 <p className="text-sm text-muted-foreground line-clamp-2">
                   {listing.description}
                 </p>
-                <p className="text-sm text-muted-foreground mt-auto">
-                  <span className="font-bold text-foreground text-base">
-                    ${listing.price}
-                  </span>{" "}
-                  / night
-                </p>
+                <PriceLabel price={listing.price} className="mt-auto" />
               </CardContent>
             </Card>
             </Link>

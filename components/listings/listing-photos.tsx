@@ -11,6 +11,7 @@ import {
   CarouselNext,
   CarouselPrevious,
 } from "@/components/ui/carousel";
+import { EmptyState } from "@/components/common/empty-state";
 import { AddListingPhotosButton } from "@/components/listings/add-listing-photos-button";
 
 export function ListingPhotos({
@@ -28,11 +29,14 @@ export function ListingPhotos({
 
   if (photos.length === 0) {
     return (
-      <div className="flex min-h-[120px] flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input py-4 text-center">
-        <ImageOff className="size-6 text-muted-foreground" />
-        <p className="text-sm text-muted-foreground">No photos yet.</p>
-        {isHostMode && <AddListingPhotosButton listingId={listingId} />}
-      </div>
+      <EmptyState
+        className="min-h-[120px] rounded-lg border border-dashed border-input py-4"
+        icon={<ImageOff />}
+        description="No photos yet."
+        action={
+          isHostMode ? <AddListingPhotosButton listingId={listingId} /> : undefined
+        }
+      />
     );
   }
 

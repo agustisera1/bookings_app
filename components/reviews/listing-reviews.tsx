@@ -1,26 +1,9 @@
-import { Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { use } from "react";
 import { ServiceResult } from "@/lib/types";
 import { Review } from "@/lib/services/reviews";
 import { ReviewReplyForm } from "@/components/reviews/review-reply-form";
-
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <div className="flex gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={`size-3.5 ${
-            star <= rating
-              ? "fill-yellow-400 text-yellow-400"
-              : "fill-muted text-muted"
-          }`}
-        />
-      ))}
-    </div>
-  );
-}
+import { StarRating } from "@/components/common/star-rating";
 
 function ReviewCard({
   review,

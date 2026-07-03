@@ -24,6 +24,7 @@ import {
 import { ChevronRightIcon } from "lucide-react";
 import { formatDate, calcNights } from "@/lib/dates";
 import { formatPrice, bookingStatusVariant } from "@/lib/utils";
+import { EmptyState } from "@/components/common/empty-state";
 import { CancelBookingButton } from "@/components/bookings/cancel-booking-button";
 
 export function UserBookings({
@@ -36,12 +37,11 @@ export function UserBookings({
 
   if (bookings.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 py-16 text-center">
-        <p className="text-base font-medium">No trips booked yet</p>
-        <p className="text-sm text-muted-foreground">
-          When you book a stay, experience or rental, it will show up here.
-        </p>
-      </div>
+      <EmptyState
+        className="py-16"
+        title="No trips booked yet"
+        description="When you book a stay, experience or rental, it will show up here."
+      />
     );
   }
 

@@ -8,9 +8,9 @@ import { toast } from "sonner";
 import { createListing } from "@/lib/services/listings";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
+import { FormField } from "@/components/common/field";
 import {
   Select,
   SelectContent,
@@ -124,20 +124,19 @@ export function CreateListingForm() {
           <CardDescription>What are you listing?</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="title">Title</Label>
+          <FormField label="Title" htmlFor="title" error={errors.title?.message}>
             <Input
               id="title"
               placeholder="Cozy loft in Palermo"
               {...register("title")}
             />
-            {errors.title && (
-              <p className="text-xs text-destructive">{errors.title.message}</p>
-            )}
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="description">Description</Label>
+          <FormField
+            label="Description"
+            htmlFor="description"
+            error={errors.description?.message}
+          >
             <Textarea
               id="description"
               rows={4}
@@ -145,15 +144,13 @@ export function CreateListingForm() {
               className="resize-none"
               {...register("description")}
             />
-            {errors.description && (
-              <p className="text-xs text-destructive">
-                {errors.description.message}
-              </p>
-            )}
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="price">Price per night (USD)</Label>
+          <FormField
+            label="Price per night (USD)"
+            htmlFor="price"
+            error={errors.price?.message}
+          >
             <Input
               id="price"
               type="number"
@@ -162,10 +159,7 @@ export function CreateListingForm() {
               placeholder="120"
               {...register("price", { valueAsNumber: true })}
             />
-            {errors.price && (
-              <p className="text-xs text-destructive">{errors.price.message}</p>
-            )}
-          </div>
+          </FormField>
         </CardContent>
       </Card>
 
@@ -175,47 +169,41 @@ export function CreateListingForm() {
           <CardDescription>Where is this listing located?</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="address">Address</Label>
+          <FormField
+            label="Address"
+            htmlFor="address"
+            error={errors.location?.address?.message}
+          >
             <Input
               id="address"
               placeholder="Av. Santa Fe 1234"
               {...register("location.address")}
             />
-            {errors.location?.address && (
-              <p className="text-xs text-destructive">
-                {errors.location.address.message}
-              </p>
-            )}
-          </div>
+          </FormField>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="city">City</Label>
+            <FormField
+              label="City"
+              htmlFor="city"
+              error={errors.location?.city?.message}
+            >
               <Input
                 id="city"
                 placeholder="Buenos Aires"
                 {...register("location.city")}
               />
-              {errors.location?.city && (
-                <p className="text-xs text-destructive">
-                  {errors.location.city.message}
-                </p>
-              )}
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="country">Country</Label>
+            </FormField>
+            <FormField
+              label="Country"
+              htmlFor="country"
+              error={errors.location?.country?.message}
+            >
               <Input
                 id="country"
                 placeholder="Argentina"
                 {...register("location.country")}
               />
-              {errors.location?.country && (
-                <p className="text-xs text-destructive">
-                  {errors.location.country.message}
-                </p>
-              )}
-            </div>
+            </FormField>
           </div>
         </CardContent>
       </Card>
@@ -229,64 +217,57 @@ export function CreateListingForm() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           <div className="grid grid-cols-3 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="beds">Beds</Label>
+            <FormField label="Beds" htmlFor="beds">
               <Input
                 id="beds"
                 type="number"
                 min={0}
                 {...register("attributes.beds", { valueAsNumber: true })}
               />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="bathrooms">Bathrooms</Label>
+            </FormField>
+            <FormField label="Bathrooms" htmlFor="bathrooms">
               <Input
                 id="bathrooms"
                 type="number"
                 min={0}
                 {...register("attributes.bathrooms", { valueAsNumber: true })}
               />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="max_guests">Max guests</Label>
+            </FormField>
+            <FormField
+              label="Max guests"
+              htmlFor="max_guests"
+              error={errors.attributes?.max_guests?.message}
+            >
               <Input
                 id="max_guests"
                 type="number"
                 min={1}
                 {...register("attributes.max_guests", { valueAsNumber: true })}
               />
-              {errors.attributes?.max_guests && (
-                <p className="text-xs text-destructive">
-                  {errors.attributes.max_guests.message}
-                </p>
-              )}
-            </div>
+            </FormField>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="check_in_time">Check-in time</Label>
+            <FormField label="Check-in time" htmlFor="check_in_time">
               <Input
                 id="check_in_time"
                 type="time"
                 className="h-10 dark:[color-scheme:dark]"
                 {...register("attributes.check_in_time")}
               />
-            </div>
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="check_out_time">Check-out time</Label>
+            </FormField>
+            <FormField label="Check-out time" htmlFor="check_out_time">
               <Input
                 id="check_out_time"
                 type="time"
                 className="h-10 dark:[color-scheme:dark]"
                 {...register("attributes.check_out_time")}
               />
-            </div>
+            </FormField>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="minimum_nights">Minimum nights</Label>
+            <FormField label="Minimum nights" htmlFor="minimum_nights">
               <Input
                 id="minimum_nights"
                 type="number"
@@ -295,9 +276,8 @@ export function CreateListingForm() {
                   valueAsNumber: true,
                 })}
               />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="property_type">Property type</Label>
+            </FormField>
+            <FormField label="Property type" htmlFor="property_type">
               <Controller
                 control={control}
                 name="attributes.property_type"
@@ -319,11 +299,10 @@ export function CreateListingForm() {
                   </Select>
                 )}
               />
-            </div>
+            </FormField>
           </div>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="amenities">Amenities</Label>
+          <FormField label="Amenities" htmlFor="amenities">
             <Controller
               control={control}
               name="attributes.amenities"
@@ -352,7 +331,7 @@ export function CreateListingForm() {
                 </Select>
               )}
             />
-          </div>
+          </FormField>
         </CardContent>
       </Card>
 

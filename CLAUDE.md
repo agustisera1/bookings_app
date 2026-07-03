@@ -156,6 +156,58 @@ async function onSubmit(data: FormValues) {
 
 ---
 
+## Arquitectura de componentes (UI)
+
+Los componentes se organizan en tres capas. **Antes de escribir markup nuevo, buscar si el patrón ya existe como primitivo** — es la regla DRY de `/lib`, aplicada a la UI.
+
+```
+components/ui/        Primitivos vendorizados de shadcn / Base UI. NO editar a mano
+      ↑               (se regeneran con `shadcn add`): Button, Input, Card, Dialog…
+components/common/    Primitivos propios reutilizables, construidos sobre ui/.
+      ↑               Agnósticos al dominio: no conocen bookings, listings, etc.
+components/<feature>/ Componentes de feature: componen common/ + ui/ + servicios.
+                      bookings/, listings/, reviews/, layout/, search/
+```
+
+Regla de dependencia: `feature → common → ui`. Un primitivo de `common/` **nunca** importa de una feature ni llama a un service: recibe datos y callbacks por props. Los archivos de `ui/` son código vendorizado — si algo de shadcn no alcanza, se envuelve en `common/`, no se edita en `ui/`.
+
+### Catálogo de `components/common/`
+
+| Primitivo | Qué resuelve | Server-safe |
+|-----------|--------------|-------------|
+| `Field`, `FieldError`, `FormField` | Fila de formulario: label + control + error. `FormField` es la forma canónica | ✓ |
+| `StarRating` / `StarRatingInput` | Rating de estrellas: display de solo lectura vs. picker interactivo | Client |
+| `ConfirmDialog` | Confirmación de acción destructiva (encapsula open + pending + retry) | Client |
+| `EmptyState` | Estado vacío centrado (icono + título + descripción + acción) | ✓ |
+| `PriceLabel` | Precio "por noche" formateado con `formatPrice` | ✓ |
+| `Section` | Encabezado (título + subtítulo) sobre un bloque, con `Card` opcional | ✓ |
+
+### Reglas de consistencia
+
+| Situación | Solución |
+|-----------|----------|
+| Fila de formulario (label + control + error) | `FormField` — nunca reconstruir el `<div className="flex flex-col gap-1.5">` a mano |
+| Mensaje de error de un campo suelto | `FieldError` (o el prop `error` de `FormField`) — nunca `<p className="text-xs text-destructive">` |
+| Área de texto | `Textarea` de `ui/` — nunca un `<textarea>` con clases crudas |
+| Precio "por noche" | `PriceLabel` — centraliza el formato en `formatPrice` |
+| Rating de estrellas | `StarRating` (display) / `StarRatingInput` (form, vía `Controller`) |
+| Estado vacío con protagonismo | `EmptyState` centrado; para un status inline compacto dentro de una lista, un `<p className="text-sm text-muted-foreground">` es más liviano |
+| Acción destructiva fuera de un form | `ConfirmDialog` (ver "Patrón de acciones de confirmación") |
+| Icono como dato hacia un Client Component | Pasar el elemento renderizado (`icon={<X />}`), nunca la referencia al componente (rompe la serialización RSC) |
+
+### Diseño de estados
+
+Un componente que consume datos async (`use(promise)` sobre un `ServiceResult`) debe cubrir **explícitamente los tres estados**: error, vacío y cargado. Referencias: `components/reviews/listing-reviews.tsx`, `components/bookings/listing-bookings.tsx`.
+
+```tsx
+const res = use(promise);
+if (!res.ok) return <p className="text-sm text-muted-foreground">Could not load…</p>;
+if (res.data.length === 0) return <EmptyState … /> /* o <p> inline si es compacto */;
+return <List data={res.data} />;
+```
+
+---
+
 ## Patrón de formularios (RHF + Zod)
 
 Todo formulario en este proyecto sigue este patrón. Referencias canónicas:
@@ -191,69 +243,57 @@ if (isSubmitSuccessful) return <SuccessUI />;
 
 | Situación | Solución |
 |-----------|----------|
-| Input nativo (`<input>`, `<textarea>`, `<select>`) | `{...register("field")}` |
-| Componente controlado (Calendar, Select de Shadcn, star-picker) | `<Controller control={control} name="field" render={...} />` |
+| Fila de campo (label + control + error) | `FormField` de `components/common/field.tsx`: `<FormField label htmlFor error={errors.x?.message}>…control…</FormField>` |
+| Control de entrada | `Input` / `Textarea` de `ui/` con `{...register("field")}` — nunca un elemento nativo con clases crudas |
+| Componente controlado (Calendar, Select de Shadcn, `StarRatingInput`) | `<Controller control={control} name="field" render={...} />` |
 | Observar un campo reactivamente | `useWatch({ control, name: "field" })` — **no** `watch("field")` (incompatible con React Compiler) |
 | Estado de envío | `isSubmitting` de RHF — **no** `useState` |
 | Estado de éxito | `isSubmitSuccessful` de RHF — **no** `useState` |
 | Estado puramente visual (hover, popover open) | `useState` local — no pertenece a RHF |
-| Mensajes de error | `{errors.field && <p className="text-xs text-destructive">{errors.field.message}</p>}` |
+| Mensajes de error | prop `error` de `FormField`, o `FieldError` suelto — nunca `<p className="text-xs text-destructive">` a mano |
 | Atributo `required` en inputs | Omitir — Zod ya lo valida |
 
 ---
 
-## Patrón de acciones de confirmación (AlertDialog + pending + error)
+## Patrón de acciones de confirmación (`ConfirmDialog`)
 
-Para acciones destructivas o irreversibles disparadas fuera de un formulario RHF (eliminar, cancelar, etc.), no usar `alert()`/`confirm()` nativos ni un `onClick` directo al service. Referencias canónicas:
+Para acciones destructivas o irreversibles disparadas fuera de un formulario RHF (eliminar, cancelar, etc.), no usar `alert()`/`confirm()` nativos ni un `onClick` directo al service. Usar **`ConfirmDialog`** (`components/common/confirm-dialog.tsx`), que encapsula el estado `open` + `isPending` + retry. Referencias canónicas:
 - `components/bookings/cancel-booking-button.tsx`
 - `components/listings/delete-listing-button.tsx`
 
-Este patrón es el equivalente, para acciones puntuales, del patrón de formularios (RHF) — reemplaza `isSubmitting`/`isSubmitSuccessful` por `useState` porque no hay un `useForm` de por medio.
-
 ### Estructura obligatoria
+
+El componente de feature solo aporta el trigger y el `onConfirm` (que llama al service). `ConfirmDialog` maneja el resto.
 
 ```tsx
 "use client";
 
 export function MyActionButton({ id }: { id: string }) {
-  const [open, setOpen] = useState(false);
-  const [isPending, setIsPending] = useState(false);
-
-  async function handleAction() {
-    setIsPending(true);
+  async function handleConfirm() {
     const result = await myService(id);
-    setIsPending(false);
-
     if (!result.ok) {
-      toast.error(result.error); // ya es friendly, se puede mostrar directo
-      return; // el diálogo queda abierto para reintentar
+      toast.error(result.error); // ya es friendly, se muestra directo
+      return false; // devolver false mantiene el diálogo abierto para reintentar
     }
-
-    setOpen(false);
     toast.success("Mensaje de éxito");
+    // devolver undefined/true cierra el diálogo
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={setOpen}>
-      <AlertDialogTrigger render={<Button variant="ghost" size="icon-sm" />}>
-        <Icon />
-      </AlertDialogTrigger>
-
-      <AlertDialogContent size="sm">
-        <AlertDialogHeader>
-          <AlertDialogTitle>¿Confirmar acción?</AlertDialogTitle>
-          <AlertDialogDescription>
-            Explicar qué pasa y si es irreversible.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
-          <Button variant="destructive" disabled={isPending} onClick={handleAction}>
-            {isPending ? "Procesando…" : "Confirmar"}
-          </Button>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <ConfirmDialog
+      tooltip="Eliminar"                       // opcional: envuelve el trigger en Tooltip
+      trigger={
+        <Button variant="ghost" size="icon-sm">
+          <Icon />
+          <span className="sr-only">Eliminar</span>
+        </Button>
+      }
+      title="¿Confirmar acción?"
+      description="Explicar qué pasa y si es irreversible."
+      confirmLabel="Sí, eliminar"
+      pendingLabel="Eliminando…"               // gerundio durante el request
+      onConfirm={handleConfirm}
+    />
   );
 }
 ```
@@ -262,15 +302,14 @@ export function MyActionButton({ id }: { id: string }) {
 
 | Situación | Solución |
 |-----------|----------|
-| Confirmación antes de ejecutar | `AlertDialog` (`components/ui/alert-dialog.tsx`) — nunca `window.confirm` |
-| Estado de apertura del diálogo | `useState<boolean>` controlado (`open`/`onOpenChange`) — necesario para poder cerrarlo manualmente en el happy path |
-| Estado de envío | `useState<boolean>` (`isPending`) — no hay RHF de por medio, así que no aplica `isSubmitting` |
-| Error del service | `toast.error(result.error)` y **no cerrar el diálogo** (`return` sin `setOpen(false)`), para permitir reintentar |
-| Éxito del service | `setOpen(false)` + `toast.success(...)` |
-| Deshabilitar acciones durante el request | `disabled={isPending}` en el botón de cancelar y en el de confirmar |
-| Texto del botón de confirmar durante el request | Verbo en gerundio ("Deleting…", "Cancelling…") en vez de spinner |
-| Botón que dispara solo un mock (sin service real) | `alert("...")` directo en el `onClick`, sin `AlertDialog` — reservar el diálogo para acciones con efecto real |
-| Tooltip sobre un ícono con `AlertDialogTrigger` | Anidar `render`: `TooltipTrigger render={<AlertDialogTrigger render={<Button>...} />}` — los íconos van como children del `Button` más interno, no de los triggers |
+| Confirmación antes de ejecutar | `ConfirmDialog` — nunca `window.confirm` ni un `AlertDialog` armado a mano |
+| Trigger | Pasar un `<Button>` plano por `trigger`; `ConfirmDialog` lo compone con `AlertDialogTrigger` internamente. **No** pre-envolver el trigger en `AlertDialogTrigger` en un Server Component (rompe la hidratación) |
+| Tooltip sobre el trigger | Prop `tooltip="…"` — `ConfirmDialog` arma la composición `Tooltip → AlertDialogTrigger` del lado cliente |
+| Error del service | `toast.error(result.error)` y `return false` desde `onConfirm` — mantiene el diálogo abierto para reintentar |
+| Éxito del service | `toast.success(...)` y devolver `undefined`/`true` — cierra el diálogo |
+| Texto del botón de confirmar durante el request | `pendingLabel` en gerundio ("Deleting…", "Cancelling…") |
+| Diálogo con contenido propio (p. ej. un form con textarea) | No usar `ConfirmDialog`; armar `AlertDialog` a mano con el mismo contrato de estados. Referencia: `components/bookings/manage-booking-actions.tsx` |
+| Botón que dispara solo un mock (sin service real) | `alert("...")` directo en el `onClick`, sin diálogo — reservar el diálogo para acciones con efecto real |
 
 ---
 

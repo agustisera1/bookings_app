@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
-import { Section } from "@/components/ui/section";
+import { Section } from "@/components/common/section";
+import { PriceLabel } from "@/components/common/price-label";
 import { Separator } from "@/components/ui/separator";
 import { BookingForm } from "@/components/bookings/booking-form";
 import { ReviewForm } from "@/components/reviews/review-form";
@@ -183,14 +184,7 @@ export default async function ListingDetailPage({
           ) : (
             <Section
               title="Book this listing"
-              subtitle={
-                <>
-                  <span className="font-semibold text-foreground">
-                    ${listing.price}
-                  </span>{" "}
-                  / night
-                </>
-              }
+              subtitle={<PriceLabel price={listing.price} />}
               card
             >
               <BookingForm
