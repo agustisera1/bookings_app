@@ -1,6 +1,7 @@
 import { GetListingsQuery } from "@/lib/apollo/__generated__/operations";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { MapPin } from "lucide-react";
 import Link from "next/link";
 
 const TYPE_GRADIENTS: Record<string, string> = {
@@ -35,6 +36,19 @@ export async function Listings({
                 <h3 className="font-semibold text-xl leading-snug line-clamp-2 group-hover:text-primary transition-colors">
                   {listing.title}
                 </h3>
+                {(listing.location?.city || listing.location?.country) && (
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="size-3.5 shrink-0" />
+                    <span>
+                      {[listing.location?.city, listing.location?.country]
+                        .filter(Boolean)
+                        .join(", ")}
+                    </span>
+                  </div>
+                )}
+                <p className="text-sm text-muted-foreground line-clamp-2">
+                  {listing.description}
+                </p>
                 <p className="text-sm text-muted-foreground mt-auto">
                   <span className="font-bold text-foreground text-base">
                     ${listing.price}

@@ -202,6 +202,78 @@ if (isSubmitSuccessful) return <SuccessUI />;
 
 ---
 
+## Patrón de acciones de confirmación (AlertDialog + pending + error)
+
+Para acciones destructivas o irreversibles disparadas fuera de un formulario RHF (eliminar, cancelar, etc.), no usar `alert()`/`confirm()` nativos ni un `onClick` directo al service. Referencias canónicas:
+- `components/bookings/cancel-booking-button.tsx`
+- `components/listings/delete-listing-button.tsx`
+
+Este patrón es el equivalente, para acciones puntuales, del patrón de formularios (RHF) — reemplaza `isSubmitting`/`isSubmitSuccessful` por `useState` porque no hay un `useForm` de por medio.
+
+### Estructura obligatoria
+
+```tsx
+"use client";
+
+export function MyActionButton({ id }: { id: string }) {
+  const [open, setOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+
+  async function handleAction() {
+    setIsPending(true);
+    const result = await myService(id);
+    setIsPending(false);
+
+    if (!result.ok) {
+      toast.error(result.error); // ya es friendly, se puede mostrar directo
+      return; // el diálogo queda abierto para reintentar
+    }
+
+    setOpen(false);
+    toast.success("Mensaje de éxito");
+  }
+
+  return (
+    <AlertDialog open={open} onOpenChange={setOpen}>
+      <AlertDialogTrigger render={<Button variant="ghost" size="icon-sm" />}>
+        <Icon />
+      </AlertDialogTrigger>
+
+      <AlertDialogContent size="sm">
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Confirmar acción?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Explicar qué pasa y si es irreversible.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={isPending}>Cancelar</AlertDialogCancel>
+          <Button variant="destructive" disabled={isPending} onClick={handleAction}>
+            {isPending ? "Procesando…" : "Confirmar"}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+```
+
+### Reglas
+
+| Situación | Solución |
+|-----------|----------|
+| Confirmación antes de ejecutar | `AlertDialog` (`components/ui/alert-dialog.tsx`) — nunca `window.confirm` |
+| Estado de apertura del diálogo | `useState<boolean>` controlado (`open`/`onOpenChange`) — necesario para poder cerrarlo manualmente en el happy path |
+| Estado de envío | `useState<boolean>` (`isPending`) — no hay RHF de por medio, así que no aplica `isSubmitting` |
+| Error del service | `toast.error(result.error)` y **no cerrar el diálogo** (`return` sin `setOpen(false)`), para permitir reintentar |
+| Éxito del service | `setOpen(false)` + `toast.success(...)` |
+| Deshabilitar acciones durante el request | `disabled={isPending}` en el botón de cancelar y en el de confirmar |
+| Texto del botón de confirmar durante el request | Verbo en gerundio ("Deleting…", "Cancelling…") en vez de spinner |
+| Botón que dispara solo un mock (sin service real) | `alert("...")` directo en el `onClick`, sin `AlertDialog` — reservar el diálogo para acciones con efecto real |
+| Tooltip sobre un ícono con `AlertDialogTrigger` | Anidar `render`: `TooltipTrigger render={<AlertDialogTrigger render={<Button>...} />}` — los íconos van como children del `Button` más interno, no de los triggers |
+
+---
+
 ## Arquitectura de `lib/`
 
 ### Capas y responsabilidades

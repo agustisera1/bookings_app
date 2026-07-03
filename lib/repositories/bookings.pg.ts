@@ -61,3 +61,17 @@ export async function cancelBooking(
 
   return result.rows[0]?.id ?? null;
 }
+
+export async function getBookingsByListingId(
+  listing_id: string,
+): Promise<Booking[]> {
+  const result = await db.query<Booking>(
+    `
+    SELECT * FROM bookings
+    WHERE listing_id = $1
+    `,
+    [listing_id],
+  );
+
+  return result.rows;
+}

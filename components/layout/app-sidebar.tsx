@@ -18,7 +18,7 @@ export async function AppSidebar() {
     user?.is_host
       ? { title: "My listings", href: "/listings/mine", icon: Book }
       : { title: "My bookings", href: "/bookings", icon: Book },
-    { title: "Browse", href: "/listings", icon: SearchIcon },
+    { title: "Explore", href: "/listings", icon: SearchIcon },
   ];
 
   return (

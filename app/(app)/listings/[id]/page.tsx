@@ -9,12 +9,9 @@ import { query } from "@/lib/apollo/client";
 import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
 import { getListingReviews } from "@/lib/services/reviews";
 import { ListingReviews } from "@/components/reviews/listing-reviews";
-
-const TYPE_GRADIENTS: Record<string, string> = {
-  accommodation: "from-violet-500 to-indigo-600",
-  experience: "from-orange-400 to-pink-500",
-  equipment: "from-teal-400 to-cyan-600",
-};
+import { getCurrentUser } from "@/lib/services/auth";
+import { getListingBookings } from "@/lib/services/listings";
+import { ListingBookings } from "@/components/bookings/listing-bookings";
 
 export default async function ListingDetailPage({
   params,
@@ -30,45 +27,52 @@ export default async function ListingDetailPage({
     variables: { listing_id: id },
   });
 
-  const reviewsPromise = getListingReviews(id);
-
   if (error || listing === null) {
     return <div className="min-h-screen">Listing not found</div>;
   }
 
-  const gradient = TYPE_GRADIENTS[listing.type!] ?? "from-gray-400 to-gray-600";
+  const currentUser = await getCurrentUser();
+  const isHostMode =
+    !!currentUser?.is_host && currentUser.id === listing.host_id;
+
+  const reviewsPromise = getListingReviews(id);
+  const bookingsPromise = isHostMode ? getListingBookings(id) : undefined;
 
   return (
     <div className="min-h-screen">
-      <div
-        className={`h-72 bg-gradient-to-br ${gradient} flex flex-col justify-between p-8`}
-      >
+      <div className="max-w-5xl mx-auto px-6 py-10">
         <Link
-          href="/listings"
-          className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-sm font-medium transition-colors w-fit"
+          href={isHostMode ? "/listings/mine" : "/listings"}
+          className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm font-medium transition-colors w-fit mb-6"
         >
           <ChevronLeft className="size-4" />
           Back to listings
         </Link>
 
-        <div className="flex items-end justify-between">
-          <Badge className="bg-black/20 text-white/90 backdrop-blur-sm hover:bg-black/30 uppercase tracking-widest text-[10px] w-fit">
-            {listing.type}
-          </Badge>
-          <div className="flex items-center gap-1.5 text-white">
-            <Star className="size-4 fill-yellow-300 text-yellow-300" />
-            <span className="text-sm font-semibold">{listing.rating_avg}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 flex flex-col gap-6">
+        <div
+          className={`grid grid-cols-1 gap-10 ${isHostMode ? "" : "lg:grid-cols-3"}`}
+        >
+          <div
+            className={`flex flex-col gap-6 ${isHostMode ? "" : "lg:col-span-2"}`}
+          >
             <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-heading font-semibold leading-tight">
-                {listing.title}
-              </h1>
+              <Badge
+                variant="outline"
+                className="uppercase tracking-widest text-[10px] w-fit"
+              >
+                {listing.type}
+              </Badge>
+              <div className="flex items-center justify-start gap-3">
+                <h1 className="text-3xl font-heading font-semibold leading-tight">
+                  {listing.title}
+                </h1>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Star className="size-4 fill-yellow-400 text-yellow-400" />
+                  <span className="text-sm font-semibold">
+                    {listing.rating_avg}
+                  </span>
+                </div>
+              </div>
               <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                 <MapPin className="size-3.5" />
                 <span>
@@ -85,47 +89,59 @@ export default async function ListingDetailPage({
             </p>
           </div>
 
-          <div className="lg:col-span-1">
-            <Card className="sticky top-6 max-w-md mx-auto lg:max-w-none">
-              <CardHeader>
-                <CardTitle className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold">${listing.price}</span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    / night
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <BookingForm
-                  listingId={listing._id}
-                  pricePerNight={listing.price}
-                />
-              </CardContent>
-            </Card>
-          </div>
+          {!isHostMode && (
+            <div className="lg:col-span-1">
+              <Card className="sticky top-6 max-w-md mx-auto lg:max-w-none">
+                <CardHeader>
+                  <CardTitle className="flex items-baseline gap-1.5">
+                    <span className="text-2xl font-bold">${listing.price}</span>
+                    <span className="text-sm font-normal text-muted-foreground">
+                      / night
+                    </span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <BookingForm
+                    listingId={listing._id}
+                    pricePerNight={listing.price}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
 
-        <Separator className="my-10" />
+        <Separator className="my-3" />
 
         <div className="flex flex-col lg:flex-row gap-4 lg:gap-12">
-          <div className="flex flex-col gap-1 lg:w-1/2">
-            <h2 className="text-3xl font-heading font-semibold">
-              Leave a review
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Share your experience to help other guests.
-            </p>
-            <ReviewForm listingId={listing._id} />
-          </div>
+          {!isHostMode && (
+            <div className="flex flex-col gap-1 lg:w-1/2">
+              <h2 className="text-3xl font-heading font-semibold">
+                Leave a review
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Share your experience to help other guests.
+              </p>
+              <ReviewForm listingId={listing._id} />
+            </div>
+          )}
 
-          <div className="flex flex-col gap-1 lg:w-1/2">
+          <div
+            className={`flex flex-col gap-1 ${isHostMode ? "w-full" : "lg:w-1/2"}`}
+          >
             <h2 className="text-3xl font-heading font-semibold">
-              Other reviews
+              {isHostMode ? "Bookings" : "Other reviews"}
             </h2>
             <p className="text-sm text-muted-foreground">
-              Check out other customer comments
+              {isHostMode
+                ? "Reservations guests have made for this listing"
+                : "Check out other customer comments"}
             </p>
-            <ListingReviews reviewsPromise={reviewsPromise} />
+            {isHostMode && bookingsPromise ? (
+              <ListingBookings bookingsPromise={bookingsPromise} />
+            ) : (
+              <ListingReviews reviewsPromise={reviewsPromise} />
+            )}
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { forbidden } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { query } from "@/lib/apollo/client";
 import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
-import { Listings } from "@/components/listings/listings";
+import { ListingsTable } from "@/components/listings/listings-table";
 import Link from "next/link";
 
 export default async function MyListingsPage() {
@@ -40,7 +40,9 @@ export default async function MyListingsPage() {
           Add new listing
         </Button>
       </div>
-      {listings && listings?.length > 0 && <Listings listings={listings} />}
+      {listings && listings?.length > 0 && (
+        <ListingsTable listings={listings} />
+      )}
     </div>
   );
 }

@@ -2,10 +2,15 @@
 import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
 import * as listingsRepo from "../repositories/listings.mongo";
+import * as bookingsRepo from "../repositories/bookings.pg";
 import type {
   CreateListingInput,
+  EditListingDocumentValues,
   ListingDocumentValues,
 } from "../types/listing";
+import { DeleteResult } from "mongodb";
+import { revalidatePath } from "next/cache";
+import { Booking } from "./bookings";
 
 export type {
   CreateListingInput,
@@ -43,11 +48,69 @@ function formatListingValues(
   };
 }
 
-export async function viewListing(): Promise<ServiceResult> {
-  const auth = await authorize("listings:view");
-  if (!auth.ok) return auth;
-  console.log("[viewListing]: invocado");
-  return { ok: true, data: null };
+// Called by GraphQL resolvers — auth is enforced at the resolver layer.
+export async function getListing(
+  listing_id: string,
+): Promise<
+  ServiceResult<Awaited<ReturnType<typeof listingsRepo.findListingById>>>
+> {
+  try {
+    const listing = await listingsRepo.findListingById(listing_id);
+    return { ok: true, data: listing };
+  } catch (error) {
+    console.error("[getListing]", error);
+    return {
+      ok: false,
+      error: "Could not retrieve the listing",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
+export async function getListings(args: {
+  limit?: number | null;
+  term?: string | null;
+  own?: boolean;
+}): Promise<
+  ServiceResult<Awaited<ReturnType<typeof listingsRepo.findListings>>>
+> {
+  // TODO: Check for user authentication
+  const { own, ...rest } = args;
+  const params: Parameters<typeof listingsRepo.findListings>[0] = { ...rest };
+  if (own) {
+    const auth = await authorize("listings:create");
+    if (auth.ok) params["host_id"] = auth.data.id;
+  }
+
+  try {
+    const listings = await listingsRepo.findListings(params);
+    return { ok: true, data: listings };
+  } catch (error) {
+    console.error("[getListings]", error);
+    return {
+      ok: false,
+      error: "Could not retrieve the listings",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
+export async function getListingsByIds(
+  ids: string[],
+): Promise<
+  ServiceResult<Awaited<ReturnType<typeof listingsRepo.findListingsByIds>>>
+> {
+  try {
+    const listings = await listingsRepo.findListingsByIds(ids);
+    return { ok: true, data: listings };
+  } catch (error) {
+    console.error("[getListingsByIds]", error);
+    return {
+      ok: false,
+      error: "Could not retrieve the listings",
+      code: "UNEXPECTED",
+    };
+  }
 }
 
 export async function createListing(
@@ -73,41 +136,71 @@ export async function createListing(
   }
 }
 
-export async function manageListing(): Promise<ServiceResult> {
+export async function deleteListing(
+  id: string,
+): Promise<ServiceResult<DeleteResult>> {
   const auth = await authorize("listings:manage-own");
   if (!auth.ok) return auth;
-  console.log("[manageListing]: invocado");
-  return { ok: true, data: null };
-}
 
-export async function createExtendedListing(): Promise<ServiceResult> {
-  const auth = await authorize("listings:create-extended");
-  if (!auth.ok) return auth;
-  console.log("[createExtendedListing]: invocado");
-  return { ok: true, data: null };
-}
-
-// Called by GraphQL resolvers — auth is enforced at the resolver layer.
-export async function getListing(listing_id: string) {
-  return listingsRepo.findListingById(listing_id);
-}
-
-export async function getListings(args: {
-  limit?: number | null;
-  term?: string | null;
-  own?: boolean;
-}) {
-  // TODO: Check for user authentication
-  const { own, ...rest } = args;
-  const params: Parameters<typeof listingsRepo.findListings>[0] = { ...rest };
-  if (own) {
-    const auth = await authorize("listings:create");
-    if (auth.ok) params["host_id"] = auth.data.id;
+  try {
+    const deleteResult = await listingsRepo.deleteListing(id);
+    revalidatePath("/listings/mine");
+    return {
+      ok: true,
+      data: deleteResult,
+    };
+  } catch (error) {
+    console.error("[deleteListing]", error);
+    return {
+      ok: false,
+      error: "Could not delete the listing",
+      code: "UNEXPECTED",
+    };
   }
-
-  return listingsRepo.findListings(params);
 }
 
-export async function getListingsByIds(ids: string[]) {
-  return listingsRepo.findListingsByIds(ids);
+export async function editListing(
+  id: string,
+  values: Partial<EditListingDocumentValues>,
+): Promise<ServiceResult> {
+  const auth = await authorize("listings:manage-own");
+  if (!auth.ok) return auth;
+
+  try {
+    const result = await listingsRepo.editListing(id, values);
+    revalidatePath("/listings/mine");
+    return {
+      ok: true,
+      data: result,
+    };
+  } catch (error) {
+    console.error("[editListing]", error);
+    return {
+      ok: false,
+      error: "Could not update the listing",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
+export async function getListingBookings(
+  listing_id: string,
+): Promise<ServiceResult<Booking[]>> {
+  const auth = await authorize("bookings:view-own-listings");
+  if (!auth.ok) return auth;
+
+  try {
+    const bookings = await bookingsRepo.getBookingsByListingId(listing_id);
+    return {
+      ok: true,
+      data: bookings,
+    };
+  } catch (error) {
+    console.error("[getListingBookings]:", error);
+    return {
+      ok: false,
+      error: "Could not retrieve the booked listings",
+      code: "NOT_FOUND",
+    };
+  }
 }

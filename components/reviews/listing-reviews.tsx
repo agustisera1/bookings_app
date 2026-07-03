@@ -29,7 +29,7 @@ function ReviewCard({ review }: { review: Review }) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex items-start justify-start gap-4">
         <div className="flex flex-col gap-1">
           <span className="text-sm font-medium">{review.author_name}</span>
           <StarRating rating={review.rating} />

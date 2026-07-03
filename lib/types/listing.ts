@@ -18,6 +18,11 @@ type ListingLocation = {
   address: string;
 };
 
+export type EditListingDocumentValues = Omit<
+  ListingDocumentValues,
+  "rating_avg" | "host_id"
+>;
+
 export type ListingDocumentValues = {
   type: string;
   host_id: string;

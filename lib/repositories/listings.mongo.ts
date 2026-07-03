@@ -1,6 +1,9 @@
 import mongoClientPromise from "@/lib/mongo";
 import { Document, Filter, InsertOneResult, ObjectId, WithId } from "mongodb";
-import { ListingDocumentValues } from "../types/listing";
+import {
+  EditListingDocumentValues,
+  ListingDocumentValues,
+} from "../types/listing";
 
 async function getCollection() {
   const client = await mongoClientPromise;
@@ -49,4 +52,21 @@ export async function createListing(
   const collection = await getCollection();
   const document = await collection.insertOne(listing);
   return document;
+}
+
+export async function deleteListing(id: string) {
+  const collection = await getCollection();
+  const result = await collection.deleteOne({ _id: new ObjectId(id) });
+  return result;
+}
+
+export async function editListing(
+  listing_id: string,
+  values: Partial<EditListingDocumentValues>,
+) {
+  const collection = await getCollection();
+  return await collection.updateOne(
+    { _id: new ObjectId(listing_id) },
+    { $set: values },
+  );
 }

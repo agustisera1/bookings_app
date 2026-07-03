@@ -4,5 +4,11 @@ query GetListings($limit: Int = 30, $term: String, $own: Boolean) {
     type
     price
     title
+    description
+    location {
+      address
+      city
+      country
+    }
   }
 }
