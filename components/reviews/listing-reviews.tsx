@@ -3,6 +3,7 @@ import { Separator } from "@/components/ui/separator";
 import { use } from "react";
 import { ServiceResult } from "@/lib/types";
 import { Review } from "@/lib/services/reviews";
+import { ReviewReplyForm } from "@/components/reviews/review-reply-form";
 
 function StarRating({ rating }: { rating: number }) {
   return (
@@ -21,7 +22,13 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function ReviewCard({ review }: { review: Review }) {
+function ReviewCard({
+  review,
+  isHostMode,
+}: {
+  review: Review;
+  isHostMode: boolean;
+}) {
   const date = new Date(review.created_at).toLocaleDateString("en-US", {
     month: "short",
     year: "numeric",
@@ -51,14 +58,20 @@ function ReviewCard({ review }: { review: Review }) {
           </p>
         </div>
       )}
+
+      {isHostMode && !review.host_reply && (
+        <ReviewReplyForm reviewId={review.id} listingId={review.listing_id} />
+      )}
     </div>
   );
 }
 
 export function ListingReviews({
   reviewsPromise,
+  isHostMode = false,
 }: {
   reviewsPromise: Promise<ServiceResult<Review[]>>;
+  isHostMode?: boolean;
 }) {
   const reviewsResponse = use(reviewsPromise);
 
@@ -84,7 +97,7 @@ export function ListingReviews({
     <div className="flex flex-col gap-6">
       {reviews.map((review, i) => (
         <div key={review.id}>
-          <ReviewCard review={review} />
+          <ReviewCard review={review} isHostMode={isHostMode} />
           {i < reviews.length - 1 && <Separator className="mt-6" />}
         </div>
       ))}

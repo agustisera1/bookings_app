@@ -126,22 +126,31 @@ export default async function ListingDetailPage({
             </div>
           )}
 
-          <div
-            className={`flex flex-col gap-1 ${isHostMode ? "w-full" : "lg:w-1/2"}`}
-          >
+          {isHostMode && bookingsPromise && (
+            <div className="flex flex-col gap-1 lg:w-1/2">
+              <h2 className="text-3xl font-heading font-semibold">
+                Bookings
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Reservations guests have made for this listing
+              </p>
+              <ListingBookings bookingsPromise={bookingsPromise} />
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1 lg:w-1/2">
             <h2 className="text-3xl font-heading font-semibold">
-              {isHostMode ? "Bookings" : "Other reviews"}
+              {isHostMode ? "Reviews" : "Other reviews"}
             </h2>
             <p className="text-sm text-muted-foreground">
               {isHostMode
-                ? "Reservations guests have made for this listing"
+                ? "What guests are saying about this listing"
                 : "Check out other customer comments"}
             </p>
-            {isHostMode && bookingsPromise ? (
-              <ListingBookings bookingsPromise={bookingsPromise} />
-            ) : (
-              <ListingReviews reviewsPromise={reviewsPromise} />
-            )}
+            <ListingReviews
+              reviewsPromise={reviewsPromise}
+              isHostMode={isHostMode}
+            />
           </div>
         </div>
       </div>

@@ -13,7 +13,8 @@ async function getCollection() {
 export async function findListingById(id: string) {
   const collection = await getCollection();
   const doc = await collection.findOne({ _id: new ObjectId(id) });
-  return doc ? { ...doc, _id: doc._id.toString() } : null;
+  if (!doc) return null;
+  return { ...doc, _id: doc._id.toString() };
 }
 
 export async function findListings({
@@ -50,14 +51,12 @@ export async function createListing(
   listing: ListingDocumentValues,
 ): Promise<InsertOneResult<Document>> {
   const collection = await getCollection();
-  const document = await collection.insertOne(listing);
-  return document;
+  return await collection.insertOne(listing);
 }
 
 export async function deleteListing(id: string) {
   const collection = await getCollection();
-  const result = await collection.deleteOne({ _id: new ObjectId(id) });
-  return result;
+  return await collection.deleteOne({ _id: new ObjectId(id) });
 }
 
 export async function editListing(

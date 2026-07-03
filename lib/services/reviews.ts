@@ -4,6 +4,7 @@ import type { ServiceResult } from "../types";
 import * as db from "../postgres";
 import * as reviewsRepo from "../repositories/reviews.pg";
 import * as bookingsRepo from "../repositories/bookings.pg";
+import * as listingsRepo from "../repositories/listings.mongo";
 import { revalidatePath } from "next/cache";
 
 export type { Review } from "../types/review";
@@ -62,10 +63,45 @@ export async function createReview({
   }
 }
 
-export async function replyToReview(): Promise<ServiceResult> {
+export async function replyToReview(
+  reviewId: string,
+  listingId: string,
+  reply: string,
+): Promise<ServiceResult> {
   const auth = await authorize("reviews:reply");
   if (!auth.ok) return auth;
-  return { ok: true, data: null };
+  try {
+    const listing = await listingsRepo.findListingById(listingId);
+    if (!listing || listing.host_id !== auth.data.id)
+      return {
+        ok: false,
+        error: "You can only reply to reviews on your own listings",
+        code: "FORBIDDEN",
+      };
+
+    const replied = await reviewsRepo.addReply({
+      reviewId,
+      reply,
+    });
+    if (!replied) {
+      return {
+        ok: false,
+        error: "Reply was not successful",
+        code: "UNEXPECTED",
+      };
+    }
+
+    revalidatePath(`/listings/${listingId}`);
+    return { ok: true, data: null };
+  } catch (error) {
+    const code = db.pgErrorToCode(error);
+    console.error("[replyToReview]", error);
+    return {
+      code,
+      error: "Could not reply to the review",
+      ok: false,
+    };
+  }
 }
 
 export async function getListingReviews(
