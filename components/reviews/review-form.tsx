@@ -47,7 +47,7 @@ export function ReviewForm({ listingId }: { listingId: string }) {
   const active = hovered || rating;
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-2">
       <div className="flex flex-col gap-2">
         <Label>Rating</Label>
         <Controller

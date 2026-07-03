@@ -35,25 +35,23 @@ function ReviewCard({
   });
 
   return (
-    <div className="flex flex-col gap-3">
-      <div className="flex items-start justify-start gap-4">
-        <div className="flex flex-col gap-1">
-          <span className="text-sm font-medium">{review.author_name}</span>
-          <StarRating rating={review.rating} />
-        </div>
-        <span className="text-xs text-muted-foreground shrink-0">{date}</span>
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-start gap-2">
+        <span className="text-sm font-medium">{review.author_name}</span>
+        <span className="text-xs text-muted-foreground">{date}</span>
+        <StarRating rating={review.rating} />
       </div>
 
-      <p className="text-sm text-muted-foreground leading-relaxed">
+      <p className="text-sm text-muted-foreground leading-snug">
         {review.comment}
       </p>
 
       {review.host_reply && (
-        <div className="ml-4 pl-3 border-l border-border flex flex-col gap-1">
+        <div className="ml-3 pl-2 border-l border-border flex flex-col gap-0.5">
           <span className="text-xs font-medium text-muted-foreground">
             Host reply
           </span>
-          <p className="text-sm text-muted-foreground leading-relaxed">
+          <p className="text-sm text-muted-foreground leading-snug">
             {review.host_reply}
           </p>
         </div>
@@ -94,11 +92,11 @@ export function ListingReviews({
   }
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-3">
       {reviews.map((review, i) => (
         <div key={review.id}>
           <ReviewCard review={review} isHostMode={isHostMode} />
-          {i < reviews.length - 1 && <Separator className="mt-6" />}
+          {i < reviews.length - 1 && <Separator className="mt-3" />}
         </div>
       ))}
     </div>

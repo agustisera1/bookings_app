@@ -60,8 +60,9 @@ export function BookingForm({
 
   const checkIn = useWatch({ control, name: "checkIn" });
   const checkOut = useWatch({ control, name: "checkOut" });
+  const guests = useWatch({ control, name: "guests" });
   const nights = calcNights(checkIn, checkOut);
-  const total = nights * pricePerNight;
+  const total = nights * pricePerNight * (guests || 0);
 
   async function onSubmit(data: BookingFormValues) {
     const result = await createBooking({
@@ -91,7 +92,7 @@ export function BookingForm({
   }
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
       <div className="grid grid-cols-2 gap-3">
         <div className="flex flex-col gap-2">
           <Label>Check-in</Label>
@@ -195,23 +196,39 @@ export function BookingForm({
         )}
       </div>
 
-      {nights > 0 && (
-        <>
-          <Separator />
-          <div className="flex flex-col gap-2 text-sm">
-            <div className="flex justify-between text-muted-foreground">
-              <span>
-                ${pricePerNight} × {nights} night{nights !== 1 ? "s" : ""}
-              </span>
-              <span>${total}</span>
-            </div>
+      <div className="flex flex-col gap-1 text-sm">
+        <div className="flex justify-between text-muted-foreground">
+          <span>Price per night</span>
+          <span>${pricePerNight}</span>
+        </div>
+
+        {nights > 0 && (
+          <div className="flex justify-between text-muted-foreground">
+            <span>
+              ${pricePerNight} × {nights} night{nights !== 1 ? "s" : ""}
+            </span>
+            <span>${nights * pricePerNight}</span>
+          </div>
+        )}
+
+        {nights > 0 && guests > 0 && (
+          <div className="flex justify-between text-muted-foreground">
+            <span>
+              × {guests} guest{guests !== 1 ? "s" : ""}
+            </span>
+            <span>${total}</span>
+          </div>
+        )}
+
+        {nights > 0 && (
+          <>
             <div className="flex justify-between font-semibold text-base">
               <span>Total</span>
               <span>${total}</span>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
 
       <Button
         type="submit"

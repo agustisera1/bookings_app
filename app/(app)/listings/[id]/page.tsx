@@ -1,8 +1,11 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Section } from "@/components/ui/section";
 import { Separator } from "@/components/ui/separator";
 import { BookingForm } from "@/components/bookings/booking-form";
 import { ReviewForm } from "@/components/reviews/review-form";
+import { ListingPhotos } from "@/components/listings/listing-photos";
+import { EditListingButton } from "@/components/listings/edit-listing-button";
+import { DeleteListingButton } from "@/components/listings/delete-listing-button";
 import { MapPin, Star, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { query } from "@/lib/apollo/client";
@@ -49,19 +52,40 @@ export default async function ListingDetailPage({
           Back to listings
         </Link>
 
-        <div
-          className={`grid grid-cols-1 gap-10 ${isHostMode ? "" : "lg:grid-cols-3"}`}
-        >
-          <div
-            className={`flex flex-col gap-2 ${isHostMode ? "" : "lg:col-span-2"}`}
-          >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+          <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Badge
-                variant="outline"
-                className="uppercase tracking-widest text-[10px] w-fit"
-              >
-                {listing.type}
-              </Badge>
+              <div className="flex items-start justify-between gap-3">
+                <Badge
+                  variant="outline"
+                  className="uppercase tracking-widest text-[10px] w-fit"
+                >
+                  {listing.type}
+                </Badge>
+                {isHostMode && (
+                  <div className="flex items-center gap-2">
+                    <DeleteListingButton
+                      listingId={listing._id}
+                      listingTitle={listing.title}
+                      variant="button"
+                    />
+                    <EditListingButton
+                      listingId={listing._id}
+                      variant="manage"
+                      defaultValues={{
+                        title: listing.title,
+                        description: listing.description,
+                        price: listing.price,
+                        location: {
+                          address: listing.location?.address ?? "",
+                          city: listing.location?.city ?? "",
+                          country: listing.location?.country ?? "",
+                        },
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
               <div className="flex items-center justify-start gap-3">
                 <h1 className="text-3xl font-heading font-semibold leading-tight">
                   {listing.title}
@@ -80,78 +104,101 @@ export default async function ListingDetailPage({
                   {listing.location?.country || "Country not specified"}
                 </span>
               </div>
+
+              <Separator />
+
+              <p className="text-muted-foreground leading-relaxed">
+                {listing.description}
+              </p>
             </div>
 
-            <Separator />
+            <Section title="Photos">
+              <ListingPhotos
+                photos={(listing.photos ?? []).filter(
+                  (p): p is string => !!p,
+                )}
+                title={listing.title}
+                listingId={listing._id}
+                isHostMode={isHostMode}
+              />
+            </Section>
 
-            <p className="text-muted-foreground leading-relaxed">
-              {listing.description}
-            </p>
-          </div>
+            {isHostMode ? (
+              <Section
+                title="Other reviews"
+                subtitle="What guests are saying about this listing"
+                card
+                cardSize="sm"
+              >
+                <ListingReviews
+                  reviewsPromise={reviewsPromise}
+                  isHostMode={isHostMode}
+                />
+              </Section>
+            ) : (
+              <>
+                <Section
+                  title="Leave a review"
+                  subtitle="Share your experience to help other guests."
+                >
+                  <ReviewForm listingId={listing._id} />
+                </Section>
 
-          {!isHostMode && (
-            <div className="lg:col-span-1">
-              <Card className="sticky top-6 max-w-md mx-auto lg:max-w-none">
-                <CardHeader>
-                  <CardTitle className="flex items-baseline gap-1.5">
-                    <span className="text-2xl font-bold">${listing.price}</span>
-                    <span className="text-sm font-normal text-muted-foreground">
-                      / night
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <BookingForm
-                    listingId={listing._id}
-                    pricePerNight={listing.price}
+                <Section
+                  title="Other reviews"
+                  subtitle="Check out other customer comments"
+                  card
+                  cardSize="sm"
+                >
+                  <ListingReviews
+                    reviewsPromise={reviewsPromise}
+                    isHostMode={isHostMode}
                   />
-                </CardContent>
-              </Card>
-            </div>
-          )}
-        </div>
-
-        <Separator className="my-3" />
-
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-12">
-          {!isHostMode && (
-            <div className="flex flex-col gap-1 lg:w-1/2">
-              <h2 className="text-3xl font-heading font-semibold">
-                Leave a review
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Share your experience to help other guests.
-              </p>
-              <ReviewForm listingId={listing._id} />
-            </div>
-          )}
-
-          {isHostMode && bookingsPromise && (
-            <div className="flex flex-col gap-1 lg:w-1/2">
-              <h2 className="text-3xl font-heading font-semibold">
-                Bookings
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                Reservations guests have made for this listing
-              </p>
-              <ListingBookings bookingsPromise={bookingsPromise} />
-            </div>
-          )}
-
-          <div className="flex flex-col gap-1 lg:w-1/2">
-            <h2 className="text-3xl font-heading font-semibold">
-              {isHostMode ? "Reviews" : "Other reviews"}
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              {isHostMode
-                ? "What guests are saying about this listing"
-                : "Check out other customer comments"}
-            </p>
-            <ListingReviews
-              reviewsPromise={reviewsPromise}
-              isHostMode={isHostMode}
-            />
+                </Section>
+              </>
+            )}
           </div>
+
+          {isHostMode ? (
+            <div className="flex flex-col gap-4">
+              {bookingsPromise && (
+                <Section
+                  title="Upcoming Bookings"
+                  subtitle="Reservations guests have made for this listing"
+                >
+                  <ListingBookings bookingsPromise={bookingsPromise} />
+                </Section>
+              )}
+
+              <Section
+                title="Metrics"
+                subtitle="Performance insights for this listing"
+                card
+              >
+                <p className="text-sm text-muted-foreground">
+                  Listing metrics are coming soon.
+                </p>
+              </Section>
+            </div>
+          ) : (
+            <Section
+              title="Book this listing"
+              subtitle={
+                <>
+                  <span className="font-semibold text-foreground">
+                    ${listing.price}
+                  </span>{" "}
+                  / night
+                </>
+              }
+              card
+            >
+              <BookingForm
+                listingId={listing._id}
+                pricePerNight={listing.price}
+              />
+            </Section>
+          )}
         </div>
       </div>
     </div>

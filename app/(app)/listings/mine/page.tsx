@@ -1,10 +1,8 @@
 import { getCurrentUser } from "@/lib/services/auth";
 import { forbidden } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { query } from "@/lib/apollo/client";
 import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
-import { ListingsTable } from "@/components/listings/listings-table";
-import Link from "next/link";
+import { ListingsGrid } from "@/components/listings/listings-grid";
 
 export default async function MyListingsPage() {
   const user = await getCurrentUser();
@@ -30,18 +28,9 @@ export default async function MyListingsPage() {
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">My listings</h1>
-        <Button
-          variant="outline"
-          nativeButton={false}
-          render={<Link href="/listings/new" />}
-        >
-          Add new listing
-        </Button>
-      </div>
+      <h1 className="text-2xl font-semibold tracking-tight">My listings</h1>
       {listings && listings?.length > 0 && (
-        <ListingsTable listings={listings} />
+        <ListingsGrid listings={listings} />
       )}
     </div>
   );

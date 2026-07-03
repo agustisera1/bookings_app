@@ -169,6 +169,7 @@ export async function editListing(
   try {
     const result = await listingsRepo.editListing(id, values);
     revalidatePath("/listings/mine");
+    revalidatePath(`/listings/${id}`);
     return {
       ok: true,
       data: result,

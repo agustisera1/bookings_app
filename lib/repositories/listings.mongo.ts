@@ -7,7 +7,7 @@ import {
 
 async function getCollection() {
   const client = await mongoClientPromise;
-  return client.db("listingsdb").collection("listings");
+  return client.db("listingsdb").collection<ListingDocumentValues>("listings");
 }
 
 export async function findListingById(id: string) {

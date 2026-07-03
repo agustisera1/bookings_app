@@ -16,15 +16,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { editListing } from "@/lib/services/listings";
 
 const editListingSchema = z.object({
@@ -45,9 +45,11 @@ type EditListingFormValues = z.infer<typeof editListingSchema>;
 export function EditListingButton({
   listingId,
   defaultValues,
+  variant = "icon",
 }: {
   listingId: string;
   defaultValues: EditListingFormValues;
+  variant?: "icon" | "manage";
 }) {
   const [open, setOpen] = useState(false);
 
@@ -78,29 +80,40 @@ export function EditListingButton({
   }
 
   return (
-    <AlertDialog open={open} onOpenChange={handleOpenChange}>
-      <Tooltip>
-        <TooltipTrigger
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {variant === "manage" ? (
+        <DialogTrigger
           render={
-            <AlertDialogTrigger
-              render={
-                <Button variant="ghost" size="icon-sm">
-                  <Pencil />
-                </Button>
-              }
-            />
+            <Button variant="outline" size="sm">
+              <Pencil className="size-4" />
+              Manage
+            </Button>
           }
         />
-        <TooltipContent variant="dark">Edit</TooltipContent>
-      </Tooltip>
+      ) : (
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <DialogTrigger
+                render={
+                  <Button variant="ghost" size="icon-sm">
+                    <Pencil />
+                  </Button>
+                }
+              />
+            }
+          />
+          <TooltipContent variant="dark">Edit</TooltipContent>
+        </Tooltip>
+      )}
 
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Edit listing</AlertDialogTitle>
-          <AlertDialogDescription>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit listing</DialogTitle>
+          <DialogDescription>
             Update the details for this listing.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
+          </DialogDescription>
+        </DialogHeader>
 
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -196,16 +209,19 @@ export function EditListingButton({
             </div>
           </div>
 
-          <AlertDialogFooter>
-            <AlertDialogCancel type="button" disabled={isSubmitting}>
+          <DialogFooter>
+            <DialogClose
+              render={<Button variant="outline" type="button" />}
+              disabled={isSubmitting}
+            >
               Cancel
-            </AlertDialogCancel>
+            </DialogClose>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Saving…" : "Save changes"}
             </Button>
-          </AlertDialogFooter>
+          </DialogFooter>
         </form>
-      </AlertDialogContent>
-    </AlertDialog>
+      </DialogContent>
+    </Dialog>
   );
 }
