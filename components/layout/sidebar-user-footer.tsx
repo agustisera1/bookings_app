@@ -30,8 +30,8 @@ export function SidebarUserFooter({ name, email }: Props) {
   return (
     <SidebarFooter>
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left outline-hidden hover:bg-sidebar-accent/50 data-popup-open:bg-sidebar-accent/50">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-sidebar-accent text-xs font-semibold text-sidebar-accent-foreground">
+        <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left outline-hidden hover:bg-success/10 data-popup-open:bg-success/10 dark:hover:bg-success/20 dark:data-popup-open:bg-success/20">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-success text-xs font-semibold text-success-foreground">
             {initials}
           </div>
           <div className="min-w-0 flex-1">

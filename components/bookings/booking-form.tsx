@@ -218,6 +218,7 @@ export function BookingForm({
         size="lg"
         disabled={isSubmitting}
         className="w-full"
+        variant="primary"
       >
         {isSubmitting ? "Requesting…" : "Book now"}
       </Button>

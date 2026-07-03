@@ -98,9 +98,9 @@ export function ReviewForm({ listingId }: { listingId: string }) {
       </div>
 
       <Button
+        variant="outline"
         type="submit"
         disabled={isSubmitting}
-        variant="outline"
         className="w-full"
       >
         {isSubmitting ? "Submitting…" : "Submit review"}

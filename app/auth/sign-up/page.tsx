@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { createUser } from "@/lib/services/auth";
 import {
   fieldErrorsFrom,
@@ -94,9 +95,24 @@ export default function SignUpPage() {
             </Alert>
           )}
 
-          <Button type="submit" disabled={status === "loading"} className="w-full">
+          <Button
+            type="submit"
+            size="lg"
+            disabled={status === "loading"}
+            className="w-full"
+          >
             {status === "loading" ? "Creating account…" : "Sign Up"}
           </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Already have an account?{" "}
+            <Link
+              href="/auth/sign-in"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Sign in
+            </Link>
+          </p>
         </form>
       </CardContent>
     </Card>

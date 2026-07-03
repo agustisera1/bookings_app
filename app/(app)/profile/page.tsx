@@ -6,10 +6,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-const ROLE_BADGE_VARIANTS: Record<Role, "default" | "secondary" | "outline"> =
+const ROLE_BADGE_VARIANTS: Record<Role, "primary" | "secondary" | "outline"> =
   {
     guest: "secondary",
-    host: "default",
+    host: "primary",
     admin: "outline",
   };
 

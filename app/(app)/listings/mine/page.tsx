@@ -33,7 +33,7 @@ export default async function MyListingsPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight">My listings</h1>
         <Button
-          variant="secondary"
+          variant="outline"
           nativeButton={false}
           render={<Link href="/listings/new" />}
         >

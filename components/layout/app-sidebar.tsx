@@ -1,25 +1,10 @@
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar";
 import { getCurrentUser } from "@/lib/services/auth";
-import { Book, SearchIcon } from "lucide-react";
-import Link from "next/link";
+import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserFooter } from "./sidebar-user-footer";
 
 export async function AppSidebar() {
   const user = await getCurrentUser();
-
-  const navItems = [
-    user?.is_host
-      ? { title: "My listings", href: "/listings/mine", icon: Book }
-      : { title: "My bookings", href: "/bookings", icon: Book },
-    { title: "Explore", href: "/listings", icon: SearchIcon },
-  ];
 
   return (
     <Sidebar>
@@ -27,18 +12,7 @@ export async function AppSidebar() {
         Bookings App
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu>
-          {navItems.map((item) => (
-            <SidebarMenuItem className="px-2" key={item.href}>
-              <SidebarMenuButton
-                render={<Link className="w-full" href={item.href} />}
-              >
-                <item.icon />
-                <span>{item.title}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          ))}
-        </SidebarMenu>
+        <SidebarNav isHost={!!user?.is_host} />
       </SidebarContent>
       {user && <SidebarUserFooter name={user.name} email={user.email} />}
     </Sidebar>

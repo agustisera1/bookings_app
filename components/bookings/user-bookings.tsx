@@ -15,6 +15,12 @@ import {
   ItemFooter,
 } from "@/components/ui/item";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ChevronRightIcon } from "lucide-react";
 import { formatDate, calcNights } from "@/lib/dates";
 import { formatPrice, bookingStatusVariant } from "@/lib/utils";
@@ -44,10 +50,7 @@ export function UserBookings({
       {bookings.map((booking) => {
         const nights = calcNights(booking!.start_date, booking!.end_date);
         return (
-          <Item
-            key={booking!.id}
-            variant="outline"
-          >
+          <Item key={booking!.id} variant="outline">
             <ItemHeader>
               <ItemTitle>{booking!.title}</ItemTitle>
             </ItemHeader>
@@ -77,9 +80,22 @@ export function UserBookings({
               </div>
               <ItemActions>
                 <CancelBookingButton bookingId={booking!.id ?? ""} />
-                <Link href={`/bookings/${booking!.id}`}>
-                  <ChevronRightIcon className="size-4 text-muted-foreground" />
-                </Link>
+                <Tooltip>
+                  <TooltipTrigger
+                    render={
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        nativeButton={false}
+                        render={<Link href={`/bookings/${booking!.id}`} />}
+                      >
+                        <ChevronRightIcon />
+                        <span className="sr-only">View booking</span>
+                      </Button>
+                    }
+                  />
+                  <TooltipContent variant="dark">View</TooltipContent>
+                </Tooltip>
               </ItemActions>
             </ItemFooter>
           </Item>

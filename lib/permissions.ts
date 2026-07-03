@@ -66,6 +66,13 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   ],
   host: [
     {
+      key: "bookings:manage",
+      label: "Acepta o rechaza bookings",
+      description:
+        "Acepta o rechaza las solicitudes creadas por guests a una de sus listings",
+      ref: "RF-XX",
+    },
+    {
       key: "reviews:list",
       label: "Ver las reseñas de un listing",
       description: "Recuperar el listado de reseñas de un alojamiento o evento",

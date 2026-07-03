@@ -17,11 +17,13 @@ export function formatPrice(
 
 export const bookingStatusVariant: Record<
   string,
-  "default" | "secondary" | "destructive" | "outline"
+  "primary" | "secondary" | "destructive" | "outline"
 > = {
-  confirmed: "default",
-  paid: "default",
+  confirmed: "primary",
+  paid: "primary",
+  accepted: "primary",
   pending: "secondary",
   cancelled: "destructive",
+  rejected: "destructive",
   completed: "outline",
 };

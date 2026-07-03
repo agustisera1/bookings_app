@@ -136,7 +136,7 @@ export function ListingsTable({
   });
 
   return (
-    <div className="rounded-lg border">
+    <div className="rounded-lg border bg-card">
       <Table>
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (

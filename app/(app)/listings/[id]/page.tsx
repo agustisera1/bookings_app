@@ -53,7 +53,7 @@ export default async function ListingDetailPage({
           className={`grid grid-cols-1 gap-10 ${isHostMode ? "" : "lg:grid-cols-3"}`}
         >
           <div
-            className={`flex flex-col gap-6 ${isHostMode ? "" : "lg:col-span-2"}`}
+            className={`flex flex-col gap-2 ${isHostMode ? "" : "lg:col-span-2"}`}
           >
             <div className="flex flex-col gap-2">
               <Badge
