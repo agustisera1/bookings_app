@@ -2,14 +2,26 @@ import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar"
 import { getCurrentUser } from "@/lib/services/auth";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserFooter } from "./sidebar-user-footer";
+import Link from "next/link";
+import { Tent } from "lucide-react";
 
 export async function AppSidebar() {
   const user = await getCurrentUser();
 
   return (
     <Sidebar>
-      <SidebarHeader className="px-4 py-3 text-sm font-semibold tracking-tight">
-        Bookings App
+      <SidebarHeader className="p-3">
+        <Link
+          href="/listings"
+          className="flex items-center gap-2.5 rounded-md px-1 py-1 transition-opacity hover:opacity-80"
+        >
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground shadow-sm">
+            <Tent className="size-4.5" />
+          </div>
+          <span className="text-sm font-semibold tracking-tight">
+            Bookings App
+          </span>
+        </Link>
       </SidebarHeader>
       <SidebarContent>
         <SidebarNav isHost={!!user?.is_host} />

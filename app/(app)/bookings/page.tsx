@@ -1,4 +1,5 @@
 import { UserBookings } from "@/components/bookings/user-bookings";
+import { PageLayout } from "@/components/common/page-layout";
 import { GetUserBookingsDocument } from "@/lib/apollo/__generated__/operations";
 import { query } from "@/lib/apollo/client";
 import { getCurrentUser } from "@/lib/services/auth";
@@ -12,9 +13,11 @@ export default async function BookingsPage() {
   });
 
   return (
-    <div className="p-6">
-      <h1 className="mb-6 text-3xl font-semibold">My bookings</h1>
+    <PageLayout
+      title="My bookings"
+      subtitle="Track your upcoming and past reservations."
+    >
       <UserBookings userBookingsPromise={userBookingsPromise} />
-    </div>
+    </PageLayout>
   );
 }

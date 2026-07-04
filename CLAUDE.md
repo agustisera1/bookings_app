@@ -63,7 +63,7 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 
 | Archivo | Qué contiene |
 |---------|-------------|
-| `lib/utils.ts` | `cn` (classnames), `formatPrice`, `bookingStatusVariant` |
+| `lib/utils.ts` | `cn` (classnames), `formatPrice`, `bookingStatusVariant`, `listingTypeGradient` |
 | `lib/dates.ts` | `parseTs`, `formatDate`, `calcNights`, `datePickerTriggerClass` |
 | `lib/types/index.ts` | Tipos compartidos (`ServiceResult`, etc.) |
 | `lib/services/*` | Lógica de negocio server-side (siempre retornan `ServiceResult`) |
@@ -180,12 +180,15 @@ Regla de dependencia: `feature → common → ui`. Un primitivo de `common/` **n
 | `ConfirmDialog` | Confirmación de acción destructiva (encapsula open + pending + retry) | Client |
 | `EmptyState` | Estado vacío centrado (icono + título + descripción + acción) | ✓ |
 | `PriceLabel` | Precio "por noche" formateado con `formatPrice` | ✓ |
-| `Section` | Encabezado (título + subtítulo) sobre un bloque, con `Card` opcional | ✓ |
+| `PageLayout` | Shell de página: heading grande sticky + contenido scrollable, con slots `actions`/`toolbar`. Es el borde de la ruta | ✓ |
+| `Section` | Encabezado (título + subtítulo) sobre un bloque **dentro** de una página, con `Card` opcional | ✓ |
 
 ### Reglas de consistencia
 
 | Situación | Solución |
 |-----------|----------|
+| Encabezado + estructura de una página (ruta) | `PageLayout` con `title` (y `subtitle`/`actions`/`toolbar` opcionales) — nunca rearmar el `<div className="p-10 flex flex-col …">` con un `<h1>` a mano |
+| Bloque titulado **dentro** de una página | `Section` (h2). Regla de altitud: `PageLayout` en el borde de la ruta, `Section` para los bloques que viven adentro |
 | Fila de formulario (label + control + error) | `FormField` — nunca reconstruir el `<div className="flex flex-col gap-1.5">` a mano |
 | Mensaje de error de un campo suelto | `FieldError` (o el prop `error` de `FormField`) — nunca `<p className="text-xs text-destructive">` |
 | Área de texto | `Textarea` de `ui/` — nunca un `<textarea>` con clases crudas |
@@ -247,6 +250,7 @@ if (isSubmitSuccessful) return <SuccessUI />;
 | Control de entrada | `Input` / `Textarea` de `ui/` con `{...register("field")}` — nunca un elemento nativo con clases crudas |
 | Componente controlado (Calendar, Select de Shadcn, `StarRatingInput`) | `<Controller control={control} name="field" render={...} />` |
 | Observar un campo reactivamente | `useWatch({ control, name: "field" })` — **no** `watch("field")` (incompatible con React Compiler) |
+| Función impura en el render de un Client Component (`Date.now()`, `Math.random()`) | Capturarla una sola vez con `useState(() => Date.now())` — nunca llamarla directo en el cuerpo del render (el React Compiler lo marca como impuro). Regla general de pureza, no solo en forms. Ref: `components/bookings/user-bookings.tsx` |
 | Estado de envío | `isSubmitting` de RHF — **no** `useState` |
 | Estado de éxito | `isSubmitSuccessful` de RHF — **no** `useState` |
 | Estado puramente visual (hover, popover open) | `useState` local — no pertenece a RHF |

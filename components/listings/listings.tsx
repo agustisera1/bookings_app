@@ -2,14 +2,9 @@ import { GetListingsQuery } from "@/lib/apollo/__generated__/operations";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { PriceLabel } from "@/components/common/price-label";
+import { listingTypeGradient } from "@/lib/utils";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
-
-const TYPE_GRADIENTS: Record<string, string> = {
-  accommodation: "from-violet-500 to-indigo-600",
-  experience: "from-orange-400 to-pink-500",
-  equipment: "from-teal-400 to-cyan-600",
-};
 
 export async function Listings({
   listings,
@@ -19,8 +14,7 @@ export async function Listings({
   return (
     <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {listings?.map((listing) => {
-        const gradient =
-          TYPE_GRADIENTS[listing.type!] ?? "from-gray-400 to-gray-600";
+        const gradient = listingTypeGradient(listing.type);
 
         return (
           <li key={listing._id}>

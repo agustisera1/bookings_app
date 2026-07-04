@@ -1,19 +1,10 @@
 "use client";
 
-import { use } from "react";
+import { use, useState } from "react";
 import Link from "next/link";
 import { ApolloClient } from "@apollo/client";
 import { GetUserBookingsQuery } from "@/lib/apollo/__generated__/operations";
-import {
-  Item,
-  ItemGroup,
-  ItemContent,
-  ItemTitle,
-  ItemDescription,
-  ItemActions,
-  ItemHeader,
-  ItemFooter,
-} from "@/components/ui/item";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -21,11 +12,22 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ChevronRightIcon } from "lucide-react";
-import { formatDate, calcNights } from "@/lib/dates";
-import { formatPrice, bookingStatusVariant } from "@/lib/utils";
+import { CalendarRange, Users, ChevronRightIcon } from "lucide-react";
+import { formatDate, calcNights, parseTs } from "@/lib/dates";
+import { formatPrice, bookingStatusVariant, listingTypeGradient } from "@/lib/utils";
 import { EmptyState } from "@/components/common/empty-state";
 import { CancelBookingButton } from "@/components/bookings/cancel-booking-button";
+
+type BookingRow = NonNullable<
+  NonNullable<GetUserBookingsQuery["guestBookings"]>[number]
+>;
+
+function endTime(b: BookingRow) {
+  return parseTs(b.end_date)?.getTime() ?? 0;
+}
+function startTime(b: BookingRow) {
+  return parseTs(b.start_date)?.getTime() ?? 0;
+}
 
 export function UserBookings({
   userBookingsPromise,
@@ -33,7 +35,9 @@ export function UserBookings({
   userBookingsPromise: Promise<ApolloClient.QueryResult<GetUserBookingsQuery>>;
 }) {
   const { data } = use(userBookingsPromise);
-  const bookings = data?.guestBookings?.filter(Boolean) ?? [];
+  const bookings = (data?.guestBookings?.filter(Boolean) ?? []) as BookingRow[];
+  // Captured once at mount: a stable "now" to split upcoming vs. past.
+  const [now] = useState(() => Date.now());
 
   if (bookings.length === 0) {
     return (
@@ -45,62 +49,142 @@ export function UserBookings({
     );
   }
 
+  // Upcoming (soonest first) on top, past trips (most recent first) below.
+  const upcoming = bookings
+    .filter((b) => endTime(b) >= now)
+    .sort((a, b) => startTime(a) - startTime(b));
+  const past = bookings
+    .filter((b) => endTime(b) < now)
+    .sort((a, b) => endTime(b) - endTime(a));
+
   return (
-    <ItemGroup>
-      {bookings.map((booking) => {
-        const nights = calcNights(booking!.start_date, booking!.end_date);
-        return (
-          <Item key={booking!.id} variant="outline">
-            <ItemHeader>
-              <ItemTitle>{booking!.title}</ItemTitle>
-            </ItemHeader>
-            <ItemContent>
-              <ItemDescription>
-                {formatDate(booking!.start_date)} —{" "}
-                {formatDate(booking!.end_date)}
+    <div className="flex flex-col gap-10">
+      {upcoming.length > 0 && (
+        <BookingSection title="Upcoming" bookings={upcoming} />
+      )}
+      {past.length > 0 && (
+        <BookingSection title="Past" bookings={past} muted />
+      )}
+    </div>
+  );
+}
+
+function BookingSection({
+  title,
+  bookings,
+  muted = false,
+}: {
+  title: string;
+  bookings: BookingRow[];
+  muted?: boolean;
+}) {
+  return (
+    <section className="flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {title}
+        </h2>
+        <span className="text-xs text-muted-foreground/70">
+          {bookings.length}
+        </span>
+        <div className="h-px flex-1 bg-border" />
+      </div>
+      <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {bookings.map((booking) => (
+          <BookingCard key={booking.id} booking={booking} muted={muted} />
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+function BookingCard({
+  booking,
+  muted,
+}: {
+  booking: BookingRow;
+  muted: boolean;
+}) {
+  const nights = calcNights(booking.start_date, booking.end_date);
+  const gradient = listingTypeGradient(booking.type);
+
+  return (
+    <li>
+      <Card
+        className={`group flex h-full flex-col overflow-hidden p-0 transition-shadow duration-300 hover:shadow-xl ${
+          muted ? "opacity-90" : ""
+        }`}
+      >
+        <div
+          className={`relative flex h-24 items-end bg-gradient-to-br p-3 ${gradient} ${
+            muted ? "saturate-[.6]" : ""
+          }`}
+        >
+          <Badge className="bg-black/20 text-white/90 uppercase tracking-widest text-[10px] backdrop-blur-sm hover:bg-black/30">
+            {booking.type}
+          </Badge>
+        </div>
+
+        <CardContent className="flex flex-1 flex-col gap-3 p-4">
+          <Link href={`/bookings/${booking.id}`} className="min-w-0">
+            <h3 className="line-clamp-2 text-lg font-semibold leading-snug transition-colors group-hover:text-primary">
+              {booking.title}
+            </h3>
+          </Link>
+
+          <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <CalendarRange className="size-3.5 shrink-0" />
+              <span>
+                {formatDate(booking.start_date)} — {formatDate(booking.end_date)}
                 {nights != null &&
                   ` · ${nights} night${nights !== 1 ? "s" : ""}`}
-                {booking!.guests != null &&
-                  ` · ${booking!.guests} guest${booking!.guests !== 1 ? "s" : ""}`}
-              </ItemDescription>
-            </ItemContent>
-            <ItemFooter>
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">
-                  {formatPrice(booking!.total_price)}
+              </span>
+            </div>
+            {booking.guests != null && (
+              <div className="flex items-center gap-1.5">
+                <Users className="size-3.5 shrink-0" />
+                <span>
+                  {booking.guests} guest{booking.guests !== 1 ? "s" : ""}
                 </span>
-                <Badge
-                  variant={
-                    bookingStatusVariant[booking!.status ?? ""] ?? "outline"
-                  }
-                  className="capitalize"
-                >
-                  {booking!.status}
-                </Badge>
               </div>
-              <ItemActions>
-                <CancelBookingButton bookingId={booking!.id ?? ""} />
-                <Tooltip>
-                  <TooltipTrigger
-                    render={
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        nativeButton={false}
-                        render={<Link href={`/bookings/${booking!.id}`} />}
-                      >
-                        <ChevronRightIcon />
-                        <span className="sr-only">View booking</span>
-                      </Button>
-                    }
-                  />
-                  <TooltipContent variant="dark">View</TooltipContent>
-                </Tooltip>
-              </ItemActions>
-            </ItemFooter>
-          </Item>
-        );
-      })}
-    </ItemGroup>
+            )}
+          </div>
+
+          <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
+            <div className="flex items-center gap-2">
+              <span className="text-base font-semibold">
+                {formatPrice(booking.total_price)}
+              </span>
+              <Badge
+                variant={bookingStatusVariant[booking.status ?? ""] ?? "outline"}
+                className="capitalize"
+              >
+                {booking.status}
+              </Badge>
+            </div>
+            <div className="flex items-center gap-1">
+              <CancelBookingButton bookingId={booking.id ?? ""} />
+              <Tooltip>
+                <TooltipTrigger
+                  render={
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      nativeButton={false}
+                      render={<Link href={`/bookings/${booking.id}`} />}
+                    >
+                      <ChevronRightIcon />
+                      <span className="sr-only">View booking</span>
+                    </Button>
+                  }
+                />
+                <TooltipContent variant="dark">View</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </li>
   );
 }

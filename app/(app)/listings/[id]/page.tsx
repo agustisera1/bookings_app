@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/common/section";
 import { PriceLabel } from "@/components/common/price-label";
-import { Separator } from "@/components/ui/separator";
 import { BookingForm } from "@/components/bookings/booking-form";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { ListingPhotos } from "@/components/listings/listing-photos";
@@ -44,80 +43,76 @@ export default async function ListingDetailPage({
 
   return (
     <div className="min-h-screen">
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="mx-auto max-w-6xl px-6 py-10">
         <Link
           href={isHostMode ? "/listings/mine" : "/listings"}
-          className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground text-sm font-medium transition-colors w-fit mb-6"
+          className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <ChevronLeft className="size-4" />
           Back to listings
         </Link>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-2">
-              <div className="flex items-start justify-between gap-3">
-                <Badge
-                  variant="outline"
-                  className="uppercase tracking-widest text-[10px] w-fit"
-                >
-                  {listing.type}
-                </Badge>
-                {isHostMode && (
-                  <div className="flex items-center gap-2">
-                    <DeleteListingButton
-                      listingId={listing._id}
-                      listingTitle={listing.title}
-                      variant="button"
-                    />
-                    <EditListingButton
-                      listingId={listing._id}
-                      variant="manage"
-                      defaultValues={{
-                        title: listing.title,
-                        description: listing.description,
-                        price: listing.price,
-                        location: {
-                          address: listing.location?.address ?? "",
-                          city: listing.location?.city ?? "",
-                          country: listing.location?.country ?? "",
-                        },
-                      }}
-                    />
-                  </div>
-                )}
+        <header className="flex flex-col gap-2 border-b pb-8">
+          <div className="flex items-start justify-start gap-4">
+            <Badge
+              variant="outline"
+              className="w-fit uppercase tracking-widest text-[10px]"
+            >
+              {listing.type}
+            </Badge>
+            {isHostMode && (
+              <div className="flex items-center gap-2">
+                <DeleteListingButton
+                  listingId={listing._id}
+                  listingTitle={listing.title}
+                  variant="button"
+                />
+                <EditListingButton
+                  listingId={listing._id}
+                  variant="manage"
+                  defaultValues={{
+                    title: listing.title,
+                    description: listing.description,
+                    price: listing.price,
+                    location: {
+                      address: listing.location?.address ?? "",
+                      city: listing.location?.city ?? "",
+                      country: listing.location?.country ?? "",
+                    },
+                  }}
+                />
               </div>
-              <div className="flex items-center justify-start gap-3">
-                <h1 className="text-3xl font-heading font-semibold leading-tight">
-                  {listing.title}
-                </h1>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <Star className="size-4 fill-yellow-400 text-yellow-400" />
-                  <span className="text-sm font-semibold">
-                    {listing.rating_avg}
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                <MapPin className="size-3.5" />
-                <span>
-                  {listing.location?.city || "Location not specified"},{" "}
-                  {listing.location?.country || "Country not specified"}
-                </span>
-              </div>
-
-              <Separator />
-
-              <p className="text-muted-foreground leading-relaxed">
-                {listing.description}
-              </p>
+            )}
+          </div>
+          <div className="flex items-center justify-start gap-2">
+            <h1 className="font-heading text-3xl font-semibold leading-tight text-balance md:text-4xl">
+              {listing.title}
+            </h1>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Star className="size-5 fill-yellow-400 text-yellow-400" />
+              <span className="text-base font-semibold">
+                {listing.rating_avg}
+              </span>
             </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="size-3.5" />
+            <span>
+              {listing.location?.city || "Location not specified"},{" "}
+              {listing.location?.country || "Country not specified"}
+            </span>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-3 lg:gap-0">
+          <div className="flex flex-col gap-4 lg:col-span-2 lg:border-r lg:pr-10 pt-8">
+            <p className="leading-relaxed text-muted-foreground">
+              {listing.description}
+            </p>
 
             <Section title="Photos">
               <ListingPhotos
-                photos={(listing.photos ?? []).filter(
-                  (p): p is string => !!p,
-                )}
+                photos={(listing.photos ?? []).filter((p): p is string => !!p)}
                 title={listing.title}
                 listingId={listing._id}
                 isHostMode={isHostMode}
@@ -160,39 +155,42 @@ export default async function ListingDetailPage({
             )}
           </div>
 
-          {isHostMode ? (
-            <div className="flex flex-col gap-4">
-              {bookingsPromise && (
-                <Section
-                  title="Upcoming Bookings"
-                  subtitle="Reservations guests have made for this listing"
-                >
-                  <ListingBookings bookingsPromise={bookingsPromise} />
-                </Section>
-              )}
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:pl-10">
+            {isHostMode ? (
+              <>
+                {bookingsPromise && (
+                  <Section
+                    title="Upcoming Bookings"
+                    subtitle="Reservations guests have made for this listing"
+                  >
+                    <ListingBookings bookingsPromise={bookingsPromise} />
+                  </Section>
+                )}
 
+                <Section
+                  title="Metrics"
+                  subtitle="Performance insights for this listing"
+                  card
+                >
+                  <p className="text-sm text-muted-foreground">
+                    Listing metrics are coming soon.
+                  </p>
+                </Section>
+              </>
+            ) : (
               <Section
-                title="Metrics"
-                subtitle="Performance insights for this listing"
+                className="pt-8"
+                title="Book this listing"
+                subtitle={<PriceLabel price={listing.price} />}
                 card
               >
-                <p className="text-sm text-muted-foreground">
-                  Listing metrics are coming soon.
-                </p>
+                <BookingForm
+                  listingId={listing._id}
+                  pricePerNight={listing.price}
+                />
               </Section>
-            </div>
-          ) : (
-            <Section
-              title="Book this listing"
-              subtitle={<PriceLabel price={listing.price} />}
-              card
-            >
-              <BookingForm
-                listingId={listing._id}
-                pricePerNight={listing.price}
-              />
-            </Section>
-          )}
+            )}
+          </aside>
         </div>
       </div>
     </div>
