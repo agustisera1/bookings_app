@@ -1,20 +1,20 @@
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Section } from "@/components/common/section";
+import { PriceLabel } from "@/components/common/price-label";
 import { BookingForm } from "@/components/bookings/booking-form";
 import { ReviewForm } from "@/components/reviews/review-form";
+import { ListingPhotos } from "@/components/listings/listing-photos";
+import { EditListingButton } from "@/components/listings/edit-listing-button";
+import { DeleteListingButton } from "@/components/listings/delete-listing-button";
 import { MapPin, Star, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 import { query } from "@/lib/apollo/client";
 import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
 import { getListingReviews } from "@/lib/services/reviews";
 import { ListingReviews } from "@/components/reviews/listing-reviews";
-
-const TYPE_GRADIENTS: Record<string, string> = {
-  accommodation: "from-violet-500 to-indigo-600",
-  experience: "from-orange-400 to-pink-500",
-  equipment: "from-teal-400 to-cyan-600",
-};
+import { getCurrentUser } from "@/lib/services/auth";
+import { getListingBookings } from "@/lib/services/listings";
+import { ListingBookings } from "@/components/bookings/listing-bookings";
 
 export default async function ListingDetailPage({
   params,
@@ -30,103 +30,168 @@ export default async function ListingDetailPage({
     variables: { listing_id: id },
   });
 
-  const reviewsPromise = getListingReviews(id);
-
   if (error || listing === null) {
     return <div className="min-h-screen">Listing not found</div>;
   }
 
-  const gradient = TYPE_GRADIENTS[listing.type!] ?? "from-gray-400 to-gray-600";
+  const currentUser = await getCurrentUser();
+  const isHostMode =
+    !!currentUser?.is_host && currentUser.id === listing.host_id;
+
+  const reviewsPromise = getListingReviews(id);
+  const bookingsPromise = isHostMode ? getListingBookings(id) : undefined;
 
   return (
     <div className="min-h-screen">
-      <div
-        className={`h-72 bg-gradient-to-br ${gradient} flex flex-col justify-between p-8`}
-      >
+      <div className="mx-auto max-w-6xl px-6 py-10">
         <Link
-          href="/listings"
-          className="inline-flex items-center gap-1.5 text-white/80 hover:text-white text-sm font-medium transition-colors w-fit"
+          href={isHostMode ? "/listings/mine" : "/listings"}
+          className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
         >
           <ChevronLeft className="size-4" />
           Back to listings
         </Link>
 
-        <div className="flex items-end justify-between">
-          <Badge className="bg-black/20 text-white/90 backdrop-blur-sm hover:bg-black/30 uppercase tracking-widest text-[10px] w-fit">
-            {listing.type}
-          </Badge>
-          <div className="flex items-center gap-1.5 text-white">
-            <Star className="size-4 fill-yellow-300 text-yellow-300" />
-            <span className="text-sm font-semibold">{listing.rating_avg}</span>
-          </div>
-        </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
-          <div className="lg:col-span-2 flex flex-col gap-6">
-            <div className="flex flex-col gap-2">
-              <h1 className="text-3xl font-heading font-semibold leading-tight">
-                {listing.title}
-              </h1>
-              <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
-                <MapPin className="size-3.5" />
-                <span>
-                  {listing.location?.city || "Location not specified"},{" "}
-                  {listing.location?.country || "Country not specified"}
-                </span>
+        <header className="flex flex-col gap-2 border-b pb-8">
+          <div className="flex items-start justify-start gap-4">
+            <Badge
+              variant="outline"
+              className="w-fit uppercase tracking-widest text-[10px]"
+            >
+              {listing.type}
+            </Badge>
+            {isHostMode && (
+              <div className="flex items-center gap-2">
+                <DeleteListingButton
+                  listingId={listing._id}
+                  listingTitle={listing.title}
+                  variant="button"
+                />
+                <EditListingButton
+                  listingId={listing._id}
+                  variant="manage"
+                  defaultValues={{
+                    title: listing.title,
+                    description: listing.description,
+                    price: listing.price,
+                    location: {
+                      address: listing.location?.address ?? "",
+                      city: listing.location?.city ?? "",
+                      country: listing.location?.country ?? "",
+                    },
+                  }}
+                />
               </div>
+            )}
+          </div>
+          <div className="flex items-center justify-start gap-2">
+            <h1 className="font-heading text-3xl font-semibold leading-tight text-balance md:text-4xl">
+              {listing.title}
+            </h1>
+            <div className="flex shrink-0 items-center gap-1.5">
+              <Star className="size-5 fill-yellow-400 text-yellow-400" />
+              <span className="text-base font-semibold">
+                {listing.rating_avg}
+              </span>
             </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <MapPin className="size-3.5" />
+            <span>
+              {listing.location?.city || "Location not specified"},{" "}
+              {listing.location?.country || "Country not specified"}
+            </span>
+          </div>
+        </header>
 
-            <Separator />
-
-            <p className="text-muted-foreground leading-relaxed">
+        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-3 lg:gap-0">
+          <div className="flex flex-col gap-4 lg:col-span-2 lg:border-r lg:pr-10 pt-8">
+            <p className="leading-relaxed text-muted-foreground">
               {listing.description}
             </p>
+
+            <Section title="Photos">
+              <ListingPhotos
+                photos={(listing.photos ?? []).filter((p): p is string => !!p)}
+                title={listing.title}
+                listingId={listing._id}
+                isHostMode={isHostMode}
+              />
+            </Section>
+
+            {isHostMode ? (
+              <Section
+                title="Other reviews"
+                subtitle="What guests are saying about this listing"
+                card
+                cardSize="sm"
+              >
+                <ListingReviews
+                  reviewsPromise={reviewsPromise}
+                  isHostMode={isHostMode}
+                />
+              </Section>
+            ) : (
+              <>
+                <Section
+                  title="Leave a review"
+                  subtitle="Share your experience to help other guests."
+                >
+                  <ReviewForm listingId={listing._id} />
+                </Section>
+
+                <Section
+                  title="Other reviews"
+                  subtitle="Check out other customer comments"
+                  card
+                  cardSize="sm"
+                >
+                  <ListingReviews
+                    reviewsPromise={reviewsPromise}
+                    isHostMode={isHostMode}
+                  />
+                </Section>
+              </>
+            )}
           </div>
 
-          <div className="lg:col-span-1">
-            <Card className="sticky top-6 max-w-md mx-auto lg:max-w-none">
-              <CardHeader>
-                <CardTitle className="flex items-baseline gap-1.5">
-                  <span className="text-2xl font-bold">${listing.price}</span>
-                  <span className="text-sm font-normal text-muted-foreground">
-                    / night
-                  </span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
+          <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:pl-10">
+            {isHostMode ? (
+              <>
+                {bookingsPromise && (
+                  <Section
+                    title="Upcoming Bookings"
+                    subtitle="Reservations guests have made for this listing"
+                    className="pt-4"
+                  >
+                    <ListingBookings bookingsPromise={bookingsPromise} />
+                  </Section>
+                )}
+
+                <Section
+                  title="Metrics"
+                  subtitle="Performance insights for this listing"
+                  card
+                >
+                  <p className="text-sm text-muted-foreground">
+                    Listing metrics are coming soon.
+                  </p>
+                </Section>
+              </>
+            ) : (
+              <Section
+                className="pt-8"
+                title="Book this listing"
+                subtitle={<PriceLabel price={listing.price} />}
+                card
+              >
                 <BookingForm
                   listingId={listing._id}
                   pricePerNight={listing.price}
                 />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        <Separator className="my-10" />
-
-        <div className="flex flex-col lg:flex-row gap-4 lg:gap-12">
-          <div className="flex flex-col gap-1 lg:w-1/2">
-            <h2 className="text-3xl font-heading font-semibold">
-              Leave a review
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Share your experience to help other guests.
-            </p>
-            <ReviewForm listingId={listing._id} />
-          </div>
-
-          <div className="flex flex-col gap-1 lg:w-1/2">
-            <h2 className="text-3xl font-heading font-semibold">
-              Other reviews
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Check out other customer comments
-            </p>
-            <ListingReviews reviewsPromise={reviewsPromise} />
-          </div>
+              </Section>
+            )}
+          </aside>
         </div>
       </div>
     </div>

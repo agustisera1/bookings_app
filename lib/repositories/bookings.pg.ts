@@ -46,7 +46,7 @@ export async function hasGuestBookingForListing(
   return (result.rowCount ?? 0) > 0;
 }
 
-export async function cancelBooking(
+export async function deleteBooking(
   bookingId: string,
   guestId: string,
 ): Promise<string | null> {
@@ -60,4 +60,51 @@ export async function cancelBooking(
   );
 
   return result.rows[0]?.id ?? null;
+}
+
+export async function getBookingsByListingId(
+  listing_id: string,
+): Promise<Booking[]> {
+  const result = await db.query<Booking>(
+    `
+    SELECT * FROM bookings
+    WHERE listing_id = $1
+    `,
+    [listing_id],
+  );
+
+  return result.rows;
+}
+
+type UpdateBookingFields = Pick<
+  Booking,
+  | "status"
+  | "status_reason"
+  | "start_date"
+  | "end_date"
+  | "guests"
+  | "total_price"
+>;
+export async function updateBooking(
+  booking_id: string,
+  values: Partial<UpdateBookingFields>,
+) {
+  const entries = Object.entries(values);
+  if (entries.length === 0) return false;
+
+  const setClause = entries
+    .map(([key], index) => `${key} = $${index + 1}`)
+    .join(", ");
+  const params = entries.map(([, val]) => val);
+
+  const result = await db.query(
+    `
+    UPDATE bookings
+    SET ${setClause}
+    WHERE id = $${entries.length + 1}
+    `,
+    [...params, booking_id],
+  );
+
+  return (result.rowCount ?? 0) > 0;
 }

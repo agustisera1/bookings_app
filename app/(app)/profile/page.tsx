@@ -1,15 +1,17 @@
 import { getCurrentUser } from "@/lib/services/auth";
 import { ROLE_LABELS, ROLE_PERMISSIONS, type Role } from "@/lib/permissions";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { PermissionButton } from "./permission-button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 
-const ROLE_BADGE_VARIANTS: Record<Role, "default" | "secondary" | "outline"> =
+const ROLE_BADGE_VARIANTS: Record<Role, "primary" | "secondary" | "outline"> =
   {
     guest: "secondary",
-    host: "default",
+    host: "primary",
     admin: "outline",
   };
 
@@ -47,6 +49,36 @@ export default async function ProfilePage() {
             ))}
           </CardContent>
         </Card>
+
+        {user.is_host && (
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Listings
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between gap-3">
+              <p className="text-sm text-muted-foreground">
+                Manage your existing listings or publish a new one.
+              </p>
+              <div className="flex gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  nativeButton={false}
+                  render={<Link href="/listings/mine" />}
+                >
+                  My listings
+                </Button>
+                <Button
+                  nativeButton={false}
+                  render={<Link href="/listings/new" />}
+                >
+                  Add new listing
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {(Object.keys(ROLE_PERMISSIONS) as Role[]).map((role) => (
           <Card key={role}>

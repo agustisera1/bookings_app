@@ -25,3 +25,18 @@ export async function createReviewRecord(params: {
   );
   return result.rows[0] ?? null;
 }
+
+export async function addReply(params: {
+  reviewId: string;
+  reply: string;
+}): Promise<boolean> {
+  const result = await db.query(
+    `
+    UPDATE reviews SET host_reply=$1
+    WHERE id = $2
+  `,
+    [params.reply, params.reviewId],
+  );
+
+  return (result.rowCount ?? 0) > 0;
+}

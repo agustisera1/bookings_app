@@ -8,6 +8,7 @@ import {
 } from "@/lib/validation/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import Link from "next/link";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -86,11 +87,22 @@ export default function SignInPage() {
 
           <Button
             type="submit"
+            size="lg"
             disabled={status === "loading"}
             className="w-full"
           >
             {status === "loading" ? "Signing in…" : "Sign In"}
           </Button>
+
+          <p className="text-center text-sm text-muted-foreground">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/auth/sign-up"
+              className="font-medium text-foreground underline-offset-4 hover:underline"
+            >
+              Sign up
+            </Link>
+          </p>
         </form>
       </CardContent>
     </Card>

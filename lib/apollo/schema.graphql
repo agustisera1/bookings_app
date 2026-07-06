@@ -13,7 +13,7 @@ type Listing {
   description: String!
   price: Int!
   location: Location
-  photos: [String!]
+  photos: [String]
   rating_avg: Float
 }
 
@@ -30,7 +30,7 @@ type GuestBooking {
 }
 
 type Query {
-  listings(limit: Int, term: String): [Listing!]
+  listings(limit: Int, term: String, own: Boolean): [Listing!]
   listing(listing_id: String!): Listing
   guestBookings: [GuestBooking]
 }

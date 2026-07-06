@@ -13,6 +13,16 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // `components/ui/**` es código vendorizado de shadcn: no se edita a mano y se
+  // regenera con `shadcn add`. No lo sometemos a reglas más estrictas que su
+  // upstream (p. ej. la regla de React Compiler `set-state-in-effect`, que
+  // shadcn dispara legítimamente en el carousel).
+  {
+    files: ["components/ui/**"],
+    rules: {
+      "react-hooks/set-state-in-effect": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

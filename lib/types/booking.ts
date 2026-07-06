@@ -5,6 +5,7 @@ export type Booking = {
   start_date: string;
   end_date: string;
   status: string;
+  status_reason: string | null;
   total_price: string;
   created_at: string;
   guests: number;

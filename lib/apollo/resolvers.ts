@@ -1,5 +1,5 @@
 import type { Listing, Resolvers } from "./__generated__/resolvers-types";
-import { GraphQLError } from "graphql";
+import { toGraphQLError } from "./errors";
 import { Booking, getUserBookings, GuestBooking } from "../services/bookings";
 import {
   getListing,
@@ -10,39 +10,27 @@ import {
 export const resolvers: Resolvers = {
   Query: {
     listing: async (_, { listing_id }) => {
-      try {
-        return (await getListing(listing_id)) as Listing | null;
-      } catch (error) {
-        throw new GraphQLError("Failed to fetch listing detail", {
-          originalError: error instanceof Error ? error : undefined,
-          extensions: { code: "INTERNAL_SERVER_ERROR" },
-        });
-      }
+      const result = await getListing(listing_id);
+      if (!result.ok) throw toGraphQLError(result);
+      return result.data as Listing | null;
     },
-    listings: async (_, { limit, term }) => {
-      try {
-        return (await getListings({ limit, term })) as Listing[];
-      } catch (error) {
-        throw new GraphQLError("Failed to fetch listings", {
-          originalError: error instanceof Error ? error : undefined,
-          extensions: { code: "INTERNAL_SERVER_ERROR" },
-        });
-      }
+    listings: async (_, { limit, term, own }) => {
+      const result = await getListings({ limit, term, own: !!own });
+      if (!result.ok) throw toGraphQLError(result);
+      return result.data as Listing[];
     },
     guestBookings: async () => {
-      let ids: string[] = [];
       // 1. Search the guest bookings
       const userBookingsResult = await getUserBookings();
-      if (!userBookingsResult.ok) {
-        throw new Error("Error while retrieving user bookings");
-      } else {
-        ids = (userBookingsResult.data as Booking[]).map(
-          ({ listing_id }) => listing_id,
-        );
-      }
+      if (!userBookingsResult.ok) throw toGraphQLError(userBookingsResult);
+      const ids = (userBookingsResult.data as Booking[]).map(
+        ({ listing_id }) => listing_id,
+      );
 
       // 2. Search documents the guest booked listings
-      const docs = await getListingsByIds(ids);
+      const docsResult = await getListingsByIds(ids);
+      if (!docsResult.ok) throw toGraphQLError(docsResult);
+      const docs = docsResult.data;
       const bookings = userBookingsResult.data;
 
       return bookings
