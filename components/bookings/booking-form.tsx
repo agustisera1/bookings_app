@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { use, useState } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -17,6 +17,8 @@ import {
 } from "@/components/ui/popover";
 import { formatDate, calcNights, datePickerTriggerClass } from "@/lib/dates";
 import { createBooking } from "@/lib/services/bookings";
+import { ServiceResult } from "@/lib/types";
+import { Matcher } from "react-day-picker";
 
 const bookingSchema = z
   .object({
@@ -38,13 +40,16 @@ export type BookingFormValues = z.infer<typeof bookingSchema>;
 export function BookingForm({
   listingId,
   pricePerNight,
+  availabilityPromise,
 }: {
   listingId: string;
   pricePerNight: number;
+  availabilityPromise: Promise<ServiceResult<Matcher[]>>;
 }) {
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [checkOutOpen, setCheckOutOpen] = useState(false);
   const [success, setSuccess] = useState(false);
+  const availability = use(availabilityPromise);
 
   const {
     control,
@@ -124,7 +129,13 @@ export function BookingForm({
                       setCheckInOpen(false);
                       if (date) setCheckOutOpen(true);
                     }}
-                    disabled={{ before: new Date() }}
+                    // availability.data son matchers DateRange (from/to
+                    // inclusivos): bloquean start_date y end_date de cada
+                    // reserva. Ver getAvailabilityFromBookings en lib/dates.ts.
+                    disabled={[
+                      { before: new Date() },
+                      ...(availability.ok ? availability.data : []),
+                    ]}
                   />
                 </PopoverContent>
               </Popover>

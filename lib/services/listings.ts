@@ -12,6 +12,8 @@ import type {
 import { DeleteResult } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { Booking } from "./bookings";
+import { Matcher } from "react-day-picker";
+import { getAvailabilityFromBookings } from "../dates";
 
 export type {
   CreateListingInput,
@@ -233,6 +235,29 @@ export async function getListingBookings(
       ok: false,
       error: "Could not retrieve the booked listings",
       code: "NOT_FOUND",
+    };
+  }
+}
+
+export async function getListingAvailability(
+  listing_id: string,
+): Promise<ServiceResult<Matcher[]>> {
+  const auth = await authorize("bookings:create");
+  if (!auth.ok) return auth;
+
+  try {
+    const bookings = await bookingsRepo.getBookingsByListingId(listing_id);
+    const availability = getAvailabilityFromBookings(bookings);
+    return {
+      ok: true,
+      data: availability,
+    };
+  } catch (error) {
+    console.error(error);
+    return {
+      ok: false,
+      error: "Could not retrieve the listing availability",
+      code: "UNEXPECTED",
     };
   }
 }

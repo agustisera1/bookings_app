@@ -13,7 +13,10 @@ import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
 import { getListingReviews } from "@/lib/services/reviews";
 import { ListingReviews } from "@/components/reviews/listing-reviews";
 import { getCurrentUser } from "@/lib/services/auth";
-import { getListingBookings } from "@/lib/services/listings";
+import {
+  getListingAvailability,
+  getListingBookings,
+} from "@/lib/services/listings";
 import { ListingBookings } from "@/components/bookings/listing-bookings";
 
 export default async function ListingDetailPage({
@@ -39,6 +42,7 @@ export default async function ListingDetailPage({
     !!currentUser?.is_host && currentUser.id === listing.host_id;
 
   const reviewsPromise = getListingReviews(id);
+  const availabilityPromise = getListingAvailability(id);
   const bookingsPromise = isHostMode ? getListingBookings(id) : undefined;
 
   return (
@@ -188,6 +192,7 @@ export default async function ListingDetailPage({
                 <BookingForm
                   listingId={listing._id}
                   pricePerNight={listing.price}
+                  availabilityPromise={availabilityPromise}
                 />
               </Section>
             )}
