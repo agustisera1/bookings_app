@@ -1,8 +1,50 @@
 import { cn } from "@/lib/utils";
+import { Matcher } from "react-day-picker";
+import { Booking } from "./types/booking";
 
 export function parseTs(ts: string | null | undefined): Date | null {
   if (!ts) return null;
   const d = new Date(Number(ts));
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/**
+ * Convierte reservas en matchers `disabled` para el Calendar (react-day-picker).
+ *
+ * Usa `DateRange` (`{ from, to }`), que incluye ambos extremos, en lugar de
+ * `DateInterval` (`{ before, after }`), que los excluye. Así se bloquean tanto
+ * `start_date` como `end_date` además de los días intermedios.
+ *
+ * Nota de negocio: el bloqueo es inclusivo en ambas puntas a propósito. Todavía
+ * no modelamos horas de check-in/check-out, solo días completos: la noche de
+ * `end_date` se considera ocupada. Si en el futuro `end_date` pasa a ser el día
+ * de check-out (esa noche libre), habría que hacer el extremo superior
+ * exclusivo (`to: end_date - 1 día`).
+ */
+export function getAvailabilityFromBookings(bookings: Booking[]) {
+  const availability: Matcher[] = bookings.map((booking) => {
+    const matcher: Matcher = {
+      from: parsePgTimestamp(booking.start_date)!,
+      to: parsePgTimestamp(booking.end_date)!,
+    };
+
+    return matcher;
+  });
+
+  return availability;
+}
+
+export function parsePgTimestamp(
+  ts: string | Date | null | undefined,
+): Date | null {
+  if (!ts) return null;
+  // El driver de pg ya puede devolver un Date para columnas timestamp
+  if (ts instanceof Date) return isNaN(ts.getTime()) ? null : ts;
+  // "2026-07-29 00:00:00-03" → ISO: "2026-07-29T00:00:00-03:00"
+  let iso = ts.trim().replace(" ", "T");
+  const tz = iso.match(/([+-]\d{2})(:?\d{2})?$/);
+  if (tz && !tz[2]) iso += ":00"; // offset sin minutos → agregarlos
+  const d = new Date(iso);
   return isNaN(d.getTime()) ? null : d;
 }
 
