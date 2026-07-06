@@ -162,6 +162,7 @@ export default async function ListingDetailPage({
                   <Section
                     title="Upcoming Bookings"
                     subtitle="Reservations guests have made for this listing"
+                    className="pt-4"
                   >
                     <ListingBookings bookingsPromise={bookingsPromise} />
                   </Section>

@@ -38,3 +38,35 @@ export const bookingStatusVariant: Record<
   rejected: "destructive",
   completed: "outline",
 };
+
+export const MIME_TYPES = {
+  // Images
+  "image/png": "png",
+  "image/jpeg": "jpeg", // Nota: mapea a 'jpeg' (puedes cambiarlo a 'jpg' si prefieres)
+  "image/gif": "gif",
+  "image/svg+xml": "svg",
+  "image/webp": "webp",
+  "image/x-icon": "ico",
+
+  // Video
+  "video/mp4": "mp4",
+  "video/webm": "webm",
+  "video/x-msvideo": "avi",
+  "video/mpeg": "mpeg",
+
+  // Documents
+  "application/pdf": "pdf",
+  "text/plain": "txt",
+  "text/csv": "csv",
+  "application/msword": "doc",
+  "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+    "docx",
+  "application/vnd.ms-excel": "xls",
+  "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": "xlsx",
+  "application/vnd.ms-powerpoint": "ppt",
+  "application/vnd.openxmlformats-officedocument.presentationml.presentation":
+    "pptx",
+} as const;
+
+// Tipo utilitario automático de TypeScript basado en tu objeto
+export type ValidMimeType = keyof typeof MIME_TYPES;

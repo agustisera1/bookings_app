@@ -3,6 +3,7 @@ import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
 import * as listingsRepo from "../repositories/listings.mongo";
 import * as bookingsRepo from "../repositories/bookings.pg";
+import { deleteListingObject } from "../s3";
 import type {
   CreateListingInput,
   EditListingDocumentValues,
@@ -179,6 +180,36 @@ export async function editListing(
     return {
       ok: false,
       error: "Could not update the listing",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
+export async function removeListingPhoto(
+  id: string,
+  photoUrl: string,
+): Promise<ServiceResult> {
+  const auth = await authorize("listings:manage-own");
+  if (!auth.ok) return auth;
+
+  try {
+    // Mongo is the source of truth for what the listing shows, so drop the
+    // reference first. Deleting the S3 object is best-effort: if it's already
+    // gone the listing no longer points at it either way, so we
+    // just log it instead of failing the whole operation.
+    const result = await listingsRepo.pullListingPhoto(id, photoUrl);
+    await deleteListingObject(photoUrl).catch((error) =>
+      console.error("[removeListingPhoto:s3]", error),
+    );
+
+    revalidatePath("/listings/mine");
+    revalidatePath(`/listings/${id}`);
+    return { ok: true, data: result };
+  } catch (error) {
+    console.error("[removeListingPhoto]", error);
+    return {
+      ok: false,
+      error: "Could not remove the photo",
       code: "UNEXPECTED",
     };
   }

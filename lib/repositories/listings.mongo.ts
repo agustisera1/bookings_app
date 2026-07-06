@@ -69,3 +69,11 @@ export async function editListing(
     { $set: values },
   );
 }
+
+export async function pullListingPhoto(listing_id: string, photoUrl: string) {
+  const collection = await getCollection();
+  return await collection.updateOne(
+    { _id: new ObjectId(listing_id) },
+    { $pull: { photos: photoUrl } },
+  );
+}

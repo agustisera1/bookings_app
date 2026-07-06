@@ -13,18 +13,21 @@ import {
 } from "@/components/ui/carousel";
 import { EmptyState } from "@/components/common/empty-state";
 import { AddListingPhotosButton } from "@/components/listings/add-listing-photos-button";
+import { DeleteListingPhotoButton } from "@/components/listings/delete-listing-photo-button";
+
+type ListingPhotosProps = {
+  photos: string[];
+  title: string;
+  listingId: string;
+  isHostMode?: boolean;
+};
 
 export function ListingPhotos({
   photos,
   title,
   listingId,
   isHostMode = false,
-}: {
-  photos: string[];
-  title: string;
-  listingId: string;
-  isHostMode?: boolean;
-}) {
+}: ListingPhotosProps) {
   const [activePhoto, setActivePhoto] = useState<string | null>(null);
 
   if (photos.length === 0) {
@@ -34,7 +37,9 @@ export function ListingPhotos({
         icon={<ImageOff />}
         description="No photos yet."
         action={
-          isHostMode ? <AddListingPhotosButton listingId={listingId} /> : undefined
+          isHostMode ? (
+            <AddListingPhotosButton listingId={listingId} />
+          ) : undefined
         }
       />
     );
@@ -54,25 +59,45 @@ export function ListingPhotos({
             <CarouselContent className="-ml-2">
               {photos.map((photo, i) => (
                 <CarouselItem key={`${photo}-${i}`} className="basis-auto pl-2">
-                  <button
-                    type="button"
-                    onClick={() => setActivePhoto(photo)}
-                    className="group relative h-[120px] w-40 shrink-0 overflow-hidden rounded-lg ring-1 ring-foreground/10"
-                  >
-                    <Image
-                      src={photo}
-                      alt={`${title} photo ${i + 1}`}
-                      fill
-                      unoptimized
-                      sizes="160px"
-                      className="object-cover"
-                    />
-                    <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-colors group-hover:bg-black/30 group-hover:opacity-100">
-                      <Search className="size-4 text-white" />
-                    </span>
-                  </button>
+                  <div className="group relative h-[120px] w-40 shrink-0 overflow-hidden rounded-lg ring-1 ring-foreground/10">
+                    <button
+                      type="button"
+                      onClick={() => setActivePhoto(photo)}
+                      className="block size-full"
+                    >
+                      <Image
+                        src={photo}
+                        alt={`${title} photo ${i + 1}`}
+                        fill
+                        unoptimized
+                        sizes="160px"
+                        className="object-cover"
+                      />
+                      <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-colors group-hover:bg-black/30 group-hover:opacity-100">
+                        <Search className="size-4 text-white" />
+                      </span>
+                    </button>
+
+                    {isHostMode && (
+                      <DeleteListingPhotoButton
+                        listingId={listingId}
+                        photoUrl={photo}
+                      />
+                    )}
+                  </div>
                 </CarouselItem>
               ))}
+
+              {isHostMode && (
+                <CarouselItem className="basis-auto pl-2">
+                  <div className="flex h-[120px] w-40 shrink-0 items-center justify-center rounded-lg border border-dashed border-input">
+                    <AddListingPhotosButton
+                      listingId={listingId}
+                      photos={photos}
+                    />
+                  </div>
+                </CarouselItem>
+              )}
             </CarouselContent>
           </div>
 

@@ -1,5 +1,4 @@
 type Attributes = Partial<ListingAttributes>;
-type Photos = string[];
 type ListingAttributes = {
   beds: number;
   bathrooms: number;
@@ -31,7 +30,7 @@ export type ListingDocumentValues = {
   price: number;
   location: ListingLocation;
   attributes?: Attributes;
-  photos: Photos;
+  photos: string[];
   rating_avg?: number;
 };
 

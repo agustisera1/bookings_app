@@ -14,7 +14,15 @@ import {
 import { ImageUpload } from "@/components/listings/image-upload";
 import { editListing } from "@/lib/services/listings";
 
-export function AddListingPhotosButton({ listingId }: { listingId: string }) {
+type AddListingPhotosButtonProps = {
+  listingId: string;
+  photos?: string[];
+};
+
+export function AddListingPhotosButton({
+  listingId,
+  photos: existingPhotos = [],
+}: AddListingPhotosButtonProps) {
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [isPending, setIsPending] = useState(false);
@@ -26,8 +34,35 @@ export function AddListingPhotosButton({ listingId }: { listingId: string }) {
 
   async function handleSave() {
     setIsPending(true);
-    const photos = files.map((file) => URL.createObjectURL(file));
-    const result = await editListing(listingId, { photos });
+
+    const uploads = await Promise.all(
+      files.map((file) => {
+        const formData = new FormData();
+        formData.append("listingId", listingId);
+        formData.append("file", file);
+
+        return fetch(`${process.env.NEXT_PUBLIC_API}/s3`, {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((json) => (json?.ok ? (json.data as string) : null))
+          .catch(() => null);
+      }),
+    );
+
+    const newPhotos = uploads.filter((url): url is string => url !== null);
+
+    if (newPhotos.length === 0) {
+      setIsPending(false);
+      toast.error("Could not upload the photos");
+      return;
+    }
+
+    const result = await editListing(listingId, {
+      photos: [...existingPhotos, ...newPhotos],
+    });
+
     setIsPending(false);
 
     if (!result.ok) {
