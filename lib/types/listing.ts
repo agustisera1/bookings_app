@@ -44,3 +44,18 @@ export type CreateListingInput = {
   location: ListingLocation;
   attributes: Attributes & { max_guests: number };
 };
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type LocationFilter = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AvailabilityRange = any;
+export type GetListingFilters = {
+  own?: boolean;
+  limit?: number;
+  type?: string;
+  term?: string;
+  location?: LocationFilter;
+  rating?: number;
+  availabilityRange?: AvailabilityRange[];
+  priceRange?: [number, number];
+};

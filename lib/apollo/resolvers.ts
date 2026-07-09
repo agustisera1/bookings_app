@@ -14,8 +14,13 @@ export const resolvers: Resolvers = {
       if (!result.ok) throw toGraphQLError(result);
       return result.data as Listing | null;
     },
-    listings: async (_, { limit, term, own }) => {
-      const result = await getListings({ limit, term, own: !!own });
+    listings: async (_, { filters: f }) => {
+      const filters = {
+        limit: f?.limit ?? undefined,
+        term: f?.term ?? undefined,
+        own: f?.own ?? undefined,
+      };
+      const result = await getListings(filters);
       if (!result.ok) throw toGraphQLError(result);
       return result.data as Listing[];
     },

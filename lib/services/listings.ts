@@ -7,6 +7,7 @@ import { deleteListingObject } from "../s3";
 import type {
   CreateListingInput,
   EditListingDocumentValues,
+  GetListingFilters,
   ListingDocumentValues,
 } from "../types/listing";
 import { DeleteResult } from "mongodb";
@@ -18,6 +19,7 @@ import { getAvailabilityFromBookings } from "../dates";
 export type {
   CreateListingInput,
   ListingDocumentValues,
+  GetListingFilters,
 } from "../types/listing";
 
 function formatListingValues(
@@ -70,16 +72,28 @@ export async function getListing(
   }
 }
 
-export async function getListings(args: {
-  limit?: number | null;
-  term?: string | null;
-  own?: boolean;
-}): Promise<
+// type Filters {
+//   own: Boolean # non customer faced
+//   limit: Int
+//   type: String
+//   term: String
+//   location: Location
+//   rating: Float
+//   availabilityRange: [String]
+//   priceRange: [Float]
+// }
+
+export async function getListings(
+  filters: GetListingFilters,
+): Promise<
   ServiceResult<Awaited<ReturnType<typeof listingsRepo.findListings>>>
 > {
   // TODO: Check for user authentication
-  const { own, ...rest } = args;
-  const params: Parameters<typeof listingsRepo.findListings>[0] = { ...rest };
+  const { own, ...rest } = filters;
+  const params: Parameters<typeof listingsRepo.findListings>[number] = {
+    ...rest,
+  };
+
   if (own) {
     const auth = await authorize("listings:create");
     if (auth.ok) params["host_id"] = auth.data.id;

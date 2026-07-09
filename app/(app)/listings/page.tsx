@@ -18,7 +18,7 @@ export default async function ListingsPage({
     error,
   } = await query({
     query: GetListingsDocument,
-    variables: { limit: 10, term: q },
+    variables: { filters: { limit: 10, term: q } },
   });
 
   return (
