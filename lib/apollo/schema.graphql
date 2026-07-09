@@ -47,7 +47,12 @@ input FiltersInput {
   location: LocationInput
   rating: Float
   availabilityRange: [String]
-  priceRange: [Float]
+  priceRange: [Float!]
+  propertyType: String
+  beds: Int
+  bathrooms: Int
+  maxGuests: Int
+  amenities: [String!]
 }
 
 type Query {

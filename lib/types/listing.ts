@@ -45,17 +45,21 @@ export type CreateListingInput = {
   attributes: Attributes & { max_guests: number };
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type LocationFilter = any;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AvailabilityRange = any;
+// type LocationFilter = any;
+// type AvailabilityRange = string[];
 export type GetListingFilters = {
   own?: boolean;
   limit?: number;
   type?: string;
   term?: string;
-  location?: LocationFilter;
+  // location?: LocationFilter;
   rating?: number;
-  availabilityRange?: AvailabilityRange[];
-  priceRange?: [number, number];
+  // [from, to] as `YYYY-MM-DD` strings; listings booked in that range are excluded.
+  availabilityRange?: string[];
+  priceRange?: number[];
+  propertyType?: string;
+  beds?: number;
+  bathrooms?: number;
+  maxGuests?: number;
+  amenities?: string[];
 };

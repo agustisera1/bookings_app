@@ -25,37 +25,8 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-
-const PROPERTY_TYPES = [
-  "apartment",
-  "house",
-  "cabin",
-  "loft",
-  "villa",
-  "room",
-  "other",
-] as const;
-
-const AMENITIES = [
-  "wifi",
-  "kitchen",
-  "parking",
-  "pool",
-  "air_conditioning",
-  "heating",
-  "tv",
-  "washer",
-  "gym",
-  "workspace",
-  "pets_allowed",
-] as const;
-
-function humanize(value: string) {
-  return value
-    .split("_")
-    .map((word) => word[0].toUpperCase() + word.slice(1))
-    .join(" ");
-}
+import { humanize } from "@/lib/utils";
+import { AMENITIES, PROPERTY_TYPES } from "@/lib/listings";
 
 const createListingSchema = z.object({
   title: z.string().min(1, "Title is required").max(120, "Title is too long"),

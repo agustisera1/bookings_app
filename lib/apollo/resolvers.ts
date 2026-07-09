@@ -14,12 +14,9 @@ export const resolvers: Resolvers = {
       if (!result.ok) throw toGraphQLError(result);
       return result.data as Listing | null;
     },
-    listings: async (_, { filters: f }) => {
-      const filters = {
-        limit: f?.limit ?? undefined,
-        term: f?.term ?? undefined,
-        own: f?.own ?? undefined,
-      };
+    listings: async (_, { filters = null }) => {
+      // Availability filtering (excluding listings booked in the requested
+      // date range) is handled inside the service, alongside the other filters.
       const result = await getListings(filters);
       if (!result.ok) throw toGraphQLError(result);
       return result.data as Listing[];

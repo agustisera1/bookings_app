@@ -68,6 +68,19 @@ export function calcNights(
   return Math.round((e.getTime() - s.getTime()) / 86_400_000);
 }
 
+/** Local calendar date as `YYYY-MM-DD` — no time component, no timezone shift. */
+export function toISODate(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/** Parse a `YYYY-MM-DD` string into a local Date at midnight. */
+export function fromISODate(value: string): Date {
+  return new Date(`${value}T00:00:00`);
+}
+
 export const datePickerTriggerClass = (hasValue: boolean) =>
   cn(
     "h-10 w-full justify-start rounded-lg border border-input bg-transparent px-3 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",

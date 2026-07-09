@@ -5,17 +5,12 @@ import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { CalendarIcon, Users } from "lucide-react";
+import { Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/field";
-import { Calendar } from "@/components/ui/calendar";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { formatDate, calcNights, datePickerTriggerClass } from "@/lib/dates";
+import { DatePicker } from "@/components/common/date-picker";
+import { calcNights } from "@/lib/dates";
 import { createBooking } from "@/lib/services/bookings";
 import { ServiceResult } from "@/lib/types";
 import { Matcher } from "react-day-picker";
@@ -103,42 +98,27 @@ export function BookingForm({
             control={control}
             name="checkIn"
             render={({ field }) => (
-              <Popover open={checkInOpen} onOpenChange={setCheckInOpen}>
-                <PopoverTrigger
-                  className={datePickerTriggerClass(!!field.value)}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <CalendarIcon className="size-4 shrink-0" />
-                    {field.value ? formatDate(field.value) : "Add date"}
-                  </span>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0"
-                  align="start"
-                  side="bottom"
-                >
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={(date) => {
-                      field.onChange(date);
-                      if (checkOut && date && checkOut <= date)
-                        setValue("checkOut", undefined as unknown as Date, {
-                          shouldValidate: true,
-                        });
-                      setCheckInOpen(false);
-                      if (date) setCheckOutOpen(true);
-                    }}
-                    // availability.data son matchers DateRange (from/to
-                    // inclusivos): bloquean start_date y end_date de cada
-                    // reserva. Ver getAvailabilityFromBookings en lib/dates.ts.
-                    disabled={[
-                      { before: new Date() },
-                      ...(availability.ok ? availability.data : []),
-                    ]}
-                  />
-                </PopoverContent>
-              </Popover>
+              <DatePicker
+                value={field.value}
+                open={checkInOpen}
+                onOpenChange={setCheckInOpen}
+                onSelect={(date) => {
+                  field.onChange(date);
+                  if (checkOut && date && checkOut <= date)
+                    setValue("checkOut", undefined as unknown as Date, {
+                      shouldValidate: true,
+                    });
+                  setCheckInOpen(false);
+                  if (date) setCheckOutOpen(true);
+                }}
+                // availability.data are inclusive DateRange matchers (from/to):
+                // they block each booking's start_date and end_date. See
+                // getAvailabilityFromBookings in lib/dates.ts.
+                disabled={[
+                  { before: new Date() },
+                  ...(availability.ok ? availability.data : []),
+                ]}
+              />
             )}
           />
         </FormField>
@@ -148,31 +128,16 @@ export function BookingForm({
             control={control}
             name="checkOut"
             render={({ field }) => (
-              <Popover open={checkOutOpen} onOpenChange={setCheckOutOpen}>
-                <PopoverTrigger
-                  className={datePickerTriggerClass(!!field.value)}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <CalendarIcon className="size-4 shrink-0" />
-                    {field.value ? formatDate(field.value) : "Add date"}
-                  </span>
-                </PopoverTrigger>
-                <PopoverContent
-                  className="w-auto p-0"
-                  align="start"
-                  side="bottom"
-                >
-                  <Calendar
-                    mode="single"
-                    selected={field.value}
-                    onSelect={(date) => {
-                      field.onChange(date);
-                      setCheckOutOpen(false);
-                    }}
-                    disabled={{ before: checkIn ?? new Date() }}
-                  />
-                </PopoverContent>
-              </Popover>
+              <DatePicker
+                value={field.value}
+                open={checkOutOpen}
+                onOpenChange={setCheckOutOpen}
+                onSelect={(date) => {
+                  field.onChange(date);
+                  setCheckOutOpen(false);
+                }}
+                disabled={{ before: checkIn ?? new Date() }}
+              />
             )}
           />
         </FormField>

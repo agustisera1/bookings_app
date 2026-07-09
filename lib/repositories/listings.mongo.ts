@@ -17,22 +17,12 @@ export async function findListingById(id: string) {
   return { ...doc, _id: doc._id.toString() };
 }
 
-export async function findListings({
-  limit,
-  term,
-  host_id,
-}: {
-  limit?: number | null;
-  term?: string | null;
-  host_id?: string | null;
-}) {
+export async function findListings(
+  filtering: Filter<Document>,
+  limit?: number,
+) {
   const collection = await getCollection();
-  const filters: Filter<Document> = {};
-
-  if (host_id) filters["host_id"] = host_id;
-  if (term) filters["$text"] = { $search: term };
-
-  const cursor = collection.find(filters);
+  const cursor = collection.find(filtering);
   const docs = await (limit ? cursor.limit(limit) : cursor).toArray();
   return docs.map((doc) => ({ ...doc, _id: doc._id.toString() }));
 }

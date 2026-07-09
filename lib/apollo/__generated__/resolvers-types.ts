@@ -13,11 +13,16 @@ export type Scalars = {
 };
 
 export type FiltersInput = {
+  amenities?: InputMaybe<Array<Scalars['String']['input']>>;
   availabilityRange?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  bathrooms?: InputMaybe<Scalars['Int']['input']>;
+  beds?: InputMaybe<Scalars['Int']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   location?: InputMaybe<LocationInput>;
+  maxGuests?: InputMaybe<Scalars['Int']['input']>;
   own?: InputMaybe<Scalars['Boolean']['input']>;
-  priceRange?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  priceRange?: InputMaybe<Array<Scalars['Float']['input']>>;
+  propertyType?: InputMaybe<Scalars['String']['input']>;
   rating?: InputMaybe<Scalars['Float']['input']>;
   term?: InputMaybe<Scalars['String']['input']>;
   type?: InputMaybe<Scalars['String']['input']>;

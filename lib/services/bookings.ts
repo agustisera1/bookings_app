@@ -1,14 +1,15 @@
 "use server";
 import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
-import type { Booking } from "../types/booking";
 import * as db from "../postgres";
 import * as bookingsRepo from "../repositories/bookings.pg";
 import { revalidatePath } from "next/cache";
 
 export type { Booking, GuestBooking } from "../types/booking";
 
-export async function getUserBookings(): Promise<ServiceResult<Booking[]>> {
+export async function getUserBookings(): Promise<
+  ServiceResult<Awaited<ReturnType<typeof bookingsRepo.findBookingsByGuestId>>>
+> {
   const auth = await authorize("bookings:view-own-listings");
   if (!auth.ok) return auth;
 
@@ -18,7 +19,6 @@ export async function getUserBookings(): Promise<ServiceResult<Booking[]>> {
     } = auth;
 
     const bookings = await bookingsRepo.findBookingsByGuestId(userId);
-
     return { ok: true, data: bookings };
   } catch (error) {
     console.error("[getUserBookings]", error);

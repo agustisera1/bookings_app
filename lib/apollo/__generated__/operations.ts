@@ -4,11 +4,16 @@ type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type FiltersInput = {
+  amenities?: Array<string> | null | undefined;
   availabilityRange?: Array<string | null | undefined> | null | undefined;
+  bathrooms?: number | null | undefined;
+  beds?: number | null | undefined;
   limit?: number | null | undefined;
   location?: LocationInput | null | undefined;
+  maxGuests?: number | null | undefined;
   own?: boolean | null | undefined;
-  priceRange?: Array<number | null | undefined> | null | undefined;
+  priceRange?: Array<number> | null | undefined;
+  propertyType?: string | null | undefined;
   rating?: number | null | undefined;
   term?: string | null | undefined;
   type?: string | null | undefined;
