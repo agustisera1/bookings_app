@@ -12,6 +12,22 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type FiltersInput = {
+  amenities?: InputMaybe<Array<Scalars['String']['input']>>;
+  availabilityRange?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
+  bathrooms?: InputMaybe<Scalars['Int']['input']>;
+  beds?: InputMaybe<Scalars['Int']['input']>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  location?: InputMaybe<LocationInput>;
+  maxGuests?: InputMaybe<Scalars['Int']['input']>;
+  own?: InputMaybe<Scalars['Boolean']['input']>;
+  priceRange?: InputMaybe<Array<Scalars['Float']['input']>>;
+  propertyType?: InputMaybe<Scalars['String']['input']>;
+  rating?: InputMaybe<Scalars['Float']['input']>;
+  term?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type GuestBooking = {
   __typename?: 'GuestBooking';
   created_at?: Maybe<Scalars['String']['output']>;
@@ -28,11 +44,13 @@ export type GuestBooking = {
 export type Listing = {
   __typename?: 'Listing';
   _id: Scalars['String']['output'];
+  availabilityRange?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   description: Scalars['String']['output'];
   host_id: Scalars['String']['output'];
   location?: Maybe<Location>;
   photos?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   price: Scalars['Int']['output'];
+  rating?: Maybe<Scalars['Float']['output']>;
   rating_avg?: Maybe<Scalars['Float']['output']>;
   title: Scalars['String']['output'];
   type: Scalars['String']['output'];
@@ -44,6 +62,14 @@ export type Location = {
   city?: Maybe<Scalars['String']['output']>;
   coordinates?: Maybe<Array<Scalars['Float']['output']>>;
   country?: Maybe<Scalars['String']['output']>;
+};
+
+export type LocationInput = {
+  address?: InputMaybe<Scalars['String']['input']>;
+  city?: InputMaybe<Scalars['String']['input']>;
+  coordinates?: InputMaybe<Array<InputMaybe<Scalars['Float']['input']>>>;
+  country?: InputMaybe<Scalars['String']['input']>;
+  type?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type Query = {
@@ -60,9 +86,7 @@ export type QueryListingArgs = {
 
 
 export type QueryListingsArgs = {
-  limit?: InputMaybe<Scalars['Int']['input']>;
-  own?: InputMaybe<Scalars['Boolean']['input']>;
-  term?: InputMaybe<Scalars['String']['input']>;
+  filters?: InputMaybe<FiltersInput>;
 };
 
 export type WithIndex<TObject> = TObject & Record<string, any>;
@@ -140,12 +164,14 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
+  FiltersInput: FiltersInput;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   GuestBooking: ResolverTypeWrapper<GuestBooking>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   Listing: ResolverTypeWrapper<Listing>;
   Location: ResolverTypeWrapper<Location>;
+  LocationInput: LocationInput;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
 }>;
@@ -153,12 +179,14 @@ export type ResolversTypes = ResolversObject<{
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
   Boolean: Scalars['Boolean']['output'];
+  FiltersInput: FiltersInput;
   Float: Scalars['Float']['output'];
   GuestBooking: GuestBooking;
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   Listing: Listing;
   Location: Location;
+  LocationInput: LocationInput;
   Query: Record<PropertyKey, never>;
   String: Scalars['String']['output'];
 }>;
@@ -177,11 +205,13 @@ export type GuestBookingResolvers<ContextType = ApolloContext, ParentType extend
 
 export type ListingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Listing'] = ResolversParentTypes['Listing']> = ResolversObject<{
   _id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  availabilityRange?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   host_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   location?: Resolver<Maybe<ResolversTypes['Location']>, ParentType, ContextType>;
   photos?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   price?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+  rating?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   rating_avg?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;

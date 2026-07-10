@@ -1,10 +1,12 @@
-query GetListings($limit: Int = 30, $term: String, $own: Boolean) {
-  listings(limit: $limit, term: $term, own: $own) {
+query GetListings($filters: FiltersInput) {
+  listings(filters: $filters) {
     _id
     type
     price
     title
     description
+    rating
+    availabilityRange
     location {
       address
       city

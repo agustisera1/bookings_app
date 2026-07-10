@@ -15,6 +15,14 @@ export function formatPrice(
   );
 }
 
+/** Turns a snake_case slug into a human label: `aire_acondicionado` → `Aire Acondicionado`. */
+export function humanize(value: string) {
+  return value
+    .split("_")
+    .map((word) => word[0].toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 const TYPE_GRADIENTS: Record<string, string> = {
   accommodation: "from-violet-500 to-indigo-600",
   experience: "from-orange-400 to-pink-500",

@@ -7,17 +7,23 @@ import { deleteListingObject } from "../s3";
 import type {
   CreateListingInput,
   EditListingDocumentValues,
+  GetListingFilters,
   ListingDocumentValues,
 } from "../types/listing";
-import { DeleteResult } from "mongodb";
+import { DeleteResult, Document, Filter, ObjectId } from "mongodb";
 import { revalidatePath } from "next/cache";
 import { Booking } from "./bookings";
 import { Matcher } from "react-day-picker";
 import { getAvailabilityFromBookings } from "../dates";
+import {
+  FiltersInput,
+  InputMaybe,
+} from "../apollo/__generated__/resolvers-types";
 
 export type {
   CreateListingInput,
   ListingDocumentValues,
+  GetListingFilters,
 } from "../types/listing";
 
 function formatListingValues(
@@ -70,23 +76,64 @@ export async function getListing(
   }
 }
 
-export async function getListings(args: {
-  limit?: number | null;
-  term?: string | null;
-  own?: boolean;
-}): Promise<
+// export type RecordFilters = Pick<GetListingFilters, "availabilityRange">;
+export type GetListingsDocumentParams = Omit<
+  GetListingFilters,
+  "own" | "availabilityRange"
+> & { host_id?: string };
+
+export async function getListings(
+  filters: InputMaybe<FiltersInput> | null,
+): Promise<
   ServiceResult<Awaited<ReturnType<typeof listingsRepo.findListings>>>
 > {
   // TODO: Check for user authentication
-  const { own, ...rest } = args;
-  const params: Parameters<typeof listingsRepo.findListings>[0] = { ...rest };
-  if (own) {
+
+  let own;
+  const limit = filters?.limit || 12;
+
+  if (filters?.own) {
     const auth = await authorize("listings:create");
-    if (auth.ok) params["host_id"] = auth.data.id;
+    if (auth.ok) own = auth.data.id;
   }
 
+  const params: Filter<Document> = {
+    ...(filters && filters.term ? { $text: { $search: filters.term } } : {}),
+    ...(filters && filters.type ? { type: filters.type } : {}),
+    ...(filters && filters.own ? { host_id: own } : {}),
+    ...(filters && filters.rating
+      ? { rating_avg: { $gte: filters.rating || 3, $lte: 5 } }
+      : {}),
+    ...(filters && filters.priceRange
+      ? { price: { $gte: filters.priceRange[0], $lte: filters.priceRange[1] } }
+      : {}),
+    ...(filters?.propertyType
+      ? { "attributes.property_type": filters.propertyType }
+      : {}),
+    // Numeric attributes are "at least N" filters: a listing qualifies when it
+    // offers the requested capacity or more.
+    ...(filters?.beds ? { "attributes.beds": { $gte: filters.beds } } : {}),
+    ...(filters?.bathrooms
+      ? { "attributes.bathrooms": { $gte: filters.bathrooms } }
+      : {}),
+    ...(filters?.maxGuests
+      ? { "attributes.max_guests": { $gte: filters.maxGuests } }
+      : {}),
+    // Amenities match on "at least one" of the selected values ($in).
+    ...(filters?.amenities && filters.amenities.length > 0
+      ? { "attributes.amenities": { $in: filters.amenities } }
+      : {}),
+  };
+
   try {
-    const listings = await listingsRepo.findListings(params);
+    const [from, to] = filters?.availabilityRange ?? [];
+    if (from && to) {
+      const bookedIds = await bookingsRepo.findBookedListingIds(from, to);
+      if (bookedIds.length > 0)
+        params._id = { $nin: bookedIds.map((id) => new ObjectId(id)) };
+    }
+
+    const listings = await listingsRepo.findListings(params, limit);
     return { ok: true, data: listings };
   } catch (error) {
     console.error("[getListings]", error);

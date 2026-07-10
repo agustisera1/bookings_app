@@ -108,3 +108,23 @@ export async function updateBooking(
 
   return (result.rowCount ?? 0) > 0;
 }
+
+// Listing ids that are unavailable within [from, to]: any booking whose date
+// range overlaps the requested one. Mirrors the DB exclusion constraint in
+// 003_booking_no_overlap.sql — inclusive bounds (`[]`) and ignoring bookings
+// that no longer hold the slot (cancelled/rejected).
+export async function findBookedListingIds(
+  from: string,
+  to: string,
+): Promise<string[]> {
+  const result = await db.query<{ listing_id: string }>(
+    `
+    SELECT DISTINCT listing_id FROM bookings
+    WHERE status NOT IN ('cancelled', 'rejected')
+      AND tstzrange(start_date, end_date, '[]')
+          && tstzrange($1::timestamptz, $2::timestamptz, '[]')
+    `,
+    [from, to],
+  );
+  return result.rows.map((row) => row.listing_id);
+}

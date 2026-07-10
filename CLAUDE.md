@@ -81,6 +81,16 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 - **Tipos de dominio** → siempre de `lib/types/index.ts` o del service correspondiente
 - Si una función aparece en más de un componente → moverla a `/lib` antes de copiarla
 
+### Regla de cohesión y acoplamiento
+
+**Siempre que se agregue código, evaluar los agregados desde la perspectiva de alta cohesión y bajo acoplamiento.** Antes de dar por cerrado un cambio, preguntarse:
+
+- **Cohesión:** ¿las piezas que agregué que se referencian entre sí viven juntas? Un conjunto que forma una unidad conceptual (p. ej. un tipo + sus transiciones + sus defaults + sus derivados) debería estar en un mismo lugar, no disperso.
+- **Acoplamiento:** ¿estoy mezclando cosas con dependencias distintas? Lógica pura (sin React, sin DB, sin framework) no debería quedar enredada con rendering o I/O. Si una parte no depende de React y la otra es toda React, separarlas baja el acoplamiento y sube la testeabilidad.
+- **Dónde ubicarlo:** dominio/utils general → `/lib`; estado o lógica pura específica de una feature → módulo colocado al lado del componente (`.ts` sin `"use client"`), importado de vuelta por el componente. Ref: `components/search/filters-draft.ts` (modelo del draft) consumido por `components/search/filters.tsx` (rendering + wiring).
+
+Esta evaluación es parte de "terminar" un cambio, igual que pasar `tsc`/`lint`.
+
 ---
 
 ## Patrón de error handling en servicios
@@ -180,6 +190,7 @@ Regla de dependencia: `feature → common → ui`. Un primitivo de `common/` **n
 | `ConfirmDialog` | Confirmación de acción destructiva (encapsula open + pending + retry) | Client |
 | `EmptyState` | Estado vacío centrado (icono + título + descripción + acción) | ✓ |
 | `PriceLabel` | Precio "por noche" formateado con `formatPrice` | ✓ |
+| `DatePicker` | Campo de fecha única: trigger (ícono + fecha formateada) + `Calendar` en `Popover`. `open`/`onOpenChange` opcionales para coordinar pickers hermanos | Client |
 | `PageLayout` | Shell de página: heading grande sticky + contenido scrollable, con slots `actions`/`toolbar`. Es el borde de la ruta | ✓ |
 | `Section` | Encabezado (título + subtítulo) sobre un bloque **dentro** de una página, con `Card` opcional | ✓ |
 
@@ -194,6 +205,7 @@ Regla de dependencia: `feature → common → ui`. Un primitivo de `common/` **n
 | Área de texto | `Textarea` de `ui/` — nunca un `<textarea>` con clases crudas |
 | Precio "por noche" | `PriceLabel` — centraliza el formato en `formatPrice` |
 | Rating de estrellas | `StarRating` (display) / `StarRatingInput` (form, vía `Controller`) |
+| Campo de selección de fecha | `DatePicker` de `components/common/date-picker.tsx` — nunca rearmar `Popover` + `Calendar` + `datePickerTriggerClass` + trigger a mano. Refs: `bookings/booking-form.tsx`, `search/filters.tsx` |
 | Estado vacío con protagonismo | `EmptyState` centrado; para un status inline compacto dentro de una lista, un `<p className="text-sm text-muted-foreground">` es más liviano |
 | Acción destructiva fuera de un form | `ConfirmDialog` (ver "Patrón de acciones de confirmación") |
 | Icono como dato hacia un Client Component | Pasar el elemento renderizado (`icon={<X />}`), nunca la referencia al componente (rompe la serialización RSC) |
@@ -254,6 +266,7 @@ if (isSubmitSuccessful) return <SuccessUI />;
 | Estado de envío | `isSubmitting` de RHF — **no** `useState` |
 | Estado de éxito | `isSubmitSuccessful` de RHF — **no** `useState` |
 | Estado puramente visual (hover, popover open) | `useState` local — no pertenece a RHF |
+| Estado local estructurado/complejo (varios campos relacionados + múltiples transiciones; p. ej. un panel de filtros con draft) | `useReducer`, no una maraña de `useState`. Reducer + acciones + defaults a nivel módulo (pensar en colocarlo aparte), acciones semánticas, y el componente solo despacha intención. El estado puramente visual (open, valor vivo de un slider) queda como `useState`. Ref: `components/search/filters.tsx` |
 | Mensajes de error | prop `error` de `FormField`, o `FieldError` suelto — nunca `<p className="text-xs text-destructive">` a mano |
 | Atributo `required` en inputs | Omitir — Zod ya lo valida |
 
@@ -403,4 +416,30 @@ Browser → cookies → Next.js (AsyncLocalStorage store A)
 ```
 
 **Configurado en:** `lib/apollo/client.ts` (reenvío de cookies) y `lib/authorize.ts` (verificación de permisos).
+
+---
+
+### GraphQL — de dónde importar los tipos generados
+
+`pnpm codegen` produce **dos** archivos en `lib/apollo/__generated__/`, con responsabilidades distintas. La configuración vive en `codegen.ts`:
+
+| Archivo | Plugins | Contiene | Fuente |
+|---------|---------|----------|--------|
+| `resolvers-types.ts` | `typescript` + `typescript-resolvers` | Tipos del schema (outputs **e inputs**) y las firmas `*Resolvers` | `schema.graphql` |
+| `operations.ts` | `typescript-operations` + `typed-document-node` | Tipos por operación (`*Query`, `*QueryVariables`) y los `TypedDocumentNode` (`*Document`) | documentos `.graphql` |
+
+**Regla de import — "operación → `operations.ts`; schema/inputs → `resolvers-types.ts`; dominio → `lib/types`":**
+
+| Necesitás… | Importá desde | Ejemplos |
+|------------|---------------|----------|
+| Resultado de una query / sus variables / el document | `__generated__/operations.ts` | `GetListingsQuery`, `GetListingsQueryVariables`, `GetListingsDocument` |
+| Tipos del schema (outputs) e **inputs** | `__generated__/resolvers-types.ts` | `Listing`, `Location`, `GuestBooking`, `FiltersInput`, `LocationInput` |
+| Resolvers del server GraphQL | `__generated__/resolvers-types.ts` | `QueryResolvers`, `ListingResolvers` |
+| Tipo de dominio de la app (no-GraphQL) | `lib/types/*` o el service | `Booking`, `Review`, `ServiceResult` |
+
+**Reglas:**
+- El bloque de `operations.ts` **no** incluye el plugin `typescript` — si se agrega, re-emite los input types (usados como variables) y colisionan con los del propio archivo → `TS2300: Duplicate identifier`. Los inputs se generan una sola vez ahí, vía `typescript-operations`.
+- Los input types (`FiltersInput`, `LocationInput`) existen en **ambos** archivos. Fuente canónica: **`resolvers-types.ts`** (reflejo directo del schema). Así los imports de inputs no dependen de cómo se generan las operaciones.
+- Los documentos `.graphql` bajo `lib/apollo/queries/**` contienen **solo** operaciones (`query`/`mutation`/`fragment`). Nunca `type`/`input`/`enum` — esos viven únicamente en `schema.graphql`. Meter definiciones de schema en un documento las duplica en `operations.ts`.
+- Para modelar dominio, preferir `lib/types/*` sobre los tipos generados de GraphQL cuando ya existe el equivalente (regla DRY de `/lib`).
 
