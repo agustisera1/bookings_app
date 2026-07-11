@@ -79,6 +79,13 @@ worker rutea con un switch sobre ese campo. El nombre de job de BullMQ (`queue.a
 `processorKey` se tipa como **literal** (`"notify-booking"`), no como `string`, para que el switch del
 worker sea exhaustivo y TypeScript avise si falta un caso.
 
+**`processorKey` vs. una variación del mismo trabajo.** El `processorKey` distingue *trabajos distintos*
+(mandar un mail vs. sincronizar a Elasticsearch). Variaciones del **mismo** trabajo — misma plantilla,
+distinta copy según el estado — **no** son un `processorKey` nuevo: van con un campo discriminante en el
+payload. Ej.: los mails `pending` / `approved` / `rejected` / `updated` son todos el mismo
+`notify-booking` con distinto `type`, no cuatro processors. Un `processorKey` nuevo solo se justifica si el
+worker haría algo estructuralmente distinto.
+
 ---
 
 ## Cómo se ve hoy (referencia canónica: email de reserva)
@@ -89,8 +96,11 @@ worker sea exhaustivo y TypeScript avise si falta un caso.
 export const emailQueue = new Queue("emails", { connection: getConnectionParams() });
 
 // El contrato: mínimo, JSON-safe, sin secretos.
+// Un solo processorKey cubre todos los mails de reserva; `type` elige la copy.
+export type NotificationType = "pending" | "approved" | "rejected" | "updated";
 export type BookingEmailPayload = {
   processorKey: "notify-booking";
+  type: NotificationType;
   guest: { email: string };
   booking: { id: string; checkIn: string; checkOut: string; guests: number; totalPrice: number };
   host: { name: string };

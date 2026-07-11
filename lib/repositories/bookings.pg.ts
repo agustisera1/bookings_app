@@ -62,6 +62,16 @@ export async function deleteBooking(
   return result.rows[0]?.id ?? null;
 }
 
+export async function getBookingById(
+  bookingId: string,
+): Promise<Booking | null> {
+  const result = await db.query<Booking>(
+    `SELECT * FROM bookings WHERE id = $1`,
+    [bookingId],
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function getBookingsByListingId(
   listing_id: string,
 ): Promise<Booking[]> {

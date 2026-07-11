@@ -6,9 +6,15 @@ import * as bookingsRepo from "../repositories/bookings.pg";
 import * as listingsRepo from "../repositories/listings.mongo";
 import * as usersRepo from "../repositories/users.pg";
 import { revalidatePath } from "next/cache";
-import { emailQueue, toBookingEmailPayload } from "../events";
+import {
+  emailQueue,
+  pgBookingToEmailBooking,
+  toBookingEmailPayload,
+  type NotificationType,
+} from "../events";
 import type { User } from "../types/user";
 import type { ListingDocumentValues } from "../types/listing";
+import type { Booking } from "../types/booking";
 import { Job } from "bullmq";
 
 export type { Booking, GuestBooking } from "../types/booking";
@@ -73,10 +79,9 @@ export async function createBooking(
       };
 
     const listing = await listingsRepo.findListingById(params.listingId);
-    const host = listing
-      ? await usersRepo.findUserById(listing.host_id)
-      : null;
+    const host = listing ? await usersRepo.findUserById(listing.host_id) : null;
     await emailBookingDetails({
+      type: "pending",
       guestEmail: auth.data.email,
       booking: {
         id: booking.id,
@@ -161,6 +166,9 @@ export async function acceptBooking(
       };
     }
 
+    const booking = await bookingsRepo.getBookingById(bookingId);
+    if (booking) await notifyBookingStatusChange(booking, "approved");
+
     revalidatePath("/listings/[id]", "page");
     revalidatePath("/listings/mine");
     return {
@@ -222,6 +230,9 @@ export async function rejectBooking(
       };
     }
 
+    const booking = await bookingsRepo.getBookingById(bookingId);
+    if (booking) await notifyBookingStatusChange(booking, "rejected");
+
     revalidatePath("/listings/[id]", "page");
     revalidatePath("/listings/mine");
     return {
@@ -239,17 +250,24 @@ export async function rejectBooking(
   }
 }
 
-type EmailBookingParams = {
-  guestEmail: string;
-  booking: { id: string; checkIn: Date; checkOut: Date; guests: number; totalPrice: number };
+// Mirrors the mapper's input (so `booking` accepts either `Date` from the
+// create path or ISO strings from a persisted row) but lets host/listing be
+// null: emailBookingDetails guards on that before enqueueing.
+type EmailBookingParams = Omit<
+  Parameters<typeof toBookingEmailPayload>[0],
+  "host" | "listing"
+> & {
   host: User | null;
   listing: ListingDocumentValues | null;
 };
 
+// Single enqueue point for every booking email. Building the payload and the
+// `queue.add` live together so the try/catch that turns an ACK failure into a
+// ServiceResult is written once, not per notification type.
 async function emailBookingDetails(
   bookingDetails: EmailBookingParams,
 ): Promise<ServiceResult<Job>> {
-  const { guestEmail, booking, host, listing } = bookingDetails;
+  const { type, guestEmail, booking, host, listing } = bookingDetails;
 
   // The email needs a host name and listing details; without them there is
   // nothing worth rendering, so skip the dispatch instead of enqueueing a
@@ -266,7 +284,7 @@ async function emailBookingDetails(
   try {
     const job = await emailQueue.add(
       "emails",
-      toBookingEmailPayload({ guestEmail, booking, host, listing }),
+      toBookingEmailPayload({ type, guestEmail, booking, host, listing }),
     );
     return {
       ok: true,
@@ -280,4 +298,32 @@ async function emailBookingDetails(
       code: "UNEXPECTED",
     };
   }
+}
+
+// Status-change path (approved / rejected / updated): starts from a persisted
+// booking row and rehydrates the guest, listing and host the email needs before
+// delegating to the single enqueue point above. Fire-and-forget relative to the
+// mutation's happy path, so it never throws — it logs and returns.
+async function notifyBookingStatusChange(
+  booking: Booking,
+  type: NotificationType,
+): Promise<void> {
+  const [guest, listing] = await Promise.all([
+    usersRepo.findUserById(booking.guest_id),
+    listingsRepo.findListingById(booking.listing_id),
+  ]);
+  const host = listing ? await usersRepo.findUserById(listing.host_id) : null;
+
+  if (!guest) {
+    console.error("[notifyBookingStatusChange]: missing guest", booking.id);
+    return;
+  }
+
+  await emailBookingDetails({
+    type,
+    guestEmail: guest.email,
+    booking: pgBookingToEmailBooking(booking),
+    host,
+    listing,
+  });
 }
