@@ -5,6 +5,7 @@ query GetListings($filters: FiltersInput) {
     price
     title
     description
+    photos
     rating
     availabilityRange
     location {

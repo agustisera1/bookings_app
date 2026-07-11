@@ -3,7 +3,13 @@ import { authorize } from "../authorize";
 import type { ServiceResult } from "../types";
 import * as db from "../postgres";
 import * as bookingsRepo from "../repositories/bookings.pg";
+import * as listingsRepo from "../repositories/listings.mongo";
+import * as usersRepo from "../repositories/users.pg";
 import { revalidatePath } from "next/cache";
+import { emailQueue, toBookingEmailPayload } from "../events";
+import type { User } from "../types/user";
+import type { ListingDocumentValues } from "../types/listing";
+import { Job } from "bullmq";
 
 export type { Booking, GuestBooking } from "../types/booking";
 
@@ -30,13 +36,17 @@ export async function getUserBookings(): Promise<
   }
 }
 
-export async function createBooking(params: {
+type CreateBookingParams = {
   checkIn: Date;
   checkOut: Date;
   guests: number;
   listingId: string;
   totalPrice: number;
-}): Promise<ServiceResult> {
+};
+
+export async function createBooking(
+  params: CreateBookingParams,
+): Promise<ServiceResult> {
   const auth = await authorize("bookings:create");
   if (!auth.ok) return auth;
 
@@ -53,12 +63,31 @@ export async function createBooking(params: {
       guests: params.guests,
     });
 
+    // 3. Queue notification and email events
+
     if (!booking)
       return {
         ok: false,
         error: "Could not create the booking",
         code: "UNEXPECTED",
       };
+
+    const listing = await listingsRepo.findListingById(params.listingId);
+    const host = listing
+      ? await usersRepo.findUserById(listing.host_id)
+      : null;
+    await emailBookingDetails({
+      guestEmail: auth.data.email,
+      booking: {
+        id: booking.id,
+        checkIn: params.checkIn,
+        checkOut: params.checkOut,
+        guests: params.guests,
+        totalPrice: params.totalPrice,
+      },
+      host,
+      listing,
+    });
 
     return { ok: true, data: booking };
   } catch (error) {
@@ -206,6 +235,49 @@ export async function rejectBooking(
       error: "Could not reject the booking",
       code,
       ok: false,
+    };
+  }
+}
+
+type EmailBookingParams = {
+  guestEmail: string;
+  booking: { id: string; checkIn: Date; checkOut: Date; guests: number; totalPrice: number };
+  host: User | null;
+  listing: ListingDocumentValues | null;
+};
+
+async function emailBookingDetails(
+  bookingDetails: EmailBookingParams,
+): Promise<ServiceResult<Job>> {
+  const { guestEmail, booking, host, listing } = bookingDetails;
+
+  // The email needs a host name and listing details; without them there is
+  // nothing worth rendering, so skip the dispatch instead of enqueueing a
+  // broken job.
+  if (!host || !listing) {
+    console.error("[emailBookingDetails]: missing host or listing", booking.id);
+    return {
+      ok: false,
+      error: "Could not dispatch email notification",
+      code: "NOT_FOUND",
+    };
+  }
+
+  try {
+    const job = await emailQueue.add(
+      "emails",
+      toBookingEmailPayload({ guestEmail, booking, host, listing }),
+    );
+    return {
+      ok: true,
+      data: job,
+    };
+  } catch (error) {
+    console.error("[emailBookingDetails]:", error);
+    return {
+      ok: false,
+      error: "ACK Failed when dispatching email notification",
+      code: "UNEXPECTED",
     };
   }
 }

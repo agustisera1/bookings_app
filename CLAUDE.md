@@ -72,6 +72,9 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/mongo.ts` | Cliente MongoDB |
 | `lib/permissions.ts` | Roles, permisos y helpers de autorización |
 | `lib/jwt.ts` | Sign/verify de tokens |
+| `lib/events.ts` | Colas BullMQ: conexión, `*Queue`, contratos `*Payload` y mappers `to*Payload` |
+
+> **Colas / workers (BullMQ + Redis):** antes de agregar un worker, job processor o payload de cola, leer `docs/bullmq-queues.md`. Define el contrato del payload, las convenciones (`processorKey`, fechas ISO, sin secretos) y el paso a paso en el producer y en el worker. El productor encola desde `lib/services/*`; el contrato se replica a mano en el repo del worker.
 
 ### Regla DRY
 
@@ -90,6 +93,27 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 - **Dónde ubicarlo:** dominio/utils general → `/lib`; estado o lógica pura específica de una feature → módulo colocado al lado del componente (`.ts` sin `"use client"`), importado de vuelta por el componente. Ref: `components/search/filters-draft.ts` (modelo del draft) consumido por `components/search/filters.tsx` (rendering + wiring).
 
 Esta evaluación es parte de "terminar" un cambio, igual que pasar `tsc`/`lint`.
+
+### Regla de tipos — revisar SIEMPRE antes de escribir uno nuevo
+
+**Antes de declarar cualquier `type`/`interface` nuevo — sea para una feature o un ajuste — revisar primero las bibliotecas de tipos existentes y reutilizar/derivar en vez de re-inlinear.** Escribir un tipo desde cero es la última opción, no la primera. Esta verificación es obligatoria y precede a escribir el tipo, igual que buscar en `/lib` antes de escribir una utilidad.
+
+**Dónde buscar antes (en este orden):**
+
+| Fuente | Qué vive ahí | Ejemplos |
+|--------|--------------|----------|
+| `lib/types/*` | Tipos de dominio (entidades, `ServiceResult`, `ErrorCode`) | `User`, `Booking`, `ListingDocumentValues` |
+| `lib/events.ts` | Contratos de cola `*Payload` y sus mappers `to*Payload` | `BookingEmailPayload`, `toBookingEmailPayload` |
+| El service correspondiente | Tipos de parámetros y re-exports del dominio | `CreateBookingParams` |
+| `__generated__/resolvers-types.ts` / `operations.ts` | Tipos de schema/inputs y de operaciones GraphQL | `FiltersInput`, `GetListingsQuery` |
+
+**Cómo reutilizar en vez de duplicar:**
+
+- Si un tipo nuevo comparte forma con uno existente, **derivarlo** con `Pick`/`Omit`/`Partial`/`&` o `ReturnType`, no re-escribir los campos a mano. Un sub-shape que ya existe (p. ej. `BookingEmailPayload["booking"]`) se referencia, no se re-inlina.
+- Si la misma forma aparece en más de un módulo → extraerla a su lugar canónico (`lib/types/*` si es dominio; `lib/events.ts` si es contrato de cola; al lado del componente si es estado de feature) **antes** de copiarla. Es la regla DRY de `/lib` aplicada a los tipos.
+- Un tipo va donde ya viven sus pares conceptuales (cohesión): dominio → `lib/types/*`; wire contract + mapper → `lib/events.ts`; params de un service → el propio service; estado puro de feature → módulo colocado junto al componente.
+
+> **Anti-patrón concreto (a no repetir):** re-inlinear el shape `{ id, checkIn, checkOut, guests, totalPrice }` en tres lugares (el `*Payload`, el input del mapper y el param del helper) en vez de definirlo una vez y derivar las variantes. Si estás por escribir una forma que "se parece" a otra, casi siempre corresponde derivar.
 
 ---
 

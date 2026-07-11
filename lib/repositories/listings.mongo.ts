@@ -19,7 +19,7 @@ export async function findListingById(id: string) {
 
 export async function findListings(
   filtering: Filter<Document>,
-  limit?: number,
+  limit?: number | null,
 ) {
   const collection = await getCollection();
   const cursor = collection.find(filtering);

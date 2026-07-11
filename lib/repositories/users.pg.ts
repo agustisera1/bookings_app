@@ -9,6 +9,14 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   return result.rows[0] ?? null;
 }
 
+export async function findUserById(id: string): Promise<User | null> {
+  const result = await db.query<User>(
+    `SELECT * FROM users WHERE id = $1`,
+    [id],
+  );
+  return result.rows[0] ?? null;
+}
+
 export async function createUser(
   email: string,
   passwordHash: string,

@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { PriceLabel } from "@/components/common/price-label";
 import { listingTypeGradient } from "@/lib/utils";
 import { MapPin } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 
 export async function Listings({
@@ -15,15 +16,28 @@ export async function Listings({
     <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {listings?.map((listing) => {
         const gradient = listingTypeGradient(listing.type);
+        const cover = listing.photos?.[0];
 
         return (
           <li key={listing._id}>
             <Link href={`/listings/${listing._id}`}>
             <Card className="group overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer p-0">
-              <div
-                className={`h-40 bg-gradient-to-br ${gradient} flex items-end p-3`}
-              >
-                <Badge className="bg-black/20 text-white/90 backdrop-blur-sm hover:bg-black/30 uppercase tracking-widest text-[10px]">
+              <div className="relative h-40 flex items-end p-3 overflow-hidden">
+                {cover ? (
+                  <Image
+                    src={cover}
+                    alt={listing.title}
+                    fill
+                    unoptimized
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div
+                    className={`absolute inset-0 bg-gradient-to-br ${gradient}`}
+                  />
+                )}
+                <Badge className="relative bg-black/20 text-white/90 backdrop-blur-sm hover:bg-black/30 uppercase tracking-widest text-[10px]">
                   {listing.type}
                 </Badge>
               </div>

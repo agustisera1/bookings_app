@@ -14,8 +14,19 @@ import { getPermissionsForRoles, getUserRoles } from "../permissions";
 import * as usersRepo from "../repositories/users.pg";
 import * as sessionsRepo from "../repositories/sessions.pg";
 
-export type { User, PublicUser, SessionRecord, CurrentUser } from "../types/user";
-import type { User, PublicUser, CurrentUser, SessionRecord } from "../types/user";
+export type {
+  User,
+  PublicUser,
+  SessionRecord,
+  CurrentUser,
+} from "../types/user";
+import type {
+  User,
+  PublicUser,
+  CurrentUser,
+  SessionRecord,
+} from "../types/user";
+import { emailQueue } from "../events";
 
 const SALT_ROUNDS = 10;
 
@@ -143,6 +154,7 @@ export async function createUser(
 
   try {
     const user = await usersRepo.createUser(email, password_hash, name);
+    await welcomeUser(user);
     return { ok: true, data: user };
   } catch (error) {
     const code = db.pgErrorToCode(error);
@@ -250,6 +262,30 @@ export async function logoutUser(): Promise<ServiceResult> {
     return {
       ok: false,
       error: "Something happened while removing the user session",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
+// WIP: welcome-email dispatch is not finished. It enqueues the raw
+// createUser row without a `processorKey` or a `WelcomeEmailPayload` mapper, so
+// the worker's `switch (processorKey)` router can't handle it yet. Before
+// shipping: define `WelcomeEmailPayload` + `toWelcomeEmailPayload` in
+// `lib/events.ts` (see `BookingEmailPayload`) and enqueue the mapped payload.
+async function welcomeUser(
+  user: Awaited<ReturnType<typeof usersRepo.createUser>>,
+): Promise<ServiceResult> {
+  try {
+    const job = await emailQueue.add("emails", user);
+    return {
+      ok: true,
+      data: job,
+    };
+  } catch (error) {
+    console.error("[welcomeUser]:", error);
+    return {
+      ok: false,
+      error: "ACK Failed when dispatching email notification",
       code: "UNEXPECTED",
     };
   }
