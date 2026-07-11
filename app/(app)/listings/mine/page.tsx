@@ -1,24 +1,33 @@
 import { getCurrentUser } from "@/lib/services/auth";
 import { forbidden } from "next/navigation";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, SearchX } from "lucide-react";
+import { Suspense } from "react";
 import { query } from "@/lib/apollo/client";
 import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
+import { parseListingFilters, type ListingSearchParams } from "@/lib/listings";
 import { ListingsGrid } from "@/components/listings/listings-grid";
+import { Search } from "@/components/search/search";
 import { PageLayout } from "@/components/common/page-layout";
 import { EmptyState } from "@/components/common/empty-state";
 import { Button } from "@/components/ui/button";
 
-export default async function MyListingsPage() {
+export default async function MyListingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<ListingSearchParams>;
+}) {
   const user = await getCurrentUser();
   if (!user?.is_host) forbidden();
 
+  const params = await searchParams;
+  const hasFilters = Object.keys(params).length > 0;
   const {
     data: { listings },
     error,
   } = await query({
     query: GetListingsDocument,
-    variables: { filters: { own: true } },
+    variables: { filters: { ...parseListingFilters(params), own: true } },
   });
 
   return (
@@ -31,6 +40,11 @@ export default async function MyListingsPage() {
           New listing
         </Button>
       }
+      toolbar={
+        <Suspense>
+          <Search />
+        </Suspense>
+      }
     >
       {error ? (
         <p className="text-sm text-muted-foreground">
@@ -38,6 +52,13 @@ export default async function MyListingsPage() {
         </p>
       ) : listings && listings.length > 0 ? (
         <ListingsGrid listings={listings} />
+      ) : hasFilters ? (
+        <EmptyState
+          className="py-16"
+          icon={<SearchX />}
+          title="No listings match your filters"
+          description="Try adjusting or clearing the filters to see more of your listings."
+        />
       ) : (
         <EmptyState
           className="py-16"
