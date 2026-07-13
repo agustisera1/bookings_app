@@ -22,6 +22,7 @@ type Listing {
 type GuestBooking {
   type: String
   title: String
+  photos: [String]
   created_at: String
   start_date: String
   end_date: String

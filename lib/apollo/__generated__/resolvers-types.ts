@@ -34,6 +34,7 @@ export type GuestBooking = {
   end_date?: Maybe<Scalars['String']['output']>;
   guests?: Maybe<Scalars['Int']['output']>;
   id?: Maybe<Scalars['ID']['output']>;
+  photos?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   start_date?: Maybe<Scalars['String']['output']>;
   status?: Maybe<Scalars['String']['output']>;
   title?: Maybe<Scalars['String']['output']>;
@@ -196,6 +197,7 @@ export type GuestBookingResolvers<ContextType = ApolloContext, ParentType extend
   end_date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guests?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
   id?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
+  photos?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   start_date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

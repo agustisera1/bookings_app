@@ -2,6 +2,7 @@ query GetUserBookings {
   guestBookings {
     type
     title
+    photos
     created_at
     start_date
     end_date

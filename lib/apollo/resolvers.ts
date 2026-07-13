@@ -47,6 +47,7 @@ export const resolvers: Resolvers = {
             return {
               type: listing.type,
               title: listing.title,
+              photos: listing.photos,
               created_at: booking.created_at,
               start_date: booking.start_date,
               end_date: booking.end_date,

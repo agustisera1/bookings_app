@@ -6,7 +6,7 @@ import { Suspense } from "react";
 import { query } from "@/lib/apollo/client";
 import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
 import { parseListingFilters, type ListingSearchParams } from "@/lib/listings";
-import { ListingsGrid } from "@/components/listings/listings-grid";
+import { Listings } from "@/components/listings/listings";
 import { Search } from "@/components/search/search";
 import { PageLayout } from "@/components/common/page-layout";
 import { EmptyState } from "@/components/common/empty-state";
@@ -34,12 +34,7 @@ export default async function MyListingsPage({
     <PageLayout
       title="My listings"
       subtitle="Manage the places, experiences, and gear you host."
-      actions={
-        <Button nativeButton={false} render={<Link href="/listings/new" />}>
-          <Plus />
-          New listing
-        </Button>
-      }
+      inlineToolbar
       toolbar={
         <Suspense>
           <Search />
@@ -51,7 +46,7 @@ export default async function MyListingsPage({
           Could not load your listings. Please try again.
         </p>
       ) : listings && listings.length > 0 ? (
-        <ListingsGrid listings={listings} />
+        <Listings listings={listings} />
       ) : hasFilters ? (
         <EmptyState
           className="py-16"

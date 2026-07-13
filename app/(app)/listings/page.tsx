@@ -30,6 +30,7 @@ export default async function ListingsPage({
     <PageLayout
       title="Explore listings"
       subtitle="Find your next stay, experience, or gear to rent."
+      inlineToolbar
       toolbar={
         <Suspense>
           <Search />
