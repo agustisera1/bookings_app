@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Compass, LayoutGrid } from "lucide-react";
+import { Bell, CalendarDays, Circle, Compass, LayoutGrid } from "lucide-react";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -11,14 +11,25 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
-export function SidebarNav({ isHost }: { isHost: boolean }) {
+export function SidebarNav({
+  isHost,
+  notifications,
+}: {
+  isHost: boolean;
+  notifications: number;
+}) {
   const pathname = usePathname();
-
   const navItems = [
     isHost
       ? { title: "My listings", href: "/listings/mine", icon: LayoutGrid }
       : { title: "My bookings", href: "/bookings", icon: CalendarDays },
     { title: "Explore", href: "/listings", icon: Compass },
+    {
+      title: "Notifications",
+      href: "/notifications",
+      icon: Bell,
+      notifications,
+    },
   ];
 
   function isActive(href: string) {
@@ -39,11 +50,14 @@ export function SidebarNav({ isHost }: { isHost: boolean }) {
       <SidebarGroupLabel>Menu</SidebarGroupLabel>
       <SidebarMenu>
         {navItems.map((item) => (
-          <SidebarMenuItem key={item.href}>
+          <SidebarMenuItem key={item.href} className="relative">
+            {item.notifications ? (
+              <Circle className="absolute right-2 top-1/2 z-10 size-2.5 -translate-y-1/2 fill-red-500 text-red-500" />
+            ) : null}
             <SidebarMenuButton
               isActive={isActive(item.href)}
-              className="gap-2.5 hover:bg-success/10 hover:text-foreground dark:hover:bg-success/20 data-active:bg-success/15 dark:data-active:bg-success/25"
               render={<Link href={item.href} />}
+              className="data-active:hover:bg-success/10 data-active:hover:text-success dark:data-active:hover:bg-success/20"
             >
               <item.icon />
               <span>{item.title}</span>

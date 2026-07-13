@@ -1,12 +1,18 @@
-import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+} from "@/components/ui/sidebar";
 import { getCurrentUser } from "@/lib/services/auth";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserFooter } from "./sidebar-user-footer";
 import Link from "next/link";
 import { Tent } from "lucide-react";
+import { getNotificationsCount } from "@/lib/services/notifications";
 
 export async function AppSidebar() {
   const user = await getCurrentUser();
+  const notifications = await getNotificationsCount();
 
   return (
     <Sidebar>
@@ -24,7 +30,10 @@ export async function AppSidebar() {
         </Link>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarNav isHost={!!user?.is_host} />
+        <SidebarNav
+          notifications={notifications.ok ? notifications.data : 0}
+          isHost={!!user?.is_host}
+        />
       </SidebarContent>
       {user && <SidebarUserFooter name={user.name} email={user.email} />}
     </Sidebar>

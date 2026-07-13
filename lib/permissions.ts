@@ -11,7 +11,6 @@ export type Permission = {
   label: string;
   description: string;
   /** Requirement this permission traces back to, e.g. "RF-08". */
-  ref: string;
   /** Set when the permission only applies from a later project phase. */
   phase?: string;
 };
@@ -19,99 +18,97 @@ export type Permission = {
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
   guest: [
     {
+      key: "notifications:view",
+      label: "Recuperar las notificaciones del usuario",
+      description:
+        "Obtiene las notificaciones asociadas al usuario actual que está logueado en la app",
+    },
+    {
       key: "listings:search",
       label: "Buscar y filtrar alojamientos",
       description: "Buscar listados por ubicación, rango de fechas y precio.",
-      ref: "RF-07",
     },
     {
       key: "listings:view",
       label: "Ver detalle de un listado",
       description:
         "Consultar descripción, fotos y calendario de disponibilidad.",
-      ref: "RF-06",
     },
     {
       key: "bookings:create",
       label: "Reservar un listado",
       description: "Crear una reserva para un rango de fechas disponible.",
-      ref: "RF-08",
     },
     {
       key: "bookings:cancel-own",
       label: "Cancelar su propia reserva",
       description:
         "Cancelar una reserva propia según la política de cancelación del listado.",
-      ref: "RF-11",
     },
     {
       key: "reviews:create",
       label: "Dejar una reseña",
       description: "Calificar (1-5) y comentar una estadía ya finalizada.",
-      ref: "RF-12",
     },
     {
       key: "reviews:list",
       label: "Ver las reseñas de un listing",
       description: "Recuperar el listado de reseñas de un alojamiento o evento",
-      ref: "RF-XX",
     },
     {
       key: "bookings:view-own-listings",
       label: "Ver el listado de bookings realizados por el usuario",
       description:
         "Recupera el listado de reservas hechos por el guest, junto con la información de cada listing",
-      ref: "RF-XX",
     },
   ],
   host: [
+    {
+      key: "notifications:view",
+      label: "Recuperar las notificaciones del usuario",
+      description:
+        "Obtiene las notificaciones asociadas al usuario actual que está logueado en la app",
+    },
     {
       key: "bookings:manage",
       label: "Acepta o rechaza bookings",
       description:
         "Acepta o rechaza las solicitudes creadas por guests a una de sus listings",
-      ref: "RF-XX",
     },
     {
       key: "reviews:list",
       label: "Ver las reseñas de un listing",
       description: "Recuperar el listado de reseñas de un alojamiento o evento",
-      ref: "RF-XX",
     },
     {
       key: "listings:create",
       label: "Crear listados",
       description:
         "Publicar un nuevo alojamiento: título, precio, ubicación, capacidad, fotos.",
-      ref: "RF-04",
     },
     {
       key: "listings:manage-own",
       label: "Editar o eliminar sus propios listados",
       description:
         "Modificar o eliminar únicamente los listados de su propiedad.",
-      ref: "RF-05",
     },
     {
       key: "bookings:view-own-listings",
       label: "Ver reservas de sus listados",
       description:
         "Consultar las reservas recibidas sobre los alojamientos que administra.",
-      ref: "RF-10",
     },
     {
       key: "reviews:reply",
       label: "Responder reseñas",
       description:
         "Responder públicamente a una reseña recibida en sus listados.",
-      ref: "RF-13",
     },
     {
       key: "listings:create-extended",
       label: "Crear listados de experiencia o equipamiento",
       description:
         "Publicar listados con atributos propios (duración, idioma, depósito, etc).",
-      ref: "RF-14",
       phase: "Fase 2+",
     },
   ],
@@ -121,28 +118,24 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
       label: "Acceder al panel de administración",
       description:
         "Entrar a la sección administrativa, restringida al rol admin.",
-      ref: "RF-03",
     },
     {
       key: "admin:moderate-content",
       label: "Moderar contenido",
       description:
         "Revisar, ocultar o eliminar listados y reseñas que infrinjan las normas.",
-      ref: "RNF-05",
     },
     {
       key: "admin:manage-disputes",
       label: "Gestionar disputas",
       description:
         "Mediar y resolver disputas entre guests y hosts sobre una reserva.",
-      ref: "RNF-05",
     },
     {
       key: "admin:global-metrics",
       label: "Acceder a métricas globales",
       description:
         "Ver indicadores agregados de toda la plataforma (reservas, listados, usuarios).",
-      ref: "RF-03",
     },
   ],
 };
