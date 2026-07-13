@@ -47,6 +47,7 @@ export type BookingEmailPayload = {
     checkOut: string;
     guests: number;
     totalPrice: number;
+    statusReason?: string;
   };
   host: { name: string };
   listing: {
@@ -93,6 +94,25 @@ export function toBookingEmailPayload(input: {
   };
 }
 
+// Welcome email sent once on sign-up. Minimal by the payload rules: the worker
+// template only greets by email, so that's the only field that crosses the
+// queue. Mirrored in the worker as `GreetingPayload` (src/lib.ts).
+export type WelcomeEmailPayload = {
+  processorKey: "greet-user";
+  email: string;
+};
+
+// Narrows the freshly-created user row down to the wire contract above. Pure and
+// side-effect free: the single place that decides which fields the email needs.
+export function toWelcomeEmailPayload(input: {
+  email: string;
+}): WelcomeEmailPayload {
+  return {
+    processorKey: "greet-user",
+    email: input.email,
+  };
+}
+
 // Adapts a persisted PG booking row to the queue's booking sub-shape: string
 // timestamps and a numeric-string `total_price` become the JSON-safe fields the
 // email template expects. Derives from `BookingEmailPayload["booking"]` so the
@@ -106,5 +126,6 @@ export function pgBookingToEmailBooking(
     checkOut: new Date(booking.end_date).toISOString(),
     guests: booking.guests,
     totalPrice: Number(booking.total_price),
+    statusReason: booking.status_reason || undefined,
   };
 }

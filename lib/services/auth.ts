@@ -26,7 +26,7 @@ import type {
   CurrentUser,
   SessionRecord,
 } from "../types/user";
-import { emailQueue } from "../events";
+import { emailQueue, toWelcomeEmailPayload } from "../events";
 
 const SALT_ROUNDS = 10;
 
@@ -154,7 +154,7 @@ export async function createUser(
 
   try {
     const user = await usersRepo.createUser(email, password_hash, name);
-    await welcomeUser(user);
+    await greetUser(user);
     return { ok: true, data: user };
   } catch (error) {
     const code = db.pgErrorToCode(error);
@@ -267,22 +267,21 @@ export async function logoutUser(): Promise<ServiceResult> {
   }
 }
 
-// WIP: welcome-email dispatch is not finished. It enqueues the raw
-// createUser row without a `processorKey` or a `WelcomeEmailPayload` mapper, so
-// the worker's `switch (processorKey)` router can't handle it yet. Before
-// shipping: define `WelcomeEmailPayload` + `toWelcomeEmailPayload` in
-// `lib/events.ts` (see `BookingEmailPayload`) and enqueue the mapped payload.
-async function welcomeUser(
+// Fire-and-forget welcome email on sign-up. Enqueues the narrowed
+// `WelcomeEmailPayload` (via the mapper, single narrowing point) so the worker
+// routes it by `processorKey`. A failure here never blocks account creation —
+// createUser only logs the ServiceResult.
+async function greetUser(
   user: Awaited<ReturnType<typeof usersRepo.createUser>>,
 ): Promise<ServiceResult> {
   try {
-    const job = await emailQueue.add("emails", user);
+    const job = await emailQueue.add("emails", toWelcomeEmailPayload(user));
     return {
       ok: true,
       data: job,
     };
   } catch (error) {
-    console.error("[welcomeUser]:", error);
+    console.error("[greetUser]:", error);
     return {
       ok: false,
       error: "ACK Failed when dispatching email notification",
