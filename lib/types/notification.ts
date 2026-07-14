@@ -11,4 +11,8 @@ export type NotificationDocument = {
   title: string;
 
   is_read: boolean;
+
+  // Emission date as an ISO string. Not stored on the document: derived from the
+  // Mongo ObjectId's embedded timestamp in the repository projection.
+  created_at: string;
 };

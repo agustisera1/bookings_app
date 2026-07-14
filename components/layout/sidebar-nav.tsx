@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, Circle, Compass, LayoutGrid } from "lucide-react";
+import { Bell, CalendarDays, Compass, LayoutGrid } from "lucide-react";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -10,6 +10,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
 
 export function SidebarNav({
   isHost,
@@ -52,7 +53,12 @@ export function SidebarNav({
         {navItems.map((item) => (
           <SidebarMenuItem key={item.href} className="relative">
             {item.notifications ? (
-              <Circle className="absolute right-2 top-1/2 z-10 size-2.5 -translate-y-1/2 fill-red-500 text-red-500" />
+              <Badge
+                variant="accent"
+                className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2"
+              >
+                {item.notifications}
+              </Badge>
             ) : null}
             <SidebarMenuButton
               isActive={isActive(item.href)}

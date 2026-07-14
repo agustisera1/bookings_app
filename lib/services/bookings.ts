@@ -16,6 +16,7 @@ import type { User } from "../types/user";
 import type { ListingDocumentValues } from "../types/listing";
 import type { Booking } from "../types/booking";
 import { Job } from "bullmq";
+import { queueNotification } from "./notifications";
 
 export type { Booking, GuestBooking } from "../types/booking";
 
@@ -167,7 +168,9 @@ export async function acceptBooking(
     }
 
     const booking = await bookingsRepo.getBookingById(bookingId);
-    if (booking) await notifyBookingStatusChange(booking, "approved");
+    if (booking) {
+      await notifyBookingStatusChange(booking, "approved");
+    }
 
     revalidatePath("/listings/[id]", "page");
     revalidatePath("/listings/mine");
@@ -318,6 +321,18 @@ async function notifyBookingStatusChange(
     console.error("[notifyBookingStatusChange]: missing guest", booking.id);
     return;
   }
+
+  if (!listing) {
+    console.error("[notifyBookingStatusChange]: missing listing");
+    return;
+  }
+
+  await queueNotification({
+    type: "notify_booking_update",
+    listingId: listing._id,
+    bookingId: booking.id,
+    userId: guest.id,
+  });
 
   await emailBookingDetails({
     type,

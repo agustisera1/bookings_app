@@ -395,14 +395,39 @@ Una función por operación. El nombre del archivo indica la DB: `.pg.ts` para P
 |---------|-------------|
 | `users.pg.ts` | `findUserByEmail`, `createUser` |
 | `sessions.pg.ts` | `findValidSession`, `createSession`, `rotateSession`, `deleteSessionsByUser` |
-| `bookings.pg.ts` | `findBookingsByGuestId`, `createBookingRecord`, `hasGuestBookingForListing` |
+| `bookings.pg.ts` | `findBookingsByGuestId`, `createBookingRecord`, `hasGuestBookingForListing`, `updateBooking` |
 | `reviews.pg.ts` | `findReviewsByListingId`, `createReviewRecord` |
 | `listings.mongo.ts` | `findListingById`, `findListings`, `findListingsByIds` |
+| `notifications.mongo.ts` | `getNotifications`, `getNotificationsCount`, `updateNotification` |
 
 **Reglas:**
 - Sin `"use server"`, sin `authorize()`, sin lógica de negocio
 - Reciben y devuelven tipos de dominio (`lib/types/`), nunca tipos de DB crudos hacia afuera
 - No tienen try/catch — los errores propagan al service que los llama
+
+#### Los repositorios NO manejan lógica de negocio
+
+Un repositorio expone **operaciones de datos genéricas**, no acciones de dominio. Traduce parámetros ↔ query y devuelve filas; no *decide* nada del negocio. La decisión ("marcar una notificación como leída", "rechazar una reserva") vive en el service; el repo solo ofrece el `update`/`insert`/`select` que esa decisión necesita.
+
+**Qué es acceso a datos (va en el repo):**
+- CRUD y queries parametrizadas; proyección de tipos de DB a dominio (p. ej. `_id: ObjectId` → `string`).
+- **Scoping por ownership en el `WHERE`** (`... AND guest_id = $2`, `{ target_id: userId }`): es un predicado de query, patrón aceptado. Refs: `deleteBooking`, `updateNotification`.
+- Atomicidad a nivel DB (CTEs, transacciones). Ref: `rotateSession`.
+
+**Qué es lógica de negocio (NO va en el repo → va en el service):**
+- Autorización (`authorize`), validación de reglas, orquestación de varias operaciones.
+- **Codificar qué valores de dominio "cuentan"**: el conjunto de estados, umbrales o defaults que representan una regla del negocio. Si cambia la regla y hay que editar el repo, la regla estaba en el lugar equivocado.
+
+**Convención de nombres — operación genérica, no acción de dominio:**
+
+| ✅ Repo (genérico, orientado a datos) | ❌ Repo (acción de dominio disfrazada) |
+|---|---|
+| `updateNotification(id, userId, values: Partial<…>)` | `markAsRead(id)` |
+| `updateBooking(id, values: Partial<…>)` | `rejectBooking(id)` / `acceptBooking(id)` |
+
+El nombre de dominio (`markAsRead`, `rejectBooking`) es el del **service**, que delega en el `update*` genérico del repo pasando los `values` concretos. Modelo canónico: `notificationsService.markAsRead` → `notificationsRepo.updateNotification(id, userId, { is_read: true })`. El tipo de `values` se deriva del dominio con `Pick` (`UpdateBookingFields`, `UpdateNotificationFields`), nunca se re-inlinea.
+
+> **Deuda técnica conocida (refactor futuro, no tocar sin pedirlo):** `bookings.pg.ts` → `findBookedListingIds` hardcodea en el `WHERE` los estados que liberan un slot (`status NOT IN ('cancelled', 'rejected')`). Ese conjunto es una regla de negocio (qué estados invalidan disponibilidad) filtrada dentro del repo. Refactor ideal: definir esos estados en el dominio/service y pasarlos como parámetro, o exponerlos como constante compartida. Hasta entonces, no replicar el patrón en repos nuevos.
 
 ---
 

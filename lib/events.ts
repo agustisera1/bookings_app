@@ -3,6 +3,7 @@ import type { User } from "./types/user";
 import type { ListingDocumentValues } from "./types/listing";
 import { Booking } from "./types/booking";
 
+const connection = getConnectionParams();
 // export const messagesQueue = new Queue("host-guest-messaging");
 // export const notificationsQueue = new Queue("booking-notifications");
 function getConnectionParams() {
@@ -16,8 +17,12 @@ function getConnectionParams() {
   return params;
 }
 
+export const notificationsQueue = new Queue("notifications", {
+  connection,
+});
+
 export const emailQueue = new Queue("emails", {
-  connection: getConnectionParams(),
+  connection,
 });
 
 // The lifecycle stage the notification announces. Drives the subject line and
@@ -91,6 +96,50 @@ export function toBookingEmailPayload(input: {
         country: listing.location.country,
       },
     },
+  };
+}
+
+// The kind of in-app notification the worker builds and persists to Mongo.
+// Drives the title/body copy on the notification row (and whether it lands
+// already-read). Replicated verbatim in the worker (`src/lib.ts`) — see the
+// mirror rule in `docs/bullmq-queues.md`.
+export type InAppNotificationType =
+  | "mark_as_read"
+  | "notify_user"
+  | "notify_booking_update";
+
+/**
+ * Wire contract for a "notifications" job, shared with the notifications worker.
+ *
+ * Minimal and JSON-safe: the worker rehydrates the listing and user from these
+ * ids, so only the ids plus the discriminant `type` cross the queue — never the
+ * rendered title/body (that copy is the worker's job) nor full DB rows.
+ *
+ * A single `processorKey` covers every in-app notification; `type` selects which
+ * copy the worker renders, mirroring how `notify-booking` uses `NotificationType`.
+ */
+export type NotificationJobPayload = {
+  processorKey: "send-notification";
+  type: InAppNotificationType;
+  listingId: string;
+  bookingId: string;
+  userId: string;
+};
+
+// Narrows the enqueue call down to the wire contract above. Pure and
+// side-effect free: the single place that stamps the `processorKey`.
+export function toNotificationPayload(input: {
+  type: InAppNotificationType;
+  listingId: string;
+  bookingId: string;
+  userId: string;
+}): NotificationJobPayload {
+  return {
+    processorKey: "send-notification",
+    type: input.type,
+    listingId: input.listingId,
+    bookingId: input.bookingId,
+    userId: input.userId,
   };
 }
 
