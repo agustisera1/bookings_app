@@ -1,6 +1,7 @@
 "use client";
 
 import { use, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { ApolloClient } from "@apollo/client";
 import { GetUserBookingsQuery } from "@/lib/apollo/__generated__/operations";
@@ -107,6 +108,7 @@ function BookingCard({
 }) {
   const nights = calcNights(booking.start_date, booking.end_date);
   const gradient = listingTypeGradient(booking.type);
+  const cover = booking.photos?.[0];
 
   return (
     <li>
@@ -116,11 +118,25 @@ function BookingCard({
         }`}
       >
         <div
-          className={`relative flex h-24 items-end bg-gradient-to-br p-3 ${gradient} ${
+          className={`relative flex h-24 items-end overflow-hidden p-3 ${
             muted ? "saturate-[.6]" : ""
           }`}
         >
-          <Badge className="bg-black/20 text-white/90 uppercase tracking-widest text-[10px] backdrop-blur-sm hover:bg-black/30">
+          {cover ? (
+            <Image
+              src={cover}
+              alt={booking.title ?? ""}
+              fill
+              unoptimized
+              sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+            />
+          ) : (
+            <div
+              className={`absolute inset-0 bg-gradient-to-br ${gradient}`}
+            />
+          )}
+          <Badge className="relative bg-black/20 text-white/90 uppercase tracking-widest text-[10px] backdrop-blur-sm hover:bg-black/30">
             {booking.type}
           </Badge>
         </div>

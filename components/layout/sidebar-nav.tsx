@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, Compass, LayoutGrid } from "lucide-react";
+import { Bell, CalendarDays, Compass, LayoutGrid } from "lucide-react";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -10,15 +10,23 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { Badge } from "@/components/ui/badge";
+import { useNotificationsCount } from "@/components/notifications/provider";
 
 export function SidebarNav({ isHost }: { isHost: boolean }) {
   const pathname = usePathname();
-
+  const notifications = useNotificationsCount();
   const navItems = [
     isHost
       ? { title: "My listings", href: "/listings/mine", icon: LayoutGrid }
       : { title: "My bookings", href: "/bookings", icon: CalendarDays },
     { title: "Explore", href: "/listings", icon: Compass },
+    {
+      title: "Notifications",
+      href: "/notifications",
+      icon: Bell,
+      notifications,
+    },
   ];
 
   function isActive(href: string) {
@@ -39,11 +47,19 @@ export function SidebarNav({ isHost }: { isHost: boolean }) {
       <SidebarGroupLabel>Menu</SidebarGroupLabel>
       <SidebarMenu>
         {navItems.map((item) => (
-          <SidebarMenuItem key={item.href}>
+          <SidebarMenuItem key={item.href} className="relative">
+            {item.notifications ? (
+              <Badge
+                variant="accent"
+                className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2"
+              >
+                {item.notifications}
+              </Badge>
+            ) : null}
             <SidebarMenuButton
               isActive={isActive(item.href)}
-              className="gap-2.5 hover:bg-success/10 hover:text-foreground dark:hover:bg-success/20 data-active:bg-success/15 dark:data-active:bg-success/25"
               render={<Link href={item.href} />}
+              className="data-active:hover:bg-success/10 data-active:hover:text-success dark:data-active:hover:bg-success/20"
             >
               <item.icon />
               <span>{item.title}</span>

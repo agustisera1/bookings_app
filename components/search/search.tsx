@@ -20,7 +20,7 @@ export function Search() {
     <div className="flex items-center gap-3">
       {/* Elevated search bar; focus lifts it (the ring token is the brand's
           acid-green in dark). Filters sits just past its end, as a matched peer. */}
-      <div className="group flex flex-1 items-center gap-2 rounded-lg border bg-card/60 p-2 pl-4 shadow-sm transition-[box-shadow,border-color] focus-within:border-ring/50 focus-within:shadow-md md:max-w-3xl">
+      <div className="group flex flex-1 items-center gap-2 rounded-lg border bg-card/60 p-1.5 pl-4 shadow-sm transition-[box-shadow,border-color] focus-within:border-ring/50 focus-within:shadow-md md:max-w-3xl">
         <SearchIcon className="pointer-events-none size-5 shrink-0 text-muted-foreground transition-colors group-focus-within:text-foreground" />
         <div className="relative flex-1">
           <Input
@@ -29,7 +29,7 @@ export function Search() {
             value={term || ""}
             onChange={handleChange}
             aria-label="Search listings"
-            className="h-10 border-transparent bg-transparent px-1 pr-8 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-base dark:bg-transparent [&::-webkit-search-cancel-button]:appearance-none"
+            className="h-9 border-transparent bg-transparent px-1 pr-8 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-base dark:bg-transparent [&::-webkit-search-cancel-button]:appearance-none"
           />
           {term && (
             <button

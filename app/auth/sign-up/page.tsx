@@ -8,7 +8,8 @@ import {
   formDataToObject,
   signUpSchema,
 } from "@/lib/validation/auth";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { CheckCircle2, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -89,11 +90,25 @@ export default function SignUpPage() {
             )}
           </div>
 
-          {message && (
-            <Alert variant={status === "success" ? "default" : "destructive"}>
-              <AlertDescription>{message}</AlertDescription>
-            </Alert>
-          )}
+          {message &&
+            (status === "success" ? (
+              <Alert className="animate-in fade-in-0 slide-in-from-top-1 border-success/40 bg-success/10 text-success dark:bg-success/20 [&>svg]:text-success">
+                <CheckCircle2 />
+                <AlertTitle>You&apos;re all set</AlertTitle>
+                <AlertDescription className="text-success/90">
+                  {message}
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <Alert
+                variant="destructive"
+                className="animate-in fade-in-0 slide-in-from-top-1 border-destructive/40 bg-destructive/10 dark:bg-destructive/20"
+              >
+                <AlertCircle />
+                <AlertTitle>Something went wrong</AlertTitle>
+                <AlertDescription>{message}</AlertDescription>
+              </Alert>
+            ))}
 
           <Button
             type="submit"

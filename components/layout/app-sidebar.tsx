@@ -1,4 +1,8 @@
-import { Sidebar, SidebarContent, SidebarHeader } from "@/components/ui/sidebar";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarHeader,
+} from "@/components/ui/sidebar";
 import { getCurrentUser } from "@/lib/services/auth";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserFooter } from "./sidebar-user-footer";

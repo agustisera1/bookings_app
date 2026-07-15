@@ -1,6 +1,7 @@
 allowBuilds:
   '@apollo/protobufjs': false
   esbuild: false
+  msgpackr-extract: false
   sharp: false
   unrs-resolver: false
 ignoredBuiltDependencies:

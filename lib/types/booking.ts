@@ -15,6 +15,7 @@ export type Booking = {
 export type GuestBooking = {
   type: string;
   title: string;
+  photos: string[];
   created_at: string; // Reservation date
   start_date: string;
   end_date: string;

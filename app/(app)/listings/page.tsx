@@ -6,45 +6,15 @@ import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
 import { query } from "@/lib/apollo/client";
 import { SearchX } from "lucide-react";
 import { Suspense } from "react";
-import { GetListingFilters } from "@/lib/types/listing";
-
-type SearchParams = {
-  own?: boolean;
-  limit?: number;
-  type?: string;
-  term?: string;
-  location?: string;
-  rating?: number;
-  availabilityRange?: string;
-  priceRange?: string;
-  propertyType?: string;
-  beds?: string;
-  bathrooms?: string;
-  maxGuests?: string;
-  amenities?: string;
-};
+import { parseListingFilters, type ListingSearchParams } from "@/lib/listings";
 
 export default async function ListingsPage({
   searchParams,
 }: {
-  searchParams: Promise<SearchParams>;
+  searchParams: Promise<ListingSearchParams>;
 }) {
   const params = await searchParams;
-  const filters: GetListingFilters = {
-    ...params,
-    rating: params.rating ? Number(params.rating) : undefined,
-    limit: params.limit ? Number(params.limit) : undefined,
-    priceRange: params.priceRange
-      ? [...params.priceRange.split(",").map((price) => Number(price))]
-      : undefined,
-    beds: params.beds ? Number(params.beds) : undefined,
-    bathrooms: params.bathrooms ? Number(params.bathrooms) : undefined,
-    maxGuests: params.maxGuests ? Number(params.maxGuests) : undefined,
-    amenities: params.amenities ? params.amenities.split(",") : undefined,
-    availabilityRange: params.availabilityRange
-      ? params.availabilityRange.split(",")
-      : undefined,
-  };
+  const filters = parseListingFilters(params);
 
   const {
     data: { listings },
@@ -60,6 +30,7 @@ export default async function ListingsPage({
     <PageLayout
       title="Explore listings"
       subtitle="Find your next stay, experience, or gear to rent."
+      inlineToolbar
       toolbar={
         <Suspense>
           <Search />

@@ -72,6 +72,9 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/mongo.ts` | Cliente MongoDB |
 | `lib/permissions.ts` | Roles, permisos y helpers de autorización |
 | `lib/jwt.ts` | Sign/verify de tokens |
+| `lib/events.ts` | Colas BullMQ: conexión, `*Queue`, contratos `*Payload` y mappers `to*Payload` |
+
+> **Colas / workers (BullMQ + Redis):** antes de agregar un worker, job processor o payload de cola, leer `docs/architecture/BULLMQ_QUEUES.md`. Define el contrato del payload, las convenciones (`processorKey`, fechas ISO, sin secretos) y el paso a paso en el producer y en el worker. El productor encola desde `lib/services/*`; el contrato se replica a mano en el repo del worker.
 
 ### Regla DRY
 
@@ -90,6 +93,27 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 - **Dónde ubicarlo:** dominio/utils general → `/lib`; estado o lógica pura específica de una feature → módulo colocado al lado del componente (`.ts` sin `"use client"`), importado de vuelta por el componente. Ref: `components/search/filters-draft.ts` (modelo del draft) consumido por `components/search/filters.tsx` (rendering + wiring).
 
 Esta evaluación es parte de "terminar" un cambio, igual que pasar `tsc`/`lint`.
+
+### Regla de tipos — revisar SIEMPRE antes de escribir uno nuevo
+
+**Antes de declarar cualquier `type`/`interface` nuevo — sea para una feature o un ajuste — revisar primero las bibliotecas de tipos existentes y reutilizar/derivar en vez de re-inlinear.** Escribir un tipo desde cero es la última opción, no la primera. Esta verificación es obligatoria y precede a escribir el tipo, igual que buscar en `/lib` antes de escribir una utilidad.
+
+**Dónde buscar antes (en este orden):**
+
+| Fuente | Qué vive ahí | Ejemplos |
+|--------|--------------|----------|
+| `lib/types/*` | Tipos de dominio (entidades, `ServiceResult`, `ErrorCode`) | `User`, `Booking`, `ListingDocumentValues` |
+| `lib/events.ts` | Contratos de cola `*Payload` y sus mappers `to*Payload` | `BookingEmailPayload`, `toBookingEmailPayload` |
+| El service correspondiente | Tipos de parámetros y re-exports del dominio | `CreateBookingParams` |
+| `__generated__/resolvers-types.ts` / `operations.ts` | Tipos de schema/inputs y de operaciones GraphQL | `FiltersInput`, `GetListingsQuery` |
+
+**Cómo reutilizar en vez de duplicar:**
+
+- Si un tipo nuevo comparte forma con uno existente, **derivarlo** con `Pick`/`Omit`/`Partial`/`&` o `ReturnType`, no re-escribir los campos a mano. Un sub-shape que ya existe (p. ej. `BookingEmailPayload["booking"]`) se referencia, no se re-inlina.
+- Si la misma forma aparece en más de un módulo → extraerla a su lugar canónico (`lib/types/*` si es dominio; `lib/events.ts` si es contrato de cola; al lado del componente si es estado de feature) **antes** de copiarla. Es la regla DRY de `/lib` aplicada a los tipos.
+- Un tipo va donde ya viven sus pares conceptuales (cohesión): dominio → `lib/types/*`; wire contract + mapper → `lib/events.ts`; params de un service → el propio service; estado puro de feature → módulo colocado junto al componente.
+
+> **Anti-patrón concreto (a no repetir):** re-inlinear el shape `{ id, checkIn, checkOut, guests, totalPrice }` en tres lugares (el `*Payload`, el input del mapper y el param del helper) en vez de definirlo una vez y derivar las variantes. Si estás por escribir una forma que "se parece" a otra, casi siempre corresponde derivar.
 
 ---
 
@@ -371,14 +395,39 @@ Una función por operación. El nombre del archivo indica la DB: `.pg.ts` para P
 |---------|-------------|
 | `users.pg.ts` | `findUserByEmail`, `createUser` |
 | `sessions.pg.ts` | `findValidSession`, `createSession`, `rotateSession`, `deleteSessionsByUser` |
-| `bookings.pg.ts` | `findBookingsByGuestId`, `createBookingRecord`, `hasGuestBookingForListing` |
+| `bookings.pg.ts` | `findBookingsByGuestId`, `createBookingRecord`, `hasGuestBookingForListing`, `updateBooking` |
 | `reviews.pg.ts` | `findReviewsByListingId`, `createReviewRecord` |
 | `listings.mongo.ts` | `findListingById`, `findListings`, `findListingsByIds` |
+| `notifications.mongo.ts` | `getNotifications`, `getNotificationsCount`, `updateNotification` |
 
 **Reglas:**
 - Sin `"use server"`, sin `authorize()`, sin lógica de negocio
 - Reciben y devuelven tipos de dominio (`lib/types/`), nunca tipos de DB crudos hacia afuera
 - No tienen try/catch — los errores propagan al service que los llama
+
+#### Los repositorios NO manejan lógica de negocio
+
+Un repositorio expone **operaciones de datos genéricas**, no acciones de dominio. Traduce parámetros ↔ query y devuelve filas; no *decide* nada del negocio. La decisión ("marcar una notificación como leída", "rechazar una reserva") vive en el service; el repo solo ofrece el `update`/`insert`/`select` que esa decisión necesita.
+
+**Qué es acceso a datos (va en el repo):**
+- CRUD y queries parametrizadas; proyección de tipos de DB a dominio (p. ej. `_id: ObjectId` → `string`).
+- **Scoping por ownership en el `WHERE`** (`... AND guest_id = $2`, `{ target_id: userId }`): es un predicado de query, patrón aceptado. Refs: `deleteBooking`, `updateNotification`.
+- Atomicidad a nivel DB (CTEs, transacciones). Ref: `rotateSession`.
+
+**Qué es lógica de negocio (NO va en el repo → va en el service):**
+- Autorización (`authorize`), validación de reglas, orquestación de varias operaciones.
+- **Codificar qué valores de dominio "cuentan"**: el conjunto de estados, umbrales o defaults que representan una regla del negocio. Si cambia la regla y hay que editar el repo, la regla estaba en el lugar equivocado.
+
+**Convención de nombres — operación genérica, no acción de dominio:**
+
+| ✅ Repo (genérico, orientado a datos) | ❌ Repo (acción de dominio disfrazada) |
+|---|---|
+| `updateNotification(id, userId, values: Partial<…>)` | `markAsRead(id)` |
+| `updateBooking(id, values: Partial<…>)` | `rejectBooking(id)` / `acceptBooking(id)` |
+
+El nombre de dominio (`markAsRead`, `rejectBooking`) es el del **service**, que delega en el `update*` genérico del repo pasando los `values` concretos. Modelo canónico: `notificationsService.markAsRead` → `notificationsRepo.updateNotification(id, userId, { is_read: true })`. El tipo de `values` se deriva del dominio con `Pick` (`UpdateBookingFields`, `UpdateNotificationFields`), nunca se re-inlinea.
+
+> **Deuda técnica conocida (refactor futuro, no tocar sin pedirlo):** `bookings.pg.ts` → `findBookedListingIds` hardcodea en el `WHERE` los estados que liberan un slot (`status NOT IN ('cancelled', 'rejected')`). Ese conjunto es una regla de negocio (qué estados invalidan disponibilidad) filtrada dentro del repo. Refactor ideal: definir esos estados en el dominio/service y pasarlos como parámetro, o exponerlos como constante compartida. Hasta entonces, no replicar el patrón en repos nuevos.
 
 ---
 

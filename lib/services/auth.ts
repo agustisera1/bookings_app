@@ -14,8 +14,19 @@ import { getPermissionsForRoles, getUserRoles } from "../permissions";
 import * as usersRepo from "../repositories/users.pg";
 import * as sessionsRepo from "../repositories/sessions.pg";
 
-export type { User, PublicUser, SessionRecord, CurrentUser } from "../types/user";
-import type { User, PublicUser, CurrentUser, SessionRecord } from "../types/user";
+export type {
+  User,
+  PublicUser,
+  SessionRecord,
+  CurrentUser,
+} from "../types/user";
+import type {
+  User,
+  PublicUser,
+  CurrentUser,
+  SessionRecord,
+} from "../types/user";
+import { emailQueue, toWelcomeEmailPayload } from "../events";
 
 const SALT_ROUNDS = 10;
 
@@ -143,6 +154,7 @@ export async function createUser(
 
   try {
     const user = await usersRepo.createUser(email, password_hash, name);
+    await greetUser(user);
     return { ok: true, data: user };
   } catch (error) {
     const code = db.pgErrorToCode(error);
@@ -250,6 +262,29 @@ export async function logoutUser(): Promise<ServiceResult> {
     return {
       ok: false,
       error: "Something happened while removing the user session",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
+// Fire-and-forget welcome email on sign-up. Enqueues the narrowed
+// `WelcomeEmailPayload` (via the mapper, single narrowing point) so the worker
+// routes it by `processorKey`. A failure here never blocks account creation —
+// createUser only logs the ServiceResult.
+async function greetUser(
+  user: Awaited<ReturnType<typeof usersRepo.createUser>>,
+): Promise<ServiceResult> {
+  try {
+    const job = await emailQueue.add("emails", toWelcomeEmailPayload(user));
+    return {
+      ok: true,
+      data: job,
+    };
+  } catch (error) {
+    console.error("[greetUser]:", error);
+    return {
+      ok: false,
+      error: "ACK Failed when dispatching email notification",
       code: "UNEXPECTED",
     };
   }
