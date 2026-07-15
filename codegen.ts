@@ -8,11 +8,17 @@ const config: CodegenConfig = {
       config: {
         contextType: "../context#ApolloContext",
         useIndexSignature: true,
+        // String unions rather than TS enums, so schema enums stay assignable
+        // to their domain counterparts in lib/types/*.
+        enumsAsTypes: true,
       },
     },
     "./lib/apollo/__generated__/operations.ts": {
       documents: ["lib/apollo/queries/**/*.graphql", "app/**/*.graphql"],
       plugins: ["typescript-operations", "typed-document-node"],
+      config: {
+        enumsAsTypes: true,
+      },
     },
   },
 };

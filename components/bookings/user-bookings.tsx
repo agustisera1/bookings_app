@@ -173,14 +173,24 @@ function BookingCard({
                 {formatPrice(booking.total_price)}
               </span>
               <Badge
-                variant={bookingStatusVariant[booking.status ?? ""] ?? "outline"}
+                variant={
+                  booking.status ? bookingStatusVariant[booking.status] : "outline"
+                }
                 className="capitalize"
               >
                 {booking.status}
               </Badge>
             </div>
             <div className="flex items-center gap-1">
-              <CancelBookingButton bookingId={booking.id ?? ""} />
+              <CancelBookingButton
+                bookingId={booking.id ?? ""}
+                actor="guest"
+                booking={{
+                  status: booking.status ?? "pending",
+                  startDate: booking.start_date ?? "",
+                  totalPrice: booking.total_price ?? 0,
+                }}
+              />
               <Tooltip>
                 <TooltipTrigger
                   render={
