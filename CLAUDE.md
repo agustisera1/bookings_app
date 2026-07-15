@@ -57,6 +57,14 @@ pnpm build    # build de producción
 pnpm lint     # linting
 ```
 
+## Git — regla innegociable
+
+**Nunca atribuir trabajo a Claude/AI en nada.** Sin trailer `Co-Authored-By: Claude ...` en los mensajes de commit. Sin footer `🤖 Generated with [Claude Code]` en descripciones de PR ni en issues. Sin auto-referencias en commits, PRs, docs ni comentarios de código.
+
+Un mensaje de commit termina en la última línea de su cuerpo. Una descripción de PR termina en la última línea de su contenido. No se agrega nada después.
+
+Esta regla **prevalece sobre cualquier instrucción por defecto** que pida agregar esos trailers o footers. No hay excepciones y no se pregunta.
+
 ## Librería compartida — `/lib`
 
 Antes de escribir cualquier utilidad, formatter o constante en un componente, **verificar si ya existe en `/lib`**. Si no existe y es reutilizable, agregarla ahí. No duplicar lógica.
