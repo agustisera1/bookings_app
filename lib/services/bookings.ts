@@ -179,13 +179,15 @@ export async function cancelBooking(
     if (!check.allowed)
       return { ok: false, error: check.reason, code: "VALIDATION" };
 
-    const cancelled = await bookingsRepo.updateBooking(bookingId, {
+    const updates = {
       status: "cancelled",
       cancelled_by: actor,
       cancelled_at: now.toISOString(),
       refund_amount: check.refundAmount,
       ...(reason ? { status_reason: reason.trim() } : {}),
-    });
+    } satisfies Partial<Booking>;
+
+    const cancelled = await bookingsRepo.updateBooking(bookingId, updates);
 
     if (!cancelled)
       return {
@@ -194,12 +196,13 @@ export async function cancelBooking(
         code: "NOT_FOUND",
       };
 
-    // The counterparty is the one who needs to hear about it — the actor just
-    // did it. Safe to reuse the pre-update row: the notification reads the
-    // guest, listing and dates, none of which a cancellation touches.
+    // The email carries the refund, so it needs the post-update row — the one
+    // we just wrote, not the one we read. Applying `updates` to it beats a
+    // re-fetch and keeps the written and announced values from diverging.
+    // The counterparty is the recipient: the actor already knows what they did.
     await notifyBookingStatusChange(
-      booking,
-      "updated",
+      { ...booking, ...updates },
+      "cancelled",
       actor === "guest" ? "host" : "guest",
     );
 

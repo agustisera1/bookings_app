@@ -1,7 +1,7 @@
 import { Queue } from "bullmq";
 import type { User } from "./types/user";
 import type { ListingDocumentValues } from "./types/listing";
-import { Booking } from "./types/booking";
+import { Booking, BookingParty } from "./types/booking";
 import { getRedisConnectionParams } from "./redis-config";
 
 const connection = getRedisConnectionParams();
@@ -17,7 +17,16 @@ export const emailQueue = new Queue("emails", {
 // The lifecycle stage the notification announces. Drives the subject line and
 // copy in the worker's email template. Replicated verbatim in the worker
 // (`src/lib.ts`) — see the mirror rule in `docs/architecture/BULLMQ_QUEUES.md`.
-export type NotificationType = "pending" | "approved" | "rejected" | "updated";
+//
+// Adding a member here is a breaking change for the worker: it indexes its copy
+// and subject maps by this type, so it must learn the new member and be deployed
+// BEFORE the API starts sending it, or the job throws and retries forever.
+export type NotificationType =
+  | "pending"
+  | "approved"
+  | "rejected"
+  | "updated"
+  | "cancelled";
 
 /**
  * Wire contract for an "emails" job, shared with the email worker.
@@ -42,6 +51,11 @@ export type BookingEmailPayload = {
     guests: number;
     totalPrice: number;
     statusReason?: string;
+    // Only meaningful on `cancelled`. The worker renders `refundAmount` as
+    // given and never recomputes it — the 48h rule lives in
+    // `lib/bookings/policy.ts`, and restating it there is how the two drift.
+    refundAmount?: number;
+    cancelledBy?: BookingParty;
   };
   host: { name: string };
   listing: {
@@ -69,12 +83,14 @@ export function toBookingEmailPayload(input: {
     processorKey: "notify-booking",
     type,
     guest: { email: guestEmail },
+    // Spread rather than re-listing each field: the input is already the wire
+    // sub-shape (only the dates differ), so the only thing to do is normalize
+    // them. Re-listing is what silently dropped `statusReason` — every optional
+    // field added to the contract had to be remembered here too, and wasn't.
     booking: {
-      id: booking.id,
+      ...booking,
       checkIn: new Date(booking.checkIn).toISOString(),
       checkOut: new Date(booking.checkOut).toISOString(),
-      guests: booking.guests,
-      totalPrice: booking.totalPrice,
     },
     host: { name: host.name },
     listing: {
@@ -165,5 +181,7 @@ export function pgBookingToEmailBooking(
     guests: booking.guests,
     totalPrice: Number(booking.total_price),
     statusReason: booking.status_reason || undefined,
+    refundAmount: Number(booking.refund_amount),
+    cancelledBy: booking.cancelled_by ?? undefined,
   };
 }
