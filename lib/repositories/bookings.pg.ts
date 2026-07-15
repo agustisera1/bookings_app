@@ -46,22 +46,6 @@ export async function hasGuestBookingForListing(
   return (result.rowCount ?? 0) > 0;
 }
 
-export async function deleteBooking(
-  bookingId: string,
-  guestId: string,
-): Promise<string | null> {
-  const result = await db.query<{ id: string }>(
-    `
-    DELETE FROM bookings
-    WHERE id = $1 AND guest_id = $2
-    RETURNING id
-    `,
-    [bookingId, guestId],
-  );
-
-  return result.rows[0]?.id ?? null;
-}
-
 export async function getBookingById(
   bookingId: string,
 ): Promise<Booking | null> {
@@ -94,6 +78,9 @@ type UpdateBookingFields = Pick<
   | "end_date"
   | "guests"
   | "total_price"
+  | "refund_amount"
+  | "cancelled_by"
+  | "cancelled_at"
 >;
 export async function updateBooking(
   booking_id: string,

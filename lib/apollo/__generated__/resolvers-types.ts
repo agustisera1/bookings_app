@@ -12,6 +12,12 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type BookingStatus =
+  | 'accepted'
+  | 'cancelled'
+  | 'pending'
+  | 'rejected';
+
 export type FiltersInput = {
   amenities?: InputMaybe<Array<Scalars['String']['input']>>;
   availabilityRange?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
@@ -36,7 +42,7 @@ export type GuestBooking = {
   id?: Maybe<Scalars['ID']['output']>;
   photos?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   start_date?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<BookingStatus>;
   title?: Maybe<Scalars['String']['output']>;
   total_price?: Maybe<Scalars['Float']['output']>;
   type?: Maybe<Scalars['String']['output']>;
@@ -164,6 +170,7 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
+  BookingStatus: BookingStatus;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   FiltersInput: FiltersInput;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
@@ -199,7 +206,7 @@ export type GuestBookingResolvers<ContextType = ApolloContext, ParentType extend
   id?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
   photos?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   start_date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
-  status?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status?: Resolver<Maybe<ResolversTypes['BookingStatus']>, ParentType, ContextType>;
   title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   total_price?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;

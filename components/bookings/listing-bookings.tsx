@@ -7,7 +7,9 @@ import { Booking } from "@/lib/services/bookings";
 import { formatDate, calcNights, parseTs } from "@/lib/dates";
 import { formatPrice, bookingStatusVariant } from "@/lib/utils";
 import { EmptyState } from "@/components/common/empty-state";
+import { toCancellableBooking } from "@/lib/bookings/policy";
 import { ManageBookingActions } from "./manage-booking-actions";
+import { CancelBookingButton } from "./cancel-booking-button";
 
 function BookingCard({ booking }: { booking: Booking }) {
   const nights = calcNights(booking.start_date, booking.end_date);
@@ -25,7 +27,7 @@ function BookingCard({ booking }: { booking: Booking }) {
               </span>
             </div>
             <Badge
-              variant={bookingStatusVariant[booking.status] ?? "outline"}
+              variant={bookingStatusVariant[booking.status]}
               className="shrink-0 capitalize"
             >
               {booking.status}
@@ -50,7 +52,15 @@ function BookingCard({ booking }: { booking: Booking }) {
             <span className="text-base font-semibold">
               {formatPrice(Number(booking.total_price))}
             </span>
-            {isPending && <ManageBookingActions bookingId={booking.id} />}
+            {isPending ? (
+              <ManageBookingActions bookingId={booking.id} />
+            ) : (
+              <CancelBookingButton
+                bookingId={booking.id}
+                actor="host"
+                booking={toCancellableBooking(booking)}
+              />
+            )}
           </div>
         </CardContent>
       </Card>
