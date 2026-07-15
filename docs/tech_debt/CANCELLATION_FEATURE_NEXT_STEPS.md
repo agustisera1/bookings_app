@@ -16,25 +16,27 @@
 | Branch | Qué lleva | Estado |
 |--------|-----------|--------|
 | `fix/permission-ref` | El `permission.ref` de `app/(app)/profile/page.tsx:113` | ⬜ Pendiente — **va primero** |
-| `feat/cancel-reservations` | Migración `004`, `lib/bookings/policy.ts`, `cancelBooking`, ownership en accept/reject, enum `BookingStatus` en GraphQL, UI, docs | ✅ Implementado |
+| `feat/cancel-reservations` | Migración `004`, `lib/bookings/policy.ts`, `cancelBooking`, ownership en accept/reject, enum `BookingStatus` en GraphQL, UI, y el mail de cancelación del lado de la API | ✅ Implementado |
+| `feat/cancellation-email` (worker) | Tipo `cancelled`, `refundAmount`/`cancelledBy` y plantilla de mail en `bookings-app-worker` | ✅ Implementado |
 | `fix/booking-money-precision` | `005`: `total_price` y `refund_amount` → `NUMERIC(10,2)`; `Booking.total_price: string` pasa a ser verdad | ⬜ Pendiente |
 | `chore/vitest` | Infra de tests + specs de `policy.ts` | ⬜ Pendiente |
 | `feat/reviews-require-completed-booking` | Trae `isCompleted` y lo cablea en `createReview` | ⬜ Pendiente |
 | `refactor/slot-holding-statuses` | Trae `SLOT_HOLDING_STATUSES`, cierra la deuda de `findBookedListingIds` | ⬜ Pendiente |
-| `feat/cancellation-email` | Tipo `cancelled` en el contrato de cola (cruza al repo del worker) | ⬜ Pendiente |
 
 ```mermaid
 graph LR
   A["fix/permission-ref<br/><i>desbloquea el build</i>"] --> B["feat/cancel-reservations"]
+  W["worker: feat/cancellation-email<br/><i>deployar ANTES que la API</i>"] --> B
   B --> C["fix/booking-money-precision"]
   B --> D["chore/vitest"]
   B --> E["feat/reviews-require-completed-booking"]
   B --> F["refactor/slot-holding-statuses"]
-  B --> G["feat/cancellation-email"]
 ```
 
-Solo `fix/permission-ref` va **antes**. El resto depende de que `feat/cancel-reservations`
-mergee, porque todos tocan tipos o módulos que ese branch introduce.
+`fix/permission-ref` va **antes** porque hoy pone en rojo el build de cualquier branch. El worker
+también va antes, pero por otro motivo: indexa su copy y sus subjects por `NotificationType`, así
+que si la API manda `"cancelled"` y el worker no lo conoce, el job explota y BullMQ lo reintenta
+para siempre. Los demás dependen de que `feat/cancel-reservations` mergee.
 
 ---
 
@@ -171,29 +173,20 @@ tiene que vivir ahí; lo que corresponde es un comentario cruzado entre ambos.
 
 ---
 
-## `feat/cancellation-email` — el mail dice "updated"
+## Mail de cancelación — hecho, con dos cabos sueltos
 
-`notifyBookingStatusChange` encola el mail de cancelación con `type: "updated"`, reusando un tipo
-que ya existía. Funciona, pero un mail de cancelación que se anuncia como "actualización" es copy
-pobre.
-
-Un tipo `cancelled` propio sería lo correcto, pero `NotificationType` **se replica a mano en el repo
-del worker** (`bookings-app-worker`, `src/lib.ts`) — ver la regla del espejo en
-`docs/architecture/BULLMQ_QUEUES.md`. Cruza a otro proyecto, así que va cuando se toquen los dos
-juntos.
-
-**Alcance:** agregar `"cancelled"` a `NotificationType` en `lib/events.ts` **y** en el worker;
-plantilla de mail nueva; y aprovechar para incluir el monto reembolsado (`refund_amount`) en el
-payload, que es la única pregunta que un guest se hace al recibirlo.
-
-Dos cosas más que caen acá porque cruzan al worker:
+El tipo `cancelled` ya existe en `lib/events.ts` y en el worker, con `refundAmount` y `cancelledBy`
+en el payload y plantilla propia. Lo que queda:
 
 - **El mail siempre va al guest.** `BookingEmailPayload` tiene `guest: { email }` hardcodeado en el
-  contrato, así que cuando el guest cancela, el host solo se entera por la notificación in-app, no
-  por mail. Mandarle mail al host requiere cambiar el payload en ambos repos.
-- **La copy de `notify_booking_update` es guest-oriented.** Ahora esa notificación también le llega
-  al host (cuando el guest cancela), y el texto que renderiza el worker probablemente diga algo tipo
-  "tu reserva fue actualizada", que a un host le suena raro. Necesita una copy propia por destinatario.
+  contrato. Cuando el guest cancela, el host solo se entera por la notificación in-app, no por mail.
+  Mandarle mail al host requiere cambiar el payload en ambos repos.
+- **La copy in-app de `notify_booking_update` es guest-oriented y está mal para todos.** El título
+  es literalmente `"Booking confirmed"` (`src/lib.ts` del worker), y se usa para approved, rejected
+  **y** cancelled — o sea que un rechazo llega titulado "Booking confirmed". Ahora además le llega
+  al host cuando el guest cancela. No se arregló acá porque el título carga los keywords de los que
+  el web app deriva el ícono (`notificationVisual` en `notifications-list.tsx`): cambiarlo cambia el
+  ícono. Necesita un tipo in-app propio por evento, coordinado entre los dos repos.
 
 ---
 
