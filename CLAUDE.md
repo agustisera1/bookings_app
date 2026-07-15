@@ -74,7 +74,7 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/jwt.ts` | Sign/verify de tokens |
 | `lib/events.ts` | Colas BullMQ: conexión, `*Queue`, contratos `*Payload` y mappers `to*Payload` |
 
-> **Colas / workers (BullMQ + Redis):** antes de agregar un worker, job processor o payload de cola, leer `docs/bullmq-queues.md`. Define el contrato del payload, las convenciones (`processorKey`, fechas ISO, sin secretos) y el paso a paso en el producer y en el worker. El productor encola desde `lib/services/*`; el contrato se replica a mano en el repo del worker.
+> **Colas / workers (BullMQ + Redis):** antes de agregar un worker, job processor o payload de cola, leer `docs/architecture/BULLMQ_QUEUES.md`. Define el contrato del payload, las convenciones (`processorKey`, fechas ISO, sin secretos) y el paso a paso en el producer y en el worker. El productor encola desde `lib/services/*`; el contrato se replica a mano en el repo del worker.
 
 ### Regla DRY
 

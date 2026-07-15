@@ -20,6 +20,7 @@ import { formatDate } from "@/lib/dates";
 import { ServiceResult } from "@/lib/types";
 import { NotificationDocument } from "@/lib/types/notification";
 import { markAsRead } from "@/lib/services/notifications";
+import { useNotificationsActions } from "@/components/notifications/provider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -188,6 +189,7 @@ export function NotificationsList({
   // Ids marked read this session, overlaid on top of the server data so an
   // optimistic update survives re-renders without stale derived state.
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
+  const { increment, decrement } = useNotificationsActions();
   const response = use(notificationsPromise);
 
   if (!response.ok) {
@@ -213,6 +215,7 @@ export function NotificationsList({
 
   async function handleMarkAsRead(id: string) {
     setReadIds((prev) => new Set(prev).add(id)); // optimistic
+    decrement(); // optimistic: drop the sidebar badge right away
     const result = await markAsRead(id);
     if (!result.ok) {
       setReadIds((prev) => {
@@ -220,6 +223,7 @@ export function NotificationsList({
         next.delete(id);
         return next;
       });
+      increment(); // revert the badge
       toast.error(result.error);
       return;
     }

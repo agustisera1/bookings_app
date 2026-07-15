@@ -11,15 +11,11 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
+import { useNotificationsCount } from "@/components/notifications/provider";
 
-export function SidebarNav({
-  isHost,
-  notifications,
-}: {
-  isHost: boolean;
-  notifications: number;
-}) {
+export function SidebarNav({ isHost }: { isHost: boolean }) {
   const pathname = usePathname();
+  const notifications = useNotificationsCount();
   const navItems = [
     isHost
       ? { title: "My listings", href: "/listings/mine", icon: LayoutGrid }

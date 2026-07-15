@@ -2,20 +2,9 @@ import { Queue } from "bullmq";
 import type { User } from "./types/user";
 import type { ListingDocumentValues } from "./types/listing";
 import { Booking } from "./types/booking";
+import { getRedisConnectionParams } from "./redis-config";
 
-const connection = getConnectionParams();
-// export const messagesQueue = new Queue("host-guest-messaging");
-// export const notificationsQueue = new Queue("booking-notifications");
-function getConnectionParams() {
-  const host = process.env.REDIS_HOST;
-  const port = Number(process.env.REDIS_PORT);
-  const password = process.env.REDIS_PASSWORD;
-  const username = process.env.REDIS_USER;
-  const params = { host, port, password, username };
-  if (Object.values(params).some((val) => !val))
-    throw new Error("[redis-queue]: Missing connection params");
-  return params;
-}
+const connection = getRedisConnectionParams();
 
 export const notificationsQueue = new Queue("notifications", {
   connection,
@@ -27,7 +16,7 @@ export const emailQueue = new Queue("emails", {
 
 // The lifecycle stage the notification announces. Drives the subject line and
 // copy in the worker's email template. Replicated verbatim in the worker
-// (`src/lib.ts`) — see the mirror rule in `docs/bullmq-queues.md`.
+// (`src/lib.ts`) — see the mirror rule in `docs/architecture/BULLMQ_QUEUES.md`.
 export type NotificationType = "pending" | "approved" | "rejected" | "updated";
 
 /**
@@ -102,7 +91,7 @@ export function toBookingEmailPayload(input: {
 // The kind of in-app notification the worker builds and persists to Mongo.
 // Drives the title/body copy on the notification row (and whether it lands
 // already-read). Replicated verbatim in the worker (`src/lib.ts`) — see the
-// mirror rule in `docs/bullmq-queues.md`.
+// mirror rule in `docs/architecture/BULLMQ_QUEUES.md`.
 export type InAppNotificationType =
   | "mark_as_read"
   | "notify_user"

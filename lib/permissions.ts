@@ -1,6 +1,6 @@
 /**
  * Permission catalog for RBAC, derived from the functional requirements in
- * proyecto-b-marketplace.md. RBAC enforcement isn't implemented yet — this
+ * docs/PROYECTO_B_MARKETPLACE.md. RBAC enforcement isn't implemented yet — this
  * is the source of truth both the UI and the future authorization layer
  * (RNF-05) should read from, so the two never drift apart.
  */

@@ -81,6 +81,20 @@ export async function createBooking(
 
     const listing = await listingsRepo.findListingById(params.listingId);
     const host = listing ? await usersRepo.findUserById(listing.host_id) : null;
+
+    // In-app: let the host know a new booking landed on their listing. Async and
+    // best-effort (RNF-04) — a queue hiccup must never fail the persisted booking.
+    if (host) {
+      await queueNotification({
+        type: "notify_user",
+        listingId: params.listingId,
+        bookingId: booking.id,
+        userId: host.id,
+      }).catch((err) =>
+        console.error("[createBooking]: could not queue host notification", err),
+      );
+    }
+
     await emailBookingDetails({
       type: "pending",
       guestEmail: auth.data.email,
@@ -327,12 +341,16 @@ async function notifyBookingStatusChange(
     return;
   }
 
+  // Best-effort (RNF-04): honour this function's "never throws" contract so a
+  // queue hiccup can't bubble up and fail the accept/reject mutation.
   await queueNotification({
     type: "notify_booking_update",
     listingId: listing._id,
     bookingId: booking.id,
     userId: guest.id,
-  });
+  }).catch((err) =>
+    console.error("[notifyBookingStatusChange]: could not queue notification", err),
+  );
 
   await emailBookingDetails({
     type,
