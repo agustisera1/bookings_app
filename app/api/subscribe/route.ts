@@ -23,8 +23,13 @@ export async function GET(req: Request) {
   try {
     subscriber = await getSubscriber();
   } catch (error) {
-    console.error("[subscribe]: could not reach the notifications broker", error);
-    return new NextResponse("Notifications channel unavailable", { status: 503 });
+    console.error(
+      "[subscribe]: could not reach the notifications broker",
+      error,
+    );
+    return new NextResponse("Notifications channel unavailable", {
+      status: 503,
+    });
   }
 
   // 3. Un stream SSE atado a ESTE request (esta pestaña).
