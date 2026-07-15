@@ -3,6 +3,12 @@ type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 /** Internal type. DO NOT USE DIRECTLY. */
 export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
+export type BookingStatus =
+  | 'accepted'
+  | 'cancelled'
+  | 'pending'
+  | 'rejected';
+
 export type FiltersInput = {
   amenities?: Array<string> | null | undefined;
   availabilityRange?: Array<string | null | undefined> | null | undefined;
@@ -30,7 +36,7 @@ export type LocationInput = {
 export type GetUserBookingsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetUserBookingsQuery = { guestBookings: Array<{ type: string | null, title: string | null, photos: Array<string | null> | null, created_at: string | null, start_date: string | null, end_date: string | null, status: string | null, total_price: number | null, id: string | null, guests: number | null } | null> | null };
+export type GetUserBookingsQuery = { guestBookings: Array<{ type: string | null, title: string | null, photos: Array<string | null> | null, created_at: string | null, start_date: string | null, end_date: string | null, status: BookingStatus | null, total_price: number | null, id: string | null, guests: number | null } | null> | null };
 
 export type GetListingQueryVariables = Exact<{
   listing_id: string;

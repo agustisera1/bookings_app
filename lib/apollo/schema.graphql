@@ -19,6 +19,15 @@ type Listing {
   availabilityRange: [String]
 }
 
+# Mirrors the domain union in lib/types/booking.ts and the booking_status_valid
+# CHECK in db/migrations/004_booking_cancellation.sql.
+enum BookingStatus {
+  pending
+  accepted
+  rejected
+  cancelled
+}
+
 type GuestBooking {
   type: String
   title: String
@@ -26,7 +35,7 @@ type GuestBooking {
   created_at: String
   start_date: String
   end_date: String
-  status: String
+  status: BookingStatus
   total_price: Float
   id: ID
   guests: Int

@@ -67,6 +67,7 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/dates.ts` | `parseTs`, `formatDate`, `calcNights`, `datePickerTriggerClass` |
 | `lib/types/index.ts` | Tipos compartidos (`ServiceResult`, etc.) |
 | `lib/services/*` | Lógica de negocio server-side (siempre retornan `ServiceResult`) |
+| `lib/bookings/policy.ts` | Reglas puras del ciclo de vida de una reserva: transiciones legales, `canCancel`, `refundFor` |
 | `lib/apollo/*` | Cliente Apollo, resolvers, schema, tipos generados |
 | `lib/postgres.ts` | Cliente PostgreSQL y helpers de error |
 | `lib/mongo.ts` | Cliente MongoDB |
@@ -411,7 +412,7 @@ Un repositorio expone **operaciones de datos genéricas**, no acciones de domini
 
 **Qué es acceso a datos (va en el repo):**
 - CRUD y queries parametrizadas; proyección de tipos de DB a dominio (p. ej. `_id: ObjectId` → `string`).
-- **Scoping por ownership en el `WHERE`** (`... AND guest_id = $2`, `{ target_id: userId }`): es un predicado de query, patrón aceptado. Refs: `deleteBooking`, `updateNotification`.
+- **Scoping por ownership en el `WHERE`** (`... AND guest_id = $2`, `{ target_id: userId }`): es un predicado de query, patrón aceptado. Refs: `findBookingsByGuestId`, `updateNotification`.
 - Atomicidad a nivel DB (CTEs, transacciones). Ref: `rotateSession`.
 
 **Qué es lógica de negocio (NO va en el repo → va en el service):**
@@ -445,6 +446,8 @@ Todos los services son `"use server"`. Cada función sigue este flujo:
 ```
 
 **Regla de parámetros:** los services no importan tipos de componentes (`FormValues`). Reciben tipos planos (`{ checkIn: Date; guests: number; ... }`). Los componentes pasan sus form values que coinciden con esos shapes.
+
+**Regla de reglas puras:** una regla de dominio que la UI también necesita evaluar (¿se puede cancelar?, ¿cuánto reembolsa?) **no** va dentro del service. Los services son `"use server"`: todo lo que exportan se vuelve una Server Action async, así que no pueden exportar un predicado sync que un componente use en render. Esas reglas van en un módulo puro aparte — sin `"use server"`, sin DB, sin React — que el service y el componente importan por igual. Así el botón nunca ofrece una acción que el server va a rechazar, y la regla es testeable sin levantar nada. Ref: `lib/bookings/policy.ts` (`canCancel`, `refundFor`) consumido por `lib/services/bookings.ts` y `components/bookings/cancel-booking-button.tsx`.
 
 ---
 

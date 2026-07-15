@@ -8,8 +8,10 @@
     "start": "next start",
     "lint": "eslint",
     "codegen": "graphql-codegen",
+    "db:status": "dotenv -e .env.local -- tsx scripts/migrate.ts status",
     "db:migrate": "dotenv -e .env.local -- tsx scripts/migrate.ts up",
     "db:rollback": "dotenv -e .env.local -- tsx scripts/migrate.ts down",
+    "db:mark": "dotenv -e .env.local -- tsx scripts/migrate.ts mark",
     "db:schema": "dotenv -e .env.local -- tsx scripts/db_schema.ts"
   },
   "dependencies": {

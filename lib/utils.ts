@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import type { BookingStatus } from "./types/booking";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -35,16 +36,13 @@ export function listingTypeGradient(type: string | null | undefined) {
 }
 
 export const bookingStatusVariant: Record<
-  string,
+  BookingStatus,
   "primary" | "secondary" | "destructive" | "outline"
 > = {
-  confirmed: "primary",
-  paid: "primary",
   accepted: "primary",
   pending: "secondary",
   cancelled: "destructive",
   rejected: "destructive",
-  completed: "outline",
 };
 
 export const MIME_TYPES = {
