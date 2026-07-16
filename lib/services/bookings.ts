@@ -183,7 +183,9 @@ export async function cancelBooking(
       status: "cancelled",
       cancelled_by: actor,
       cancelled_at: now.toISOString(),
-      refund_amount: check.refundAmount,
+      // The policy computes money as number; the column is NUMERIC(10,2), which
+      // pg expects (and returns) as string. `toFixed(2)` matches its scale.
+      refund_amount: check.refundAmount.toFixed(2),
       ...(reason ? { status_reason: reason.trim() } : {}),
     } satisfies Partial<Booking>;
 

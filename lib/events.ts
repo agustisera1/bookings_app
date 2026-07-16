@@ -168,9 +168,10 @@ export function toWelcomeEmailPayload(input: {
 }
 
 // Adapts a persisted PG booking row to the queue's booking sub-shape: string
-// timestamps and a numeric-string `total_price` become the JSON-safe fields the
-// email template expects. Derives from `BookingEmailPayload["booking"]` so the
-// shape stays defined in exactly one place.
+// timestamps and the numeric-string money columns (`total_price`,
+// `refund_amount` — NUMERIC comes back as string from pg) become the JSON-safe
+// fields the email template expects. Derives from `BookingEmailPayload["booking"]`
+// so the shape stays defined in exactly one place.
 export function pgBookingToEmailBooking(
   booking: Booking,
 ): BookingEmailPayload["booking"] {
