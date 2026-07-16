@@ -14,7 +14,8 @@ Tema central de aprendizaje: **integración de múltiples bases de datos especia
 |---|---|
 | Guest | Busca, filtra, reserva alojamientos, deja reseñas |
 | Host | Crea y administra sus propios listados, gestiona disponibilidad y reservas recibidas |
-| Admin | Modera contenido, gestiona disputas, accede a métricas globales |
+
+> El rol **admin** se quitó del sistema y no se va a desarrollar (migración `006` dropea `users.is_admin`). Un usuario puede tener rol guest y host simultáneamente.
 
 ---
 
@@ -23,7 +24,7 @@ Tema central de aprendizaje: **integración de múltiples bases de datos especia
 ### 3.1 Autenticación y cuentas
 - RF-01: Registro y login (JWT access + refresh token)
 - RF-02: Un usuario puede tener rol guest y host simultáneamente (no son excluyentes)
-- RF-03: Panel de administración accesible solo para rol admin
+- ~~RF-03~~: quitado — el panel de administración se eliminó junto con el rol admin
 
 ### 3.2 Listados (alojamientos — Fase 1)
 - RF-04: Host crea un listado: título, descripción, precio por noche, ubicación, capacidad, fotos
@@ -55,6 +56,11 @@ Tema central de aprendizaje: **integración de múltiples bases de datos especia
 - RF-20: Guest recibe notificación de confirmación de reserva
 - RF-21: Las notificaciones se procesan de forma asíncrona, sin bloquear la respuesta de la API
 
+### 3.8 Mensajería guest ↔ host (Fase 3+)
+- RF-22: Guest y host pueden intercambiar mensajes directos en el contexto de un listado o reserva
+- RF-23: Los mensajes se entregan en tiempo real — la conexión/entrega en vivo se establece vía Redis (Pub/Sub)
+- RF-24: El historial de conversación se persiste en MongoDB y se recupera al reabrir la conversación
+
 ---
 
 ## 4. Requerimientos no funcionales
@@ -63,8 +69,8 @@ Tema central de aprendizaje: **integración de múltiples bases de datos especia
 - RNF-02: **Consistencia eventual aceptable** — el índice de búsqueda (Elasticsearch) puede estar desactualizado por unos segundos respecto a la fuente de verdad (MongoDB/Postgres)
 - RNF-03: **Aislamiento de responsabilidades por motor de DB**:
   - PostgreSQL: usuarios, reservas, pagos, relaciones con integridad referencial
-  - MongoDB: listados (esquema flexible según tipo)
-  - Redis: locks de concurrencia para reservas, cache de disponibilidad, sesiones
+  - MongoDB: listados (esquema flexible según tipo), notificaciones, historial de mensajería
+  - Redis: locks de concurrencia para reservas, cache de disponibilidad, sesiones, Pub/Sub para mensajería en tiempo real
   - Elasticsearch: índice de búsqueda de listados
 - RNF-04: **Procesamiento asíncrono** — notificaciones y sincronización del índice de búsqueda se procesan vía cola de mensajes (no en el ciclo de request/response)
 - RNF-05: **Autorización granular** — cada mutación de la API GraphQL valida el rol del usuario y, cuando aplica, que sea el owner del recurso (ej. solo el host dueño puede editar su listado)
@@ -85,37 +91,48 @@ erDiagram
     string password_hash
     string name
     boolean is_host
-    boolean is_admin
     timestamp created_at
+  }
+  SESSIONS {
+    uuid id PK
+    uuid user_id FK
+    string token_hash
+    timestamp expires_at
   }
   BOOKINGS {
     uuid id PK
-    uuid listing_id FK
+    string listing_id
     uuid guest_id FK
-    date start_date
-    date end_date
+    timestamp start_date
+    timestamp end_date
     string status
+    string status_reason
     numeric total_price
+    int guests
+    numeric refund_amount
+    string cancelled_by
+    timestamp cancelled_at
     timestamp created_at
   }
   REVIEWS {
     uuid id PK
-    uuid booking_id FK
-    uuid author_id FK
+    string listing_id
+    string author_name
     int rating
     string comment
     string host_reply
     timestamp created_at
   }
 
+  USERS ||--o{ SESSIONS : has
   USERS ||--o{ BOOKINGS : makes
-  USERS ||--o{ REVIEWS : writes
-  BOOKINGS ||--o| REVIEWS : "can have"
 ```
 
-> `listing_id` referencia un documento de MongoDB (Fase 2+) — la referencia se guarda como string/UUID, sin foreign key real entre motores.
+> `listing_id` (en `BOOKINGS` y `REVIEWS`) referencia un documento de MongoDB — la referencia se guarda como string (ObjectId de 24 chars), sin foreign key real entre motores. `REVIEWS` no tiene FKs: guarda `author_name` desnormalizado.
+>
+> Constraints relevantes: `status` es un set cerrado (`pending | accepted | rejected | cancelled`, CHECK en migración 004; `completed` se deriva, no se persiste), el no-solapamiento se garantiza con una `EXCLUDE` constraint (gist) sobre `listing_id` + rango de fechas (migración 003), y los montos son `NUMERIC(10,2)` (migración 005).
 
-### 5.2 MongoDB (catálogo de listados — desde Fase 2)
+### 5.2 MongoDB (catálogo de listados — `listingsdb.listings`)
 
 ```mermaid
 erDiagram
@@ -129,12 +146,30 @@ erDiagram
     object location
     object attributes
     array photos
-    datetime created_at
-    datetime updated_at
+    numeric rating_avg
   }
 ```
 
-> `attributes` es un objeto cuya forma depende de `type`: `accommodation` (beds, check_in_time...), `experience` (duration_minutes, language...), `equipment` (units_available, deposit...).
+> `attributes` es un objeto cuya forma depende de `type`: `accommodation` (beds, check_in_time...), `experience` (duration_minutes, language...), `equipment` (units_available, deposit...). `location` incluye city, country, address y coordenadas GeoJSON opcionales.
+
+### 5.3 MongoDB (notificaciones — `notificationsdb.notifications`)
+
+```mermaid
+erDiagram
+  NOTIFICATIONS {
+    ObjectId _id PK
+    string listing_id
+    string host_id
+    string guest_id
+    string booking_id
+    string target_id
+    string title
+    string body
+    boolean is_read
+  }
+```
+
+> `target_id` es el usuario que debe recibir la notificación. `created_at` no se persiste en el documento: se deriva del timestamp embebido en el `ObjectId` al proyectar en el repositorio.
 
 ---
 
@@ -155,8 +190,8 @@ flowchart TB
   Client["Cliente (web)"]
   API["API GraphQL"]
   PG["PostgreSQL (usuarios, reservas)"]
-  Mongo["MongoDB (listados)"]
-  Redis["Redis (locks, cache, sesiones)"]
+  Mongo["MongoDB (listados, notificaciones, mensajes)"]
+  Redis["Redis (locks, cache, sesiones, pub/sub mensajería)"]
   ES["Elasticsearch (búsqueda)"]
   Queue["Cola de mensajes"]
   Worker["Workers (notificaciones, reindexado)"]
@@ -199,9 +234,9 @@ sequenceDiagram
 
 ## 7. Plan de fases
 
-1. **Fase 1**: PostgreSQL únicamente. Auth + RBAC (guest/host/admin), CRUD de listados (solo alojamientos), reservas sin solapamiento (constraint/transacción en Postgres), reseñas. API REST o GraphQL simple.
+1. **Fase 1**: PostgreSQL únicamente. Auth + RBAC (guest/host), CRUD de listados (solo alojamientos), reservas sin solapamiento (constraint/transacción en Postgres), reseñas. API REST o GraphQL simple.
 2. **Fase 2**: Migrar listados a MongoDB. Soportar múltiples `type` de listado con `attributes` flexibles. API GraphQL para listados (consultas anidadas listado → reseñas → host).
-3. **Fase 3**: Redis para locks de concurrencia en reservas + cache de disponibilidad + sesiones.
+3. **Fase 3**: Redis para locks de concurrencia en reservas + cache de disponibilidad + sesiones. Mensajería guest ↔ host en tiempo real: Redis (Pub/Sub) para establecer la conexión y entregar mensajes en vivo; el historial de la conversación se persiste en MongoDB.
 4. **Fase 4**: Elasticsearch para búsqueda full-text y filtros combinados. Cola de mensajes (RabbitMQ o Redis Streams) para sincronizar Mongo → Elasticsearch.
 5. **Fase 5**: Workers para notificaciones por email ante eventos de reserva. Trazabilidad del flujo completo.
 6. **Fase 6 — Hardening**: reverse proxy (Nginx) con rate limiting, métricas (Prometheus/Grafana), tracing (OpenTelemetry), pruebas de carga (k6) sobre el endpoint de creación de reservas.
