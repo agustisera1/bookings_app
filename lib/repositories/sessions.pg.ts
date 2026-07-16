@@ -6,7 +6,7 @@ export async function findValidSession(
   tokenHash: string,
 ): Promise<SessionRecord | null> {
   const result = await db.query<SessionRecord>(
-    `SELECT u.id, u.email, u.name, u.is_admin, u.is_host, s.expires_at
+    `SELECT u.id, u.email, u.name, u.is_host, s.expires_at
      FROM sessions s
      JOIN users u ON u.id = s.user_id
      WHERE s.user_id = $1 AND s.token_hash = $2 AND s.expires_at > NOW()`,

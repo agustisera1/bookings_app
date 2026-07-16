@@ -18,14 +18,14 @@ Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo d
 |-------|---------------------------------------------------------------|
 | Guest | Busca, reserva, deja reseñas                                  |
 | Host  | Crea y administra listados, gestiona reservas recibidas       |
-| Admin | Modera contenido, accede a métricas globales                  |
 
-Un usuario puede tener rol guest y host simultáneamente.
+Un usuario puede tener rol guest y host simultáneamente. El rol admin se quitó del sistema
+(la columna `users.is_admin` sigue en la DB, huérfana, por si el rol vuelve en una fase futura).
 
 ## Modelo de datos
 
 ### PostgreSQL (transaccional)
-- `USERS`: id, email, password_hash, name, is_host, is_admin, created_at
+- `USERS`: id, email, password_hash, name, is_host, created_at
 - `BOOKINGS`: id, listing_id (ref MongoDB), guest_id, start_date, end_date, status, total_price, created_at
 - `REVIEWS`: id, booking_id, author_id, rating (1-5), comment, host_reply, created_at
 

@@ -41,7 +41,6 @@ export async function createAccessToken(
         user_id: user.id,
         email: user.email,
         name: user.name,
-        is_admin: user.is_admin,
         is_host: user.is_host,
         roles,
         permissions: permissions.map(({ key }) => key),
@@ -234,7 +233,6 @@ export async function getCurrentUser(): Promise<CurrentUser | null> {
       email: decoded.email,
       name: decoded.name,
       is_host: decoded.is_host,
-      is_admin: decoded.is_admin,
       roles: decoded.roles,
       permissions: decoded.permissions,
     };

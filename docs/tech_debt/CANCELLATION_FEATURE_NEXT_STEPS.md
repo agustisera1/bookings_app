@@ -206,8 +206,8 @@ en el payload y plantilla propia. Lo que queda:
 
 - **La disputa no existe.** `canCancel` le dice al guest *"Contact support to open a dispute"*
   cuando la estadía ya empezó, pero no hay support ni flujo de disputa. El permiso
-  `admin:manage-disputes` está en el catálogo (`lib/permissions.ts`) y no lo implementa nadie.
-  Por ahora es copy que apunta a la nada.
+  `admin:manage-disputes` se eliminó junto con el resto del rol admin (branch
+  `refactor/remove-admin-role`). Por ahora es copy que apunta a la nada.
 - **`bookings:cancel-own` no gatea al host.** En `cancelBooking` se usa como permiso baseline, pero
   como todo usuario es guest (RF-02), lo tiene todo el mundo: solo prueba que hay sesión. Lo que
   realmente autoriza es el ownership que resuelve `resolveCancelActor`. Funciona, pero si el

@@ -4,7 +4,7 @@
  * is the source of truth both the UI and the future authorization layer
  * (RNF-05) should read from, so the two never drift apart.
  */
-export type Role = "guest" | "host" | "admin";
+export type Role = "guest" | "host";
 
 export type Permission = {
   key: string;
@@ -111,51 +111,20 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
       phase: "Fase 2+",
     },
   ],
-  admin: [
-    {
-      key: "admin:panel",
-      label: "Acceder al panel de administración",
-      description:
-        "Entrar a la sección administrativa, restringida al rol admin.",
-    },
-    {
-      key: "admin:moderate-content",
-      label: "Moderar contenido",
-      description:
-        "Revisar, ocultar o eliminar listados y reseñas que infrinjan las normas.",
-    },
-    {
-      key: "admin:manage-disputes",
-      label: "Gestionar disputas",
-      description:
-        "Mediar y resolver disputas entre guests y hosts sobre una reserva.",
-    },
-    {
-      key: "admin:global-metrics",
-      label: "Acceder a métricas globales",
-      description:
-        "Ver indicadores agregados de toda la plataforma (reservas, listados, usuarios).",
-    },
-  ],
 };
 
 export const ROLE_LABELS: Record<Role, string> = {
   guest: "Guest",
   host: "Host",
-  admin: "Admin",
 };
 
 /**
- * Guest is the baseline for every account (RF-02: host/admin stack on top
- * of it rather than replacing it), so it's always included.
+ * Guest is the baseline for every account (RF-02: host stacks on top of it
+ * rather than replacing it), so it's always included.
  */
-export function getUserRoles(user: {
-  is_host: boolean;
-  is_admin: boolean;
-}): Role[] {
+export function getUserRoles(user: { is_host: boolean }): Role[] {
   const roles: Role[] = ["guest"];
   if (user.is_host) roles.push("host");
-  if (user.is_admin) roles.push("admin");
   return roles;
 }
 

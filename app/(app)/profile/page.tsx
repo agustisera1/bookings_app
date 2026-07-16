@@ -12,7 +12,6 @@ const ROLE_BADGE_VARIANTS: Record<Role, "primary" | "secondary" | "outline"> =
   {
     guest: "secondary",
     host: "primary",
-    admin: "outline",
   };
 
 export default async function ProfilePage() {
