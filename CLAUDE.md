@@ -20,7 +20,7 @@ Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo d
 | Host  | Crea y administra listados, gestiona reservas recibidas       |
 
 Un usuario puede tener rol guest y host simultáneamente. El rol admin se quitó del sistema
-(la columna `users.is_admin` sigue en la DB, huérfana, por si el rol vuelve en una fase futura).
+(migración `006` dropea `users.is_admin`).
 
 ## Modelo de datos
 
