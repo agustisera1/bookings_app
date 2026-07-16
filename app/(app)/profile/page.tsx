@@ -109,9 +109,6 @@ export default async function ProfilePage() {
                         </span>
                       </div>
                       <div className="flex flex-col items-end gap-1.5 shrink-0">
-                        <span className="text-[10px] text-muted-foreground">
-                          {permission.ref}
-                        </span>
                         {permission.phase && (
                           <Badge
                             variant="outline"

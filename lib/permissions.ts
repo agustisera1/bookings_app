@@ -10,7 +10,6 @@ export type Permission = {
   key: string;
   label: string;
   description: string;
-  /** Requirement this permission traces back to, e.g. "RF-08". */
   /** Set when the permission only applies from a later project phase. */
   phase?: string;
 };

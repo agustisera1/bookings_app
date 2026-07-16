@@ -15,7 +15,7 @@
 
 | Branch | Qué lleva | Estado |
 |--------|-----------|--------|
-| `fix/permission-ref` | El `permission.ref` de `app/(app)/profile/page.tsx:113` | ⬜ Pendiente — **va primero** |
+| ~~`fix/permission-ref`~~ | ~~El `permission.ref` de `app/(app)/profile/page.tsx:113`~~ | ✅ Resuelto |
 | `feat/cancel-reservations` | Migración `004`, `lib/bookings/policy.ts`, `cancelBooking`, ownership en accept/reject, enum `BookingStatus` en GraphQL, UI, y el mail de cancelación del lado de la API | ✅ Implementado |
 | `feat/cancellation-email` (worker) | Tipo `cancelled`, `refundAmount`/`cancelledBy` y plantilla de mail en `bookings-app-worker` | ✅ Implementado |
 | `fix/booking-money-precision` | `005`: `total_price` y `refund_amount` → `NUMERIC(10,2)`; `Booking.total_price: string` pasa a ser verdad | ⬜ Pendiente |
@@ -40,7 +40,12 @@ para siempre. Los demás dependen de que `feat/cancel-reservations` mergee.
 
 ---
 
-## `fix/permission-ref` — el build está rojo 🔴
+## ~~`fix/permission-ref`~~ — ✅ resuelto
+
+> **Resolución:** el historial (`f796096`) muestra que el campo `ref` se eliminó a propósito
+> (se borró del tipo y de todos los valores en el mismo commit; varios eran placeholders `RF-XX`).
+> Se tomó la primera salida: se borró el `<span>` huérfano de `profile/page.tsx` y el JSDoc
+> huérfano de `lib/permissions.ts`. Build verde.
 
 `app/(app)/profile/page.tsx:113` lee `permission.ref`, un campo que **no existe** en el tipo
 `Permission` (`lib/permissions.ts`). Quedó el JSDoc huérfano en `lib/permissions.ts:13`
