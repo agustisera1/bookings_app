@@ -18,7 +18,7 @@
 | ~~`fix/permission-ref`~~ | ~~El `permission.ref` de `app/(app)/profile/page.tsx:113`~~ | ✅ Resuelto |
 | `feat/cancel-reservations` | Migración `004`, `lib/bookings/policy.ts`, `cancelBooking`, ownership en accept/reject, enum `BookingStatus` en GraphQL, UI, y el mail de cancelación del lado de la API | ✅ Implementado |
 | `feat/cancellation-email` (worker) | Tipo `cancelled`, `refundAmount`/`cancelledBy` y plantilla de mail en `bookings-app-worker` | ✅ Implementado |
-| `fix/booking-money-precision` | `005`: `total_price` y `refund_amount` → `NUMERIC(10,2)`; `Booking.total_price: string` pasa a ser verdad | ⬜ Pendiente |
+| `fix/booking-money-precision` | `005`: `total_price` y `refund_amount` → `NUMERIC(10,2)`; `Booking.total_price: string` pasa a ser verdad | ✅ Implementado |
 | `chore/vitest` | Infra de tests + specs de `policy.ts` | ⬜ Pendiente |
 | `feat/reviews-require-completed-booking` | Trae `isCompleted` y lo cablea en `createReview` | ⬜ Pendiente |
 | `refactor/slot-holding-statuses` | Trae `SLOT_HOLDING_STATUSES`, cierra la deuda de `findBookedListingIds` | ⬜ Pendiente |
@@ -67,6 +67,13 @@ Dos salidas posibles — decidir cuál refleja la intención original:
 ---
 
 ## `fix/booking-money-precision` — dinero en punto flotante 💰
+
+> **Resolución (branch `fix/booking-money-precision`):** migración `005` convierte ambas
+> columnas a `NUMERIC(10,2)`; `Booking.refund_amount` pasó a `string` (pg devuelve `NUMERIC`
+> como string, así el tipo dice la verdad para las dos columnas). Call sites revisados:
+> `resolvers.ts` (`parseFloat`), `events.ts` y `policy.ts` (`Number(...)`) ya convertían en el
+> borde — ahora sobre strings reales. El único cambio de código fue `cancelBooking`, que escribe
+> `check.refundAmount.toFixed(2)`. **Pendiente: aplicar `005` con `pnpm db:migrate` en cada entorno.**
 
 **Dos bugs entrelazados, ambos preexistentes:**
 

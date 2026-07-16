@@ -25,10 +25,12 @@ export type Booking = {
   end_date: string;
   status: BookingStatus;
   status_reason: string | null;
+  // Money columns are NUMERIC(10,2) (005), which node-postgres returns as
+  // strings to avoid float precision loss. Consumers convert at the edge.
   total_price: string;
   created_at: string;
   guests: number;
-  refund_amount: number;
+  refund_amount: string;
   cancelled_by: CancelActor | null;
   cancelled_at: string | null;
 };
