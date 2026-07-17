@@ -1,10 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { getChatHistory } from "@/lib/services/chat";
 import type { SerializableMessageDocument } from "@/lib/types/messages";
 import type { SerializableChatDocument } from "@/lib/types/chat";
 import type { Status } from "./types";
+import { getSocketConnection } from "@/lib/socket";
+
+// No-op subscription for now — connect/disconnect events get wired here later.
+const subscribe = () => () => {
+  // socket.on("connect", () => {});
+  // socket.on("connect_error", () => {});
+  // socket.on("disconnect", () => {});
+};
+
+export function useSocket() {
+  const socket = useSyncExternalStore(
+    subscribe,
+    () => getSocketConnection(), // client: the shared singleton (stable ref)
+    () => null, // server: don't open a connection during SSR
+  );
+  return { socket };
+}
 
 /** Loads a booking's chat history and splits it into meta + messages. */
 export function useBookingChat(bookingId: string) {
@@ -17,6 +34,12 @@ export function useBookingChat(bookingId: string) {
 
   useEffect(() => {
     let ignore = false;
+    const socket = getSocketConnection();
+    const onMessageReceived = (msg: SerializableMessageDocument) => {
+      setHistory((prev) => [...prev, msg]);
+    };
+
+    socket.on("server-message", onMessageReceived);
 
     getChatHistory(bookingId).then((response) => {
       if (ignore) return;
@@ -32,9 +55,9 @@ export function useBookingChat(bookingId: string) {
         setStatus("error");
       }
     });
-
     return () => {
       ignore = true;
+      socket.off("server-message", onMessageReceived);
     };
   }, [bookingId]);
 

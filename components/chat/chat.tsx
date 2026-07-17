@@ -7,6 +7,7 @@ import { EmptyThread, ErrorState, ThreadSkeleton } from "./chat-states";
 import { MessageThread } from "./message-thread";
 import type { Counterpart } from "./types";
 import { useBookingChat } from "./use-booking-chat";
+import { SocketProvider } from "./context";
 
 export default function Chat({
   bookingId,
@@ -31,35 +32,37 @@ export default function Chat({
   }, [status, history.length]);
 
   return (
-    <div className="mx-auto flex h-[70vh] max-h-[720px] min-h-[440px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <ChatHeader
-        counterpart={counterpart}
-        startedAt={chatMeta?.started_at}
-        status={status}
-      />
+    <SocketProvider>
+      <div className="mx-auto flex h-[70vh] max-h-[720px] min-h-[440px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
+        <ChatHeader
+          counterpart={counterpart}
+          startedAt={chatMeta?.started_at}
+          status={status}
+        />
 
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"
-        aria-live="polite"
-      >
-        {status === "loading" && <ThreadSkeleton />}
-        {status === "error" && <ErrorState message={error} />}
-        {status === "ready" && history.length === 0 && (
-          <EmptyThread counterpart={counterpart} />
-        )}
-        {status === "ready" && history.length > 0 && (
-          <MessageThread
-            messages={history}
-            currentUserId={currentUserId}
-            counterpart={counterpart}
-            startedAt={chatMeta?.started_at}
-            now={now}
-          />
-        )}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"
+          aria-live="polite"
+        >
+          {status === "loading" && <ThreadSkeleton />}
+          {status === "error" && <ErrorState message={error} />}
+          {status === "ready" && history.length === 0 && (
+            <EmptyThread counterpart={counterpart} />
+          )}
+          {status === "ready" && history.length > 0 && (
+            <MessageThread
+              messages={history}
+              currentUserId={currentUserId}
+              counterpart={counterpart}
+              startedAt={chatMeta?.started_at}
+              now={now}
+            />
+          )}
+        </div>
+
+        <ChatComposer bookingId={bookingId} counterpart={counterpart} />
       </div>
-
-      <ChatComposer counterpart={counterpart} />
-    </div>
+    </SocketProvider>
   );
 }

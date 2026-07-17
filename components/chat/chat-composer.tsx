@@ -1,33 +1,59 @@
+"use client";
+
+import { useState, type KeyboardEvent } from "react";
 import { SendHorizontalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Counterpart } from "./types";
+import { useSocketContext } from "./context";
 
-export function ChatComposer({ counterpart }: { counterpart: Counterpart }) {
-  // Sending is not wired yet — real-time delivery arrives with the messaging
-  // feature. The field is shown disabled so the surface reads as complete.
+export function ChatComposer({
+  bookingId,
+  counterpart,
+}: {
+  bookingId: string;
+  counterpart: Counterpart;
+}) {
+  const { socket } = useSocketContext();
+  const [body, setBody] = useState("");
+
+  function sendMessage() {
+    const trimmed = body.trim();
+    if (!trimmed) return;
+    // The booking id doubles as the chat room id (chat_id) on the worker side.
+    socket?.emit("client-message", { chat_id: bookingId, body: trimmed });
+    setBody("");
+  }
+
+  // Enter sends; Shift+Enter inserts a newline.
+  function handleKeyDown(event: KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      sendMessage();
+    }
+  }
+
   return (
     <div className="border-t bg-card px-4 py-3 sm:px-6">
-      <div className="flex items-end gap-1.5 rounded-2xl border bg-background p-1.5 opacity-70">
+      <div className="flex items-end gap-1.5 rounded-2xl border bg-background p-1.5">
         <Textarea
-          disabled
           rows={1}
+          value={body}
+          onChange={(event) => setBody(event.target.value)}
+          onKeyDown={handleKeyDown}
           placeholder={`Message your ${counterpart.toLowerCase()}…`}
           className="min-h-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-2 text-sm shadow-none focus-visible:ring-0 disabled:bg-transparent disabled:opacity-100"
         />
         <Button
           size="icon"
-          disabled
           className="size-9 shrink-0 rounded-xl"
           aria-label="Send message"
+          onClick={sendMessage}
+          disabled={!body.trim()}
         >
           <SendHorizontalIcon />
         </Button>
       </div>
-      <p className="mt-2 px-1 text-[11px] text-muted-foreground">
-        Real-time messaging is coming to this booking — you&apos;ll be able to
-        reply here soon.
-      </p>
     </div>
   );
 }
