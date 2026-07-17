@@ -60,6 +60,13 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
       description:
         "Recupera el listado de reservas hechos por el guest, junto con la información de cada listing",
     },
+    {
+      key: "chat:view-own",
+      label: "Leer la conversación de su reserva",
+      description:
+        "Acceder al historial de mensajes del chat asociado a una reserva en la que participa (como guest o host).",
+      phase: "Fase 3+",
+    },
   ],
   host: [
     {
@@ -96,6 +103,13 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
       label: "Ver reservas de sus listados",
       description:
         "Consultar las reservas recibidas sobre los alojamientos que administra.",
+    },
+    {
+      key: "chat:view-own",
+      label: "Leer la conversación de su reserva",
+      description:
+        "Acceder al historial de mensajes del chat asociado a una reserva en la que participa (como guest o host).",
+      phase: "Fase 3+",
     },
     {
       key: "reviews:reply",

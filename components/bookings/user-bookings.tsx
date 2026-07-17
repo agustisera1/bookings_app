@@ -7,13 +7,7 @@ import { ApolloClient } from "@apollo/client";
 import { GetUserBookingsQuery } from "@/lib/apollo/__generated__/operations";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { CalendarRange, Users, ChevronRightIcon } from "lucide-react";
+import { CalendarRange, Users } from "lucide-react";
 import { formatDate, calcNights, parseTs } from "@/lib/dates";
 import { formatPrice, bookingStatusVariant, listingTypeGradient } from "@/lib/utils";
 import { EmptyState } from "@/components/common/empty-state";
@@ -113,10 +107,17 @@ function BookingCard({
   return (
     <li>
       <Card
-        className={`group flex h-full flex-col overflow-hidden p-0 transition-shadow duration-300 hover:shadow-xl ${
+        className={`group relative flex h-full flex-col overflow-hidden p-0 transition-shadow duration-300 hover:shadow-xl ${
           muted ? "opacity-90" : ""
         }`}
       >
+        {/* Stretched link: the whole card navigates to the detail page. Sits
+            below interactive children (cancel), which lift above it with z-10. */}
+        <Link
+          href={`/bookings/${booking.id}`}
+          className="absolute inset-0 z-0"
+          aria-label={`View booking for ${booking.title ?? "listing"}`}
+        />
         <div
           className={`relative flex h-24 items-end overflow-hidden p-3 ${
             muted ? "saturate-[.6]" : ""
@@ -142,11 +143,9 @@ function BookingCard({
         </div>
 
         <CardContent className="flex flex-1 flex-col gap-3 p-4">
-          <Link href={`/bookings/${booking.id}`} className="min-w-0">
-            <h3 className="line-clamp-2 text-lg font-semibold leading-snug transition-colors group-hover:text-primary">
-              {booking.title}
-            </h3>
-          </Link>
+          <h3 className="line-clamp-2 min-w-0 text-lg font-semibold leading-snug transition-colors group-hover:text-primary">
+            {booking.title}
+          </h3>
 
           <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
             <div className="flex items-center gap-1.5">
@@ -181,7 +180,8 @@ function BookingCard({
                 {booking.status}
               </Badge>
             </div>
-            <div className="flex items-center gap-1">
+            {/* Lifted above the stretched link so the dialog trigger stays clickable. */}
+            <div className="relative z-10 flex items-center gap-1">
               <CancelBookingButton
                 bookingId={booking.id ?? ""}
                 actor="guest"
@@ -191,22 +191,6 @@ function BookingCard({
                   totalPrice: booking.total_price ?? 0,
                 }}
               />
-              <Tooltip>
-                <TooltipTrigger
-                  render={
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      nativeButton={false}
-                      render={<Link href={`/bookings/${booking.id}`} />}
-                    >
-                      <ChevronRightIcon />
-                      <span className="sr-only">View booking</span>
-                    </Button>
-                  }
-                />
-                <TooltipContent variant="dark">View</TooltipContent>
-              </Tooltip>
             </div>
           </div>
         </CardContent>

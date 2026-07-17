@@ -68,6 +68,55 @@ export function calcNights(
   return Math.round((e.getTime() - s.getTime()) / 86_400_000);
 }
 
+/** Resilient parse: accepts a Date, an epoch-millis string, or an ISO string. */
+function toDate(value: Date | string | null | undefined): Date | null {
+  if (value instanceof Date) return isNaN(value.getTime()) ? null : value;
+  const epoch = parseTs(value);
+  if (epoch) return epoch;
+  if (!value) return null;
+  const d = new Date(value);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+/** Time of day, e.g. "9:05 AM". Empty string when unparseable. */
+export function formatTime(value: Date | string | null | undefined): string {
+  const d = toDate(value);
+  if (!d) return "";
+  return d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+}
+
+/**
+ * Day label relative to `now`: "Today", "Yesterday", a weekday within the last
+ * week, or an absolute date. `now` is passed in (not read here) so callers keep
+ * render pure — reading the clock during render is flagged by the React Compiler.
+ */
+export function formatDayLabel(
+  value: Date | string | null | undefined,
+  now: Date,
+): string {
+  const d = toDate(value);
+  if (!d) return "";
+  const startOfDay = (x: Date) =>
+    new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+  const days = Math.round((startOfDay(now) - startOfDay(d)) / 86_400_000);
+  if (days <= 0) return "Today";
+  if (days === 1) return "Yesterday";
+  if (days < 7) return d.toLocaleDateString("en-US", { weekday: "long" });
+  return formatDate(d);
+}
+
+/** Epoch millis for sorting; `0` when unparseable. Accepts epoch or ISO strings. */
+export function toMillis(value: Date | string | null | undefined): number {
+  const d = toDate(value);
+  return d ? d.getTime() : 0;
+}
+
+/** Calendar-day bucket key (`YYYY-MM-DD`) for grouping; `""` when unparseable. */
+export function toDayKey(value: Date | string | null | undefined): string {
+  const d = toDate(value);
+  return d ? toISODate(d) : "";
+}
+
 /** Local calendar date as `YYYY-MM-DD` — no time component, no timezone shift. */
 export function toISODate(date: Date): string {
   const y = date.getFullYear();
