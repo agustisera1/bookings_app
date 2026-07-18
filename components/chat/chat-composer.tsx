@@ -5,25 +5,26 @@ import { SendHorizontalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Counterpart } from "./types";
-import { useSocketContext } from "./context";
-import { EVENTS, type ClientMessage } from "@/lib/socket";
 
+/**
+ * The composer owns its draft and nothing else: sending goes through `onSend`,
+ * so every socket call for the thread lives in `useBookingChat` next to the
+ * state it updates. Splitting them is what left the sender's own message
+ * unrendered — the emit had no way to reach the history.
+ */
 export function ChatComposer({
-  bookingId,
   counterpart,
+  onSend,
 }: {
-  bookingId: string;
   counterpart: Counterpart;
+  onSend: (body: string) => void;
 }) {
-  const { socket } = useSocketContext();
   const [body, setBody] = useState("");
 
   function sendMessage() {
     const trimmed = body.trim();
     if (!trimmed) return;
-    // The booking id doubles as the chat room id (chat_id) on the worker side.
-    const payload: ClientMessage = { chat_id: bookingId, body: trimmed };
-    socket?.emit(EVENTS.CLIENT_MESSAGE, payload);
+    onSend(trimmed);
     setBody("");
   }
 

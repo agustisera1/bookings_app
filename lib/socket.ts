@@ -31,6 +31,16 @@ export type ClientMessage = Pick<
   "chat_id" | "body"
 >;
 
+/**
+ * Reply to a `CLIENT_MESSAGE`. The server excludes the sender from the
+ * broadcast, so this ack is the only confirmation the sender gets — and it
+ * carries the real `_id`, which replaces the temporary one used to render the
+ * message optimistically.
+ */
+export type MessageAck =
+  | { ok: true; message: SerializableMessageDocument }
+  | { ok: false };
+
 export function getSocketConnection() {
   if (!globalThis.chatSocket) {
     const url =

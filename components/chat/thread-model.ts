@@ -1,5 +1,5 @@
 import { formatDayLabel, toDayKey, toMillis } from "@/lib/dates";
-import type { SerializableMessageDocument } from "@/lib/types/messages";
+import type { ThreadMessage } from "./types";
 
 /**
  * A message enriched with the display flags a thread needs, computed from its
@@ -10,7 +10,7 @@ import type { SerializableMessageDocument } from "@/lib/types/messages";
  * tested on its own (cohesion/coupling rule in CLAUDE.md).
  */
 export type ThreadItem = {
-  message: SerializableMessageDocument;
+  message: ThreadMessage;
   isMine: boolean;
   isRunStart: boolean;
   isRunEnd: boolean;
@@ -18,7 +18,7 @@ export type ThreadItem = {
 };
 
 export function buildThread(
-  messages: SerializableMessageDocument[],
+  messages: ThreadMessage[],
   currentUserId: string,
   now: Date,
 ): ThreadItem[] {

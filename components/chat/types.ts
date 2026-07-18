@@ -1,4 +1,16 @@
 import type { BookingParty } from "@/lib/types/booking";
+import type { SerializableMessageDocument } from "@/lib/types/messages";
+
+/**
+ * A message as the thread holds it. Same shape the server stores, plus the two
+ * client-only states an optimistically rendered message passes through: shown
+ * before the server has confirmed it (`pending`), and shown after the server
+ * refused or failed to store it (`failed`). Neither is ever persisted.
+ */
+export type ThreadMessage = SerializableMessageDocument & {
+  pending?: boolean;
+  failed?: boolean;
+};
 
 /** Load state of the chat history fetch. */
 export type Status = "loading" | "error" | "ready";

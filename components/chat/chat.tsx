@@ -7,7 +7,6 @@ import { EmptyThread, ErrorState, ThreadSkeleton } from "./chat-states";
 import { MessageThread } from "./message-thread";
 import { counterpartOf } from "./types";
 import { useBookingChat } from "./use-booking-chat";
-import { SocketProvider } from "./context";
 import { cn } from "@/lib/utils";
 
 export default function Chat({
@@ -24,8 +23,8 @@ export default function Chat({
    */
   fill?: boolean;
 }) {
-  const { status, error, history, chatMeta, viewerParty } =
-    useBookingChat(bookingId);
+  const { status, error, history, chatMeta, viewerParty, sendMessage } =
+    useBookingChat(bookingId, currentUserId);
   // Captured once at mount: a stable "now" for relative day labels keeps render pure.
   const [now] = useState(() => new Date());
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -43,47 +42,45 @@ export default function Chat({
   }, [status, history.length]);
 
   return (
-    <SocketProvider>
+    <div
+      className={cn(
+        "flex flex-col overflow-hidden",
+        fill
+          ? // Inherit the pane's `background`, which is a step darker than
+            // `card`. That contrast is what sets the thread apart from the
+            // rail, so painting it `card` here would flatten the two together.
+            "h-full min-h-0 flex-1"
+          : "mx-auto h-[70vh] max-h-[720px] min-h-[440px] w-full max-w-2xl rounded-2xl border bg-card shadow-sm",
+      )}
+    >
+      <ChatHeader
+        counterpart={counterpart}
+        startedAt={chatMeta?.started_at}
+        status={status}
+      />
+
       <div
-        className={cn(
-          "flex flex-col overflow-hidden",
-          fill
-            ? // Inherit the pane's `background`, which is a step darker than
-              // `card`. That contrast is what sets the thread apart from the
-              // rail, so painting it `card` here would flatten the two together.
-              "h-full min-h-0 flex-1"
-            : "mx-auto h-[70vh] max-h-[720px] min-h-[440px] w-full max-w-2xl rounded-2xl border bg-card shadow-sm",
-        )}
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"
+        aria-live="polite"
       >
-        <ChatHeader
-          counterpart={counterpart}
-          startedAt={chatMeta?.started_at}
-          status={status}
-        />
-
-        <div
-          ref={scrollRef}
-          className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"
-          aria-live="polite"
-        >
-          {status === "loading" && <ThreadSkeleton />}
-          {status === "error" && <ErrorState message={error} />}
-          {status === "ready" && history.length === 0 && (
-            <EmptyThread counterpart={counterpart} />
-          )}
-          {status === "ready" && history.length > 0 && (
-            <MessageThread
-              messages={history}
-              currentUserId={currentUserId}
-              counterpart={counterpart}
-              startedAt={chatMeta?.started_at}
-              now={now}
-            />
-          )}
-        </div>
-
-        <ChatComposer bookingId={bookingId} counterpart={counterpart} />
+        {status === "loading" && <ThreadSkeleton />}
+        {status === "error" && <ErrorState message={error} />}
+        {status === "ready" && history.length === 0 && (
+          <EmptyThread counterpart={counterpart} />
+        )}
+        {status === "ready" && history.length > 0 && (
+          <MessageThread
+            messages={history}
+            currentUserId={currentUserId}
+            counterpart={counterpart}
+            startedAt={chatMeta?.started_at}
+            now={now}
+          />
+        )}
       </div>
-    </SocketProvider>
+
+      <ChatComposer counterpart={counterpart} onSend={sendMessage} />
+    </div>
   );
 }

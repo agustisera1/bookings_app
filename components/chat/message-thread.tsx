@@ -1,8 +1,7 @@
 import { formatDate, formatTime } from "@/lib/dates";
-import type { SerializableMessageDocument } from "@/lib/types/messages";
 import { DayDivider, MessageBubble } from "./message-bubble";
 import { buildThread } from "./thread-model";
-import type { Counterpart } from "./types";
+import type { Counterpart, ThreadMessage } from "./types";
 
 export function MessageThread({
   messages,
@@ -11,7 +10,7 @@ export function MessageThread({
   startedAt,
   now,
 }: {
-  messages: SerializableMessageDocument[];
+  messages: ThreadMessage[];
   currentUserId: string;
   counterpart: Counterpart;
   startedAt?: string;
@@ -35,6 +34,8 @@ export function MessageThread({
             isMine={isMine}
             isRunStart={isRunStart}
             counterpart={counterpart}
+            pending={message.pending}
+            failed={message.failed}
           />
         </div>
       ))}
