@@ -6,7 +6,6 @@ import { ChatHeader } from "./chat-header";
 import { EmptyThread, ErrorState, ThreadSkeleton } from "./chat-states";
 import { MessageThread } from "./message-thread";
 import { counterpartOf } from "./types";
-import type { BookingParty } from "@/lib/types/booking";
 import { useBookingChat } from "./use-booking-chat";
 import { SocketProvider } from "./context";
 import { cn } from "@/lib/utils";
@@ -25,14 +24,16 @@ export default function Chat({
    */
   fill?: boolean;
 }) {
-  const { status, error, history, chatMeta } = useBookingChat(bookingId);
+  const { status, error, history, chatMeta, viewerParty } =
+    useBookingChat(bookingId);
   // Captured once at mount: a stable "now" for relative day labels keeps render pure.
   const [now] = useState(() => new Date());
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // The viewer is one of the two parties; the counterpart is the other side.
-  const viewerParty: BookingParty =
-    !chatMeta || chatMeta.guest_id === currentUserId ? "guest" : "host";
+  // The side comes from the server, which resolved it against the booking's
+  // guest and the listing's owner. Deriving it here from `chatMeta` used to
+  // fall back to "guest" whenever the chat document didn't exist yet, so a host
+  // opening a fresh thread was told they were talking to their host.
   const counterpart = counterpartOf(viewerParty);
 
   // Pin to the latest message whenever the thread settles.

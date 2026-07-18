@@ -17,13 +17,8 @@ export default async function BookingDetailPage({
   if (!user) return "Unauthenticated";
 
   // Reuse the guest bookings query (no single-booking query yet) to title the
-  // page with the listing this reservation is for.
-  //
-  // TECH DEBT — this fetches every booking the user has just to read one row's
-  // title and dates, and now that the thread moved to /messages that's most of
-  // what the page does. It also only looks at `guestBookings`, so a host
-  // opening their own booking gets the fallback title. Wants a `booking(id:)`
-  // query in the schema.
+  // page with the listing this reservation is for. Its cost and the host-side
+  // gap are in `docs/tech_debt/CHAT_FEATURE_NEXT_STEPS.md`.
   const { data } = await query({ query: GetUserBookingsDocument });
   const booking = data?.guestBookings?.find((b) => b?.id === id) ?? null;
 

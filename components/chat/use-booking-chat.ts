@@ -4,12 +4,13 @@ import { useEffect, useState, useSyncExternalStore } from "react";
 import { getChatHistory } from "@/lib/services/chat";
 import type { SerializableMessageDocument } from "@/lib/types/messages";
 import type { SerializableChatDocument } from "@/lib/types/chat";
+import type { BookingParty } from "@/lib/types/booking";
 import type { Status } from "./types";
-import { getSocketConnection } from "@/lib/socket";
+import { EVENTS, getSocketConnection, type JoinAck } from "@/lib/socket";
 
 // No-op subscription for now — connect/disconnect events get wired here later.
 const subscribe = () => () => {
-  // socket.on("connect", () => {});
+  // socket.on("connect", () => {})
   // socket.on("connect_error", () => {});
   // socket.on("disconnect", () => {});
 };
@@ -31,6 +32,27 @@ export function useBookingChat(bookingId: string) {
   const [chatMeta, setChatMeta] = useState<SerializableChatDocument | null>(
     null,
   );
+  // Comes from the server, which knows the ownership; `guest` is only the
+  // placeholder until the fetch lands.
+  const [viewerParty, setViewerParty] = useState<BookingParty>("guest");
+
+  useEffect(() => {
+    const socket = getSocketConnection();
+
+    // The ack is the last argument of `emit` — socket.io recognises it by
+    // position and calls it with whatever the server passes to `ack(...)`.
+    // (`emitWithAck` is the promise-based variant and takes no callback.)
+    socket.emit(EVENTS.JOIN_CHAT, bookingId, (res: JoinAck) => {
+      if (!res.ok) {
+        setError("Could not join chat");
+        setStatus("error");
+      }
+    });
+
+    return () => {
+      socket.emit(EVENTS.LEAVE_CHAT, bookingId);
+    };
+  }, [bookingId]);
 
   useEffect(() => {
     let ignore = false;
@@ -39,27 +61,27 @@ export function useBookingChat(bookingId: string) {
       setHistory((prev) => [...prev, msg]);
     };
 
-    socket.on("server-message", onMessageReceived);
-
     getChatHistory(bookingId).then((response) => {
       if (ignore) return;
       if (response.ok) {
-        const {
-          data: { messages, ...chat },
-        } = response;
+        const { chat, messages, viewerParty } = response.data;
         setHistory(messages);
         setChatMeta(chat);
+        setViewerParty(viewerParty);
         setStatus("ready");
       } else {
         setError(response.error);
         setStatus("error");
       }
     });
+
+    socket.on(EVENTS.SERVER_MESSAGE, onMessageReceived);
+
     return () => {
       ignore = true;
-      socket.off("server-message", onMessageReceived);
+      socket.off(EVENTS.SERVER_MESSAGE, onMessageReceived);
     };
   }, [bookingId]);
 
-  return { status, error, history, chatMeta };
+  return { status, error, history, chatMeta, viewerParty };
 }

@@ -13,8 +13,24 @@ export type SerializableChatDocument = Omit<ChatDocument, "_id"> & {
   _id: string;
 };
 
-export type ChatHistory = SerializableChatDocument & {
+/**
+ * A booking's thread as the UI consumes it.
+ *
+ * `chat` is nullable on purpose: the document is only written once someone
+ * speaks, so a booking nobody has messaged yet has messages but no chat meta.
+ * That's an empty conversation, not a failure — keeping it nullable is what
+ * stops the UI from reporting "couldn't load" for a thread that simply hasn't
+ * started.
+ */
+export type ChatHistory = {
+  chat: SerializableChatDocument | null;
   messages: SerializableMessageDocument[];
+  /**
+   * Which side of the booking the caller is on. Resolved server-side, where
+   * ownership is known, so the UI never has to guess it from `chat` — which is
+   * null until someone speaks.
+   */
+  viewerParty: BookingParty;
 };
 
 /**

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Counterpart } from "./types";
 import { useSocketContext } from "./context";
+import { EVENTS, type ClientMessage } from "@/lib/socket";
 
 export function ChatComposer({
   bookingId,
@@ -21,7 +22,8 @@ export function ChatComposer({
     const trimmed = body.trim();
     if (!trimmed) return;
     // The booking id doubles as the chat room id (chat_id) on the worker side.
-    socket?.emit("client-message", { chat_id: bookingId, body: trimmed });
+    const payload: ClientMessage = { chat_id: bookingId, body: trimmed };
+    socket?.emit(EVENTS.CLIENT_MESSAGE, payload);
     setBody("");
   }
 

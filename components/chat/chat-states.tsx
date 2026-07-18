@@ -1,4 +1,4 @@
-import { MessagesSquareIcon, WifiOffIcon } from "lucide-react";
+import { MessagesSquareIcon, TriangleAlertIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/common/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,12 +27,13 @@ export function ThreadSkeleton() {
 }
 
 export function EmptyThread({ counterpart }: { counterpart: Counterpart }) {
+  const other = counterpart.toLowerCase();
   return (
     <div className="flex h-full items-center justify-center">
       <EmptyState
         icon={<MessagesSquareIcon />}
-        title="No messages yet"
-        description={`This is where your conversation with your ${counterpart.toLowerCase()} will appear.`}
+        title={`Say hello to your ${other}`}
+        description={`No messages yet — send the first one and it'll show up here.`}
       />
     </div>
   );
@@ -42,7 +43,10 @@ export function ErrorState({ message }: { message: string | null }) {
   return (
     <div className="flex h-full items-center justify-center">
       <EmptyState
-        icon={<WifiOffIcon />}
+        // Not a wifi glyph: this state covers any failure to load the thread,
+        // and the vast majority are server-side. Blaming the user's connection
+        // sends them to check their router for something we broke.
+        icon={<TriangleAlertIcon />}
         title="Couldn't load this conversation"
         description={message ?? "Please try again in a moment."}
       />

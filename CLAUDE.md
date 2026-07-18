@@ -57,6 +57,29 @@ pnpm build    # build de producción
 pnpm lint     # linting
 ```
 
+## Documentación — `/docs`
+
+| Carpeta | Qué vive ahí |
+|---------|-------------|
+| `docs/architecture/` | Decisiones de arquitectura (ADRs): transporte realtime, colas BullMQ |
+| `docs/tech_debt/` | **Deuda técnica conocida.** `PERFORMANCE.md` (backlog de tuning, por impacto) + un `<FEATURE>_NEXT_STEPS.md` por feature |
+| `docs/insights/` | Notas de aprendizaje sobre APIs y conceptos |
+| `docs/guides/` | Setup de servicios externos |
+
+### Regla de deuda técnica
+
+**La deuda técnica se documenta en `docs/tech_debt/`, no en comentarios del código.** Cuando
+se identifica un costo conocido, una simplificación deliberada o algo que hay que revisitar:
+
+- Va a `PERFORMANCE.md` si es un costo de queries/rendering, siguiendo el formato existente
+  (**Dónde / Qué pasa / Por qué duele / Cómo medirlo / Idea de fix**), ordenado por impacto.
+- Va a `<FEATURE>_NEXT_STEPS.md` si es estructural de una feature (contratos, límites entre
+  servicios, gaps funcionales).
+- En el código queda **como mucho un puntero de una línea** al doc correspondiente.
+
+El motivo es que la deuda se revisa en bloque cuando se prioriza, no leyendo docstrings uno
+por uno. Un bloque de deuda enterrado en un comentario es deuda que nadie va a encontrar.
+
 ## Librería compartida — `/lib`
 
 Antes de escribir cualquier utilidad, formatter o constante en un componente, **verificar si ya existe en `/lib`**. Si no existe y es reutilizable, agregarla ahí. No duplicar lógica.
