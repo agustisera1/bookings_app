@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, Compass, LayoutGrid } from "lucide-react";
+import {
+  Bell,
+  CalendarDays,
+  Compass,
+  LayoutGrid,
+  MessageSquare,
+} from "lucide-react";
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -21,6 +27,7 @@ export function SidebarNav({ isHost }: { isHost: boolean }) {
       ? { title: "My listings", href: "/listings/mine", icon: LayoutGrid }
       : { title: "My bookings", href: "/bookings", icon: CalendarDays },
     { title: "Explore", href: "/listings", icon: Compass },
+    { title: "Messages", href: "/messages", icon: MessageSquare },
     {
       title: "Notifications",
       href: "/notifications",

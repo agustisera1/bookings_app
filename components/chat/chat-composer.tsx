@@ -34,8 +34,12 @@ export function ChatComposer({
   }
 
   return (
-    <div className="border-t bg-card px-4 py-3 sm:px-6">
-      <div className="flex items-end gap-1.5 rounded-2xl border bg-background p-1.5">
+    // The bar inherits the surface it sits on and is anchored by the hairline;
+    // previously it painted itself `card` over a darker pane, which is what made
+    // it read as a floating slab. The field keeps `border-input`, the one token
+    // with enough contrast to stay visible on both `card` and `background`.
+    <div className="border-t border-foreground/10 px-4 py-3 sm:px-6">
+      <div className="flex items-end gap-1.5 rounded-2xl border border-input bg-muted p-1.5">
         <Textarea
           rows={1}
           value={body}

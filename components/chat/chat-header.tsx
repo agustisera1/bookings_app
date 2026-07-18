@@ -12,7 +12,10 @@ export function ChatHeader({
   status: Status;
 }) {
   return (
-    <header className="flex items-center gap-3 border-b bg-card/60 px-4 py-3 backdrop-blur-sm sm:px-6">
+    // Transparent on purpose: the header takes whatever surface it sits on
+    // (the pane in the messages view, the card when embedded), and the hairline
+    // is what marks the edge in both.
+    <header className="flex items-center gap-3 border-b border-foreground/10 px-4 py-3 sm:px-6">
       <ChatAvatar counterpart={counterpart} className="size-10" />
       <div className="min-w-0 flex-1">
         <p className="truncate text-sm font-semibold leading-tight">

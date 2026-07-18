@@ -5,16 +5,25 @@ import { ChatComposer } from "./chat-composer";
 import { ChatHeader } from "./chat-header";
 import { EmptyThread, ErrorState, ThreadSkeleton } from "./chat-states";
 import { MessageThread } from "./message-thread";
-import type { Counterpart } from "./types";
+import { counterpartOf } from "./types";
+import type { BookingParty } from "@/lib/types/booking";
 import { useBookingChat } from "./use-booking-chat";
 import { SocketProvider } from "./context";
+import { cn } from "@/lib/utils";
 
 export default function Chat({
   bookingId,
   currentUserId,
+  fill = false,
 }: {
   bookingId: string;
   currentUserId: string;
+  /**
+   * Fill the parent instead of sizing itself as a standalone card. Set by the
+   * messages view, where the pane owns the height; left off wherever the chat
+   * is embedded in a normal page flow.
+   */
+  fill?: boolean;
 }) {
   const { status, error, history, chatMeta } = useBookingChat(bookingId);
   // Captured once at mount: a stable "now" for relative day labels keeps render pure.
@@ -22,8 +31,9 @@ export default function Chat({
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // The viewer is one of the two parties; the counterpart is the other side.
-  const viewerIsGuest = chatMeta ? chatMeta.guest_id === currentUserId : true;
-  const counterpart: Counterpart = viewerIsGuest ? "Host" : "Guest";
+  const viewerParty: BookingParty =
+    !chatMeta || chatMeta.guest_id === currentUserId ? "guest" : "host";
+  const counterpart = counterpartOf(viewerParty);
 
   // Pin to the latest message whenever the thread settles.
   useEffect(() => {
@@ -33,7 +43,17 @@ export default function Chat({
 
   return (
     <SocketProvider>
-      <div className="mx-auto flex h-[70vh] max-h-[720px] min-h-[440px] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border bg-card shadow-sm">
+      <div
+        className={cn(
+          "flex flex-col overflow-hidden",
+          fill
+            ? // Inherit the pane's `background`, which is a step darker than
+              // `card`. That contrast is what sets the thread apart from the
+              // rail, so painting it `card` here would flatten the two together.
+              "h-full min-h-0 flex-1"
+            : "mx-auto h-[70vh] max-h-[720px] min-h-[440px] w-full max-w-2xl rounded-2xl border bg-card shadow-sm",
+        )}
+      >
         <ChatHeader
           counterpart={counterpart}
           startedAt={chatMeta?.started_at}
