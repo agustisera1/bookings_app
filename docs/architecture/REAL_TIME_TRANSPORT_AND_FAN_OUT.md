@@ -9,10 +9,11 @@
 
 ## Contexto
 
-Estamos por integrar entrega en tiempo real. El primer caso son las **notificaciones in-app**:
-el worker (proceso Node aparte) ya rehidrata usuario + listing y arma el documento de notificación
-(`sendNotification` en el repo del worker); falta persistirlo en Mongo y **empujarlo al cliente en
-vivo**. El segundo caso, más adelante, es **mensajería host↔guest**.
+Estamos integrando entrega en tiempo real. El primer caso son las **notificaciones in-app**, hoy ya
+implementadas de punta a punta: el worker (proceso Node aparte) rehidrata usuario + listing, arma el
+documento de notificación, lo **persiste en Mongo** (`insertNotification`) y lo **publica** al canal
+Redis (`sendNotification` en el repo del worker); la ruta SSE de Next lo empuja al cliente. El segundo
+caso, más adelante, es **mensajería host↔guest**.
 
 La duda que disparó este documento: **¿socket.io es la herramienta apropiada, o hay una solución de
 Redis / BullMQ que evite montar sockets?** Ya usamos Redis + BullMQ para los emails, así que valía
@@ -162,8 +163,9 @@ crudo, otra cosa.)
   las conexiones SSE en memoria filtrando por `userId` — **no** una suscripción Redis por cliente.
 - **Refetch en el (re)connect.** Al abrir/reabrir el `EventSource`, el cliente refetchea de Mongo para
   reconciliar lo que se haya perdido mientras estuvo desconectado (ver la sección de at-most-once).
-- **Orden en el worker.** Persistir en Mongo **primero**, publicar después. (Hoy `sendNotification`
-  arma el doc y solo hace `console.log` — falta el `insertOne` y el `publish`.)
+- **Orden en el worker.** Persistir en Mongo **primero**, publicar después. Ya implementado:
+  `sendNotification` inserta con `insertNotification` y recién ahí publica al canal
+  (`src/processors/notifications.ts`).
 
 **A resolver más adelante — mensajería (socket.io)**
 - **Proceso de sockets.** Definir si vive junto al worker o como proceso propio (el emitter permite

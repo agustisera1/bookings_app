@@ -57,6 +57,29 @@ pnpm build    # build de producción
 pnpm lint     # linting
 ```
 
+## Documentación — `/docs`
+
+| Carpeta | Qué vive ahí |
+|---------|-------------|
+| `docs/architecture/` | Decisiones de arquitectura (ADRs): transporte realtime, colas BullMQ |
+| `docs/tech_debt/` | **Deuda técnica conocida.** `PERFORMANCE.md` (backlog de tuning, por impacto) + un `<FEATURE>_NEXT_STEPS.md` por feature |
+| `docs/insights/` | Notas de aprendizaje sobre APIs y conceptos |
+| `docs/guides/` | Setup de servicios externos |
+
+### Regla de deuda técnica
+
+**La deuda técnica se documenta en `docs/tech_debt/`, no en comentarios del código.** Cuando
+se identifica un costo conocido, una simplificación deliberada o algo que hay que revisitar:
+
+- Va a `PERFORMANCE.md` si es un costo de queries/rendering, siguiendo el formato existente
+  (**Dónde / Qué pasa / Por qué duele / Cómo medirlo / Idea de fix**), ordenado por impacto.
+- Va a `<FEATURE>_NEXT_STEPS.md` si es estructural de una feature (contratos, límites entre
+  servicios, gaps funcionales).
+- En el código queda **como mucho un puntero de una línea** al doc correspondiente.
+
+El motivo es que la deuda se revisa en bloque cuando se prioriza, no leyendo docstrings uno
+por uno. Un bloque de deuda enterrado en un comentario es deuda que nadie va a encontrar.
+
 ## Librería compartida — `/lib`
 
 Antes de escribir cualquier utilidad, formatter o constante en un componente, **verificar si ya existe en `/lib`**. Si no existe y es reutilizable, agregarla ahí. No duplicar lógica.
@@ -245,6 +268,37 @@ if (!res.ok) return <p className="text-sm text-muted-foreground">Could not load�
 if (res.data.length === 0) return <EmptyState … /> /* o <p> inline si es compacto */;
 return <List data={res.data} />;
 ```
+
+### Partición de un componente de feature en archivos
+
+Cuando un componente de feature crece y **acumula varios sub-componentes, mezcla lógica pura con rendering, o junta estado/efectos con presentación**, se parte en una carpeta de feature con un archivo por responsabilidad. No es fragmentar por fragmentar: cada archivo aísla una dependencia distinta (React vs. lógica pura, estado vs. markup), lo que baja el acoplamiento y sube la testeabilidad — es la regla de cohesión/acoplamiento aplicada al árbol de archivos.
+
+**Disparadores (cualquiera basta):**
+- El archivo acumula muchos componentes internos y cuesta ubicarse.
+- Hay lógica pura (transformación de datos, derivados) enredada con JSX.
+- Conviven un hook con estado/efectos y componentes puramente presentacionales.
+
+**Roles y dónde va cada uno:**
+
+| Archivo | Responsabilidad | `"use client"` |
+|---------|-----------------|----------------|
+| `<feature>.tsx` | Orquestador: default export, cablea las piezas, sostiene el hook y el layout | Sí (usa el hook) |
+| `use-<feature>.ts` | Hook: estado, efectos, fetch | Sí |
+| `<feature>-model.ts` | **Lógica pura**: transformaciones, derivados y los tipos de esos derivados. Sin React, sin I/O | No |
+| `types.ts` | Tipos de la feature compartidos entre las piezas | No (solo tipos) |
+| `<pieza>.tsx` | Cada bloque presentacional (header, item, composer, estados…) | Solo si tiene hooks/interactividad |
+
+**Regla de `"use client"`:** solo el orquestador y el hook (y cualquier pieza con estado/eventos propios) llevan la directiva. Un componente presentacional **sin hooks no la necesita** aunque se renderice dentro del árbol cliente: lo arrastra su importador. Ponerla de más agranda el bundle cliente sin motivo.
+
+**Lógica pura fuera del rendering:** toda transformación que no dependa de React va a un módulo `.ts` colocado (mismo criterio que `components/search/filters-draft.ts`). Así se testea sin montar nada y el componente solo compone. Ubicar ahí también el sort/derivado que el orquestador no necesita conocer.
+
+**Naming:** archivos en kebab-case; prefijo de feature cuando ayuda a desambiguar (`chat-header.tsx`, `message-bubble.tsx`). El default export vive en `<feature>.tsx`.
+
+**Dependencias:** la partición **no** rompe `feature → common → ui`. Las piezas importan de `common/` y `ui/`, nunca de otra feature.
+
+**Referencia canónica:** `components/chat/` — `chat.tsx` (orquestador) + `use-booking-chat.ts` (hook) + `thread-model.ts` (lógica pura del hilo, testeable) + `types.ts` + piezas presentacionales (`chat-header`, `message-thread`, `message-bubble`, `chat-composer`, `chat-states`, `chat-avatar`).
+
+> La UI ya construida todavía no sigue este patrón en todos lados; se aplica de forma **gradual** (refactor futuro, no bloqueante). Cuando un componente de feature toque los disparadores de arriba, partirlo es parte de "terminar" el cambio.
 
 ---
 
