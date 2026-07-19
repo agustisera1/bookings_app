@@ -63,8 +63,14 @@ pnpm lint     # linting
 |---------|-------------|
 | `docs/architecture/` | Decisiones de arquitectura (ADRs): transporte realtime, colas BullMQ |
 | `docs/tech_debt/` | **Deuda técnica conocida.** `PERFORMANCE.md` (backlog de tuning, por impacto) + un `<FEATURE>_NEXT_STEPS.md` por feature |
+| `docs/tickets/` | **Backlog priorizado.** Un `TD-XX-*.md` por tarea = un branch. `README.md` tiene el criterio de triage, la tabla y el grafo de dependencias |
 | `docs/insights/` | Notas de aprendizaje sobre APIs y conceptos |
 | `docs/guides/` | Setup de servicios externos |
+
+**Relación entre los dos primeros:** `tech_debt/` responde *por qué esto es deuda*; `tickets/`
+responde *qué hago y cómo sé que terminé*. Se enlazan, no se duplican. Un ítem de deuda que se
+decide trabajar lleva su marca `TD-XX` inline; el que se descarta se **saca del doc**, no se archiva
+con justificativo.
 
 ### Regla de deuda técnica
 
