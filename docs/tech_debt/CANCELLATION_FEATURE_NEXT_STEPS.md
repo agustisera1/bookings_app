@@ -9,6 +9,9 @@
 > Este documento los deja anotados y repartidos en branches, para no arrastrarlos dentro
 > de `feat/cancel-reservations`.
 
+Lo que sigue pendiente lleva su ticket en [`docs/tickets/`](../tickets/README.md); el resto es
+ledger de trabajo ya cerrado.
+
 ---
 
 ## El split
@@ -19,18 +22,16 @@
 | `feat/cancel-reservations` | Migración `004`, `lib/bookings/policy.ts`, `cancelBooking`, ownership en accept/reject, enum `BookingStatus` en GraphQL, UI, y el mail de cancelación del lado de la API | ✅ Implementado |
 | `feat/cancellation-email` (worker) | Tipo `cancelled`, `refundAmount`/`cancelledBy` y plantilla de mail en `bookings-app-worker` | ✅ Implementado |
 | `fix/booking-money-precision` | `005`: `total_price` y `refund_amount` → `NUMERIC(10,2)`; `Booking.total_price: string` pasa a ser verdad | ✅ Implementado |
-| `chore/vitest` | Infra de tests + specs de `policy.ts` | ⬜ Pendiente |
-| `feat/reviews-require-completed-booking` | Trae `isCompleted` y lo cablea en `createReview` | ⬜ Pendiente |
-| `refactor/slot-holding-statuses` | Trae `SLOT_HOLDING_STATUSES`, cierra la deuda de `findBookedListingIds` | ⬜ Pendiente |
+| `chore/vitest` | Infra de tests + specs de `policy.ts` | ⬜ **TD-10** |
+| `refactor/slot-holding-statuses` | Trae `SLOT_HOLDING_STATUSES`, cierra la deuda de `findBookedListingIds` | ⬜ **TD-12** |
 
 ```mermaid
 graph LR
   A["fix/permission-ref<br/><i>desbloquea el build</i>"] --> B["feat/cancel-reservations"]
   W["worker: feat/cancellation-email<br/><i>deployar ANTES que la API</i>"] --> B
   B --> C["fix/booking-money-precision"]
-  B --> D["chore/vitest"]
-  B --> E["feat/reviews-require-completed-booking"]
-  B --> F["refactor/slot-holding-statuses"]
+  B --> D["chore/vitest<br/>TD-10"]
+  B --> F["refactor/slot-holding-statuses<br/>TD-12"]
 ```
 
 `fix/permission-ref` va **antes** porque hoy pone en rojo el build de cualquier branch. El worker
@@ -108,9 +109,10 @@ de la tabla, y una sola `005` convierte las dos columnas juntas.
 
 ---
 
-## `chore/vitest` — no hay infra de tests
+## `chore/vitest` — no hay infra de tests — **TD-10**
 
 El proyecto **no tiene ninguna**: ni `vitest` ni `jest` en `devDependencies`, ni script `test`.
+El worker tampoco.
 
 `lib/bookings/policy.ts` se diseñó puro (sin DB, sin React, sin framework) explícitamente para ser
 testeable sin levantar nada — y se entregó sin un solo test. Es el mejor primer candidato que va a
@@ -127,38 +129,7 @@ Casos que valen la pena:
 
 ---
 
-## `feat/reviews-require-completed-booking` — una regla que se promete y no se cumple
-
-`createReview` (`lib/services/reviews.ts:30`) devuelve *"You need a completed booking for this
-listing to leave a review"*, pero solo llama a `hasGuestBookingForListing`, que chequea que
-**exista** una reserva — sin mirar status ni fechas. O sea: alguien puede reservar y reseñar
-en el mismo minuto, o reseñar una reserva rechazada.
-
-Se decidió que `completed` es **derivado, no almacenado**: una reserva está completada si es
-`accepted` y su `end_date` ya pasó. Almacenarlo obligaría a un job programado que flipee la fila
-cuando la fecha rueda, y esos dos campos ya lo dicen.
-
-La función que lo define ya está escrita y probada en diseño, pero **no viaja en
-`feat/cancel-reservations`** porque ahí no la consume nadie. Llega con este branch, junto a su
-consumidor:
-
-```ts
-export function isCompleted(booking: CancellableBooking, now: Date): boolean {
-  return (
-    booking.status === "accepted" &&
-    new Date(booking.endDate).getTime() < now.getTime()
-  );
-}
-```
-
-**Alcance:** agregar `isCompleted` a `lib/bookings/policy.ts`; en el repo, una query genérica
-(`findBookingsByGuestAndListing`) que devuelva las filas; y que el **service** filtre con
-`isCompleted`. Ojo con la regla de `CLAUDE.md`: decidir *qué cuenta como completada* es lógica de
-negocio y **no va en el repo** — el repo devuelve filas, el service decide.
-
----
-
-## `refactor/slot-holding-statuses` — la deuda que `CLAUDE.md` marca como "no tocar sin pedirlo"
+## `refactor/slot-holding-statuses` — la deuda que `CLAUDE.md` marca como "no tocar sin pedirlo" — **TD-12**
 
 `findBookedListingIds` (`lib/repositories/bookings.pg.ts`) hardcodea en el `WHERE` los estados que
 liberan un slot:
@@ -185,33 +156,15 @@ tiene que vivir ahí; lo que corresponde es un comentario cruzado entre ambos.
 
 ---
 
-## Mail de cancelación — hecho, con dos cabos sueltos
+## Mail de cancelación — hecho
 
 El tipo `cancelled` ya existe en `lib/events.ts` y en el worker, con `refundAmount` y `cancelledBy`
-en el payload y plantilla propia. Lo que queda:
-
-- **El mail siempre va al guest.** `BookingEmailPayload` tiene `guest: { email }` hardcodeado en el
-  contrato. Cuando el guest cancela, el host solo se entera por la notificación in-app, no por mail.
-  Mandarle mail al host requiere cambiar el payload en ambos repos.
-- **La copy in-app de `notify_booking_update` es guest-oriented y está mal para todos.** El título
-  es literalmente `"Booking confirmed"` (`src/lib.ts` del worker), y se usa para approved, rejected
-  **y** cancelled — o sea que un rechazo llega titulado "Booking confirmed". Ahora además le llega
-  al host cuando el guest cancela. No se arregló acá porque el título carga los keywords de los que
-  el web app deriva el ícono (`notificationVisual` en `notifications-list.tsx`): cambiarlo cambia el
-  ícono. Necesita un tipo in-app propio por evento, coordinado entre los dos repos.
+en el payload y plantilla propia.
 
 ---
 
-## Cabos sueltos menores
+## Estado de migraciones
 
-- **La disputa no existe.** `canCancel` le dice al guest *"Contact support to open a dispute"*
-  cuando la estadía ya empezó, pero no hay support ni flujo de disputa. El permiso
-  `admin:manage-disputes` se eliminó junto con el resto del rol admin (branch
-  `refactor/remove-admin-role`). Por ahora es copy que apunta a la nada.
-- **`bookings:cancel-own` no gatea al host.** En `cancelBooking` se usa como permiso baseline, pero
-  como todo usuario es guest (RF-02), lo tiene todo el mundo: solo prueba que hay sesión. Lo que
-  realmente autoriza es el ownership que resuelve `resolveCancelActor`. Funciona, pero si el
-  catálogo de permisos crece, un `bookings:cancel-hosted` explícito para el host sería más honesto.
 - **`004` ya está aplicada en local** (ver la sección del ledger arriba). Verificado contra la base:
   los 3 CHECK presentes, `status` en `NOT NULL`, y las 3 columnas nuevas con la nullability
   esperada. Los `UPDATE` de normalización no matchearon nada — no había estados legacy ni `NULL`.
