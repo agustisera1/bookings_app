@@ -88,6 +88,33 @@ se identifica un costo conocido, una simplificación deliberada o algo que hay q
 El motivo es que la deuda se revisa en bloque cuando se prioriza, no leyendo docstrings uno
 por uno. Un bloque de deuda enterrado en un comentario es deuda que nadie va a encontrar.
 
+### Regla de comentarios — el default es no comentar
+
+**El código se explica solo; un comentario es la excepción, no el acompañamiento.** Antes de
+escribir uno, la pregunta no es "¿esto se entiende mejor con un comentario?" sino **"¿esto es
+deducible leyendo el código?"**. Si la respuesta es sí, no va.
+
+**Solo se comenta cuando:**
+
+| Caso | Ejemplo |
+|---|---|
+| **Edge case** — una condición no obvia que el código respeta pero no revela | `type` en la clave del `jobId`: sin él, tres mails legítimos colapsan en uno |
+| **Config exclusiva de un comportamiento** — un valor elegido para lograr algo puntual, donde el valor "natural" rompería | `removeOnComplete: 1000` en vez de `true`, porque `true` no deja ventana que inspeccionar |
+| **Contradicción aparente** — algo que parece un error y no lo es | Envolver en `Error` real porque BullMQ lee `failedReason` de `.message` |
+
+**No se comenta:** qué hace una función que el nombre ya dice; el rationale de arquitectura de una
+feature (va al markdown); la repetición en prosa de las tres líneas siguientes; el "por qué existe"
+de algo que ya está documentado en `docs/`.
+
+**No duplicar el markdown.** Si una feature tiene su doc en `docs/architecture/` o `docs/tech_debt/`,
+en el código va **a lo sumo un puntero de una línea** (`// Ver docs/architecture/X.md`), nunca el
+resumen del doc. Es la misma regla de deuda técnica de arriba, generalizada: la explicación larga
+vive en un solo lugar y ese lugar es el markdown, porque es donde se revisa en bloque.
+
+**Regla práctica:** si un archivo tiene más líneas de comentario que de código, está mal. El
+comentario largo casi siempre es señal de que el nombre o la estructura son los que fallan — primero
+arreglá eso, y recién si el hecho sigue sin ser deducible, comentá.
+
 ## Librería compartida — `/lib`
 
 Antes de escribir cualquier utilidad, formatter o constante en un componente, **verificar si ya existe en `/lib`**. Si no existe y es reutilizable, agregarla ahí. No duplicar lógica.

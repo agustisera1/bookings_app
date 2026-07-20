@@ -273,9 +273,6 @@ async function greetUser(
   user: Awaited<ReturnType<typeof usersRepo.createUser>>,
 ): Promise<ServiceResult> {
   try {
-    // One welcome per account: the user id alone identifies the fact, since
-    // there is no lifecycle stage to disambiguate. Bounded by the queue's
-    // retention like every other id — see BULLMQ_QUEUES.md § Idempotencia.
     const job = await emailQueue.add("emails", toWelcomeEmailPayload(user), {
       jobId: `greet-${user.id}`,
     });
