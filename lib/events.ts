@@ -1,4 +1,4 @@
-import { Queue } from "bullmq";
+import { Queue, type JobsOptions } from "bullmq";
 import type { User } from "./types/user";
 import type { ListingDocumentValues } from "./types/listing";
 import { Booking, BookingParty } from "./types/booking";
@@ -6,12 +6,33 @@ import { getRedisConnectionParams } from "./redis-config";
 
 const connection = getRedisConnectionParams();
 
+/**
+ * Delivery policy shared by both queues.
+ *
+ * Lives in the producer because job options travel WITH the job into Redis: a
+ * worker restart can't change the policy of a job that was already enqueued.
+ *
+ * `removeOnComplete`/`removeOnFail` are counts, not booleans. `true` drops the
+ * job the instant it settles, which bounds Redis but leaves nothing to inspect
+ * when a delivery is questioned; keeping the last N bounds growth *and* keeps a
+ * recent window visible. Failed jobs get the larger window on purpose — they're
+ * rarer and they're the ones worth reading.
+ */
+const defaultJobOptions: JobsOptions = {
+  attempts: 3,
+  backoff: { type: "exponential", delay: 5000 },
+  removeOnComplete: 1000,
+  removeOnFail: 5000,
+};
+
 export const notificationsQueue = new Queue("notifications", {
   connection,
+  defaultJobOptions,
 });
 
 export const emailQueue = new Queue("emails", {
   connection,
+  defaultJobOptions,
 });
 
 // The lifecycle stage the notification announces. Drives the subject line and
