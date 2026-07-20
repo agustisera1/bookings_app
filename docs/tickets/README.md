@@ -109,7 +109,7 @@ Se despachan contra un sistema ya andando, como releases.
 | Ticket | Título | Bloque | Prioridad |
 |--------|--------|--------|-----------|
 | **Fase 4** | Elasticsearch + cola de sincronización Mongo → ES | Búsqueda | 🟠 |
-| [TD-03](TD-03-bookings-daterange-gist.md) | Índice GiST parcial para disponibilidad | Índices | 🟠 |
+| [TD-03](TD-03-bookings-daterange-gist.md) | Índices de `bookings` (GiST de disponibilidad + guest_id + listing_id) | Índices | 🔴 |
 | [TD-06](TD-06-conversations-batch-query.md) | N+1 en el rail de mensajería | Queries | 🟠 |
 | [TD-07](TD-07-messages-rail-suspense.md) | Suspense en el rail de `/messages` | Queries | 🟡 |
 | [TD-12](TD-12-slot-holding-statuses.md) | `SLOT_HOLDING_STATUSES` fuera del repo | Higiene | 🟡 |

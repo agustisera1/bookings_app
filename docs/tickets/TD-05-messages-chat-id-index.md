@@ -51,10 +51,8 @@ db.messages.createIndex({ chat_id: 1, timestamp: 1 });
 ```
 
 Compuesto y en ese orden a propósito: `chat_id` como prefijo de igualdad resuelve el filtro, y
-`timestamp` deja el resultado **ya ordenado** — Postgres y Mongo comparten este principio
-(igualdad primero, rango/orden después), y es el mismo razonamiento que en TD-03 explica por qué
-un índice con las columnas al revés no sirve. Los dos tickets enseñan la misma regla desde los dos
-motores.
+`timestamp` deja el resultado **ya ordenado**. Los índices compuestos de Mongo siguen la regla del
+prefijo, igual que un B-tree de Postgres: igualdad primero, rango/orden después.
 
 En `findMessagesByChatId`:
 
