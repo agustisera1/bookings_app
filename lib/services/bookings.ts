@@ -98,7 +98,10 @@ export async function createBooking(
         bookingId: booking.id,
         userId: host.id,
       }).catch((err) =>
-        console.error("[createBooking]: could not queue host notification", err),
+        console.error(
+          "[createBooking]: could not queue host notification",
+          err,
+        ),
       );
     }
 
@@ -451,7 +454,10 @@ async function notifyBookingStatusChange(
       bookingId: booking.id,
       userId: notifyUserId,
     }).catch((err) =>
-      console.error("[notifyBookingStatusChange]: could not queue notification", err),
+      console.error(
+        "[notifyBookingStatusChange]: could not queue notification",
+        err,
+      ),
     );
   }
 
