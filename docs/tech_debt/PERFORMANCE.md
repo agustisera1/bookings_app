@@ -6,6 +6,9 @@ y una idea de fix.
 Cada ítem lleva su ticket en [`docs/tickets/`](../tickets/README.md), o la fase del plan que lo
 resuelve.
 
+> Los números son identificadores estables: se referencian desde `docs/tickets/` como "punto N". Un
+> ítem resuelto se borra y su número queda vacío — no se renumera el resto.
+
 > Contexto del stack: MongoDB para listados, PostgreSQL para reservas. La búsqueda de
 > Fase 4 (Elasticsearch) todavía no existe, así que los filtros corren directo contra Mongo.
 
@@ -25,26 +28,6 @@ resuelve.
 - **Cómo medirlo:** `db.messages.find({chat_id}).explain("executionStats")` → `COLLSCAN` con
   `totalDocsExamined` ≫ `nReturned`.
 - **Idea de fix:** índice compuesto `{ chat_id: 1, timestamp: 1 }` + `sort` y `limit` explícitos.
-
-### 2. `findBookedListingIds`: la query de disponibilidad no usa el índice GiST — **TD-03**
-
-- **Dónde:** `lib/repositories/bookings.pg.ts` (`findBookedListingIds`)
-- **Qué pasa:** filtra por overlap de rango **sin** predicado de `listing_id`:
-  ```sql
-  WHERE status NOT IN ('cancelled','rejected')
-    AND tstzrange(start_date, end_date, '[]') && tstzrange($1,$2,'[]')
-  ```
-  El índice de la constraint `no_overlap` (`db/migrations/003_booking_no_overlap.sql`) es
-  `gist (listing_id WITH =, tstzrange(...) WITH &&)`. Con `listing_id` como **primera columna**
-  y la query sin filtrar por listing, ese índice **no es aprovechable** → scan de todas las
-  reservas activas, calculando `tstzrange` fila por fila. O(n) sobre `bookings`.
-- **Cómo medirlo:** `EXPLAIN ANALYZE` de la query → buscar `Seq Scan on bookings`.
-- **Idea de fix:** índice GiST dedicado solo sobre el rango, parcial con el mismo `WHERE`:
-  ```sql
-  CREATE INDEX bookings_daterange_gist
-    ON bookings USING gist (tstzrange(start_date, end_date, '[]'))
-    WHERE status NOT IN ('cancelled','rejected');
-  ```
 
 ### 3. N+1 en el rail de mensajería: una query por listing del host — **TD-06**
 
