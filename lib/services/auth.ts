@@ -273,7 +273,9 @@ async function greetUser(
   user: Awaited<ReturnType<typeof usersRepo.createUser>>,
 ): Promise<ServiceResult> {
   try {
-    const job = await emailQueue.add("emails", toWelcomeEmailPayload(user));
+    const job = await emailQueue.add("emails", toWelcomeEmailPayload(user), {
+      jobId: `greet-${user.id}`,
+    });
     return {
       ok: true,
       data: job,

@@ -389,9 +389,12 @@ async function emailBookingDetails(
   }
 
   try {
+    // `type` va en la clave: una misma reserva emite `pending`, `approved` y
+    // `cancelled`, y sin él los tres colapsarían en un solo job.
     const job = await emailQueue.add(
       "emails",
       toBookingEmailPayload({ type, guestEmail, booking, host, listing }),
+      { jobId: `booking-${booking.id}-${type}` },
     );
     return {
       ok: true,

@@ -94,8 +94,19 @@ worker haría algo estructuralmente distinto.
 
 ```ts
 const connection = getRedisConnectionParams();
-export const emailQueue = new Queue("emails", { connection });
-export const notificationsQueue = new Queue("notifications", { connection });
+
+// Política de entrega compartida por las dos colas. Vive en el producer porque
+// las opciones viajan CON el job a Redis: un restart del worker no cambia la
+// política de un job ya encolado.
+const defaultJobOptions: JobsOptions = {
+  attempts: 3,
+  backoff: { type: "exponential", delay: 5000 },
+  removeOnComplete: 1000,  // counts, no booleanos: `true` no deja nada que inspeccionar
+  removeOnFail: 5000,
+};
+
+export const emailQueue = new Queue("emails", { connection, defaultJobOptions });
+export const notificationsQueue = new Queue("notifications", { connection, defaultJobOptions });
 
 // El contrato: mínimo, JSON-safe, sin secretos.
 // Un solo processorKey cubre todos los mails de reserva; `type` elige la copy.
@@ -125,7 +136,12 @@ async function emailBookingDetails(bookingDetails: EmailBookingParams): Promise<
   const { guestEmail, booking, host, listing } = bookingDetails;
   if (!host || !listing) { /* log + return NOT_FOUND: no encolar un job roto */ }
   try {
-    const job = await emailQueue.add("emails", toBookingEmailPayload({ guestEmail, booking, host, listing }));
+    // `jobId` determinístico: nombra el hecho, no la invocación. Ver § Idempotencia.
+    const job = await emailQueue.add(
+      "emails",
+      toBookingEmailPayload({ guestEmail, booking, host, listing }),
+      { jobId: `booking-${booking.id}-${type}` },
+    );
     return { ok: true, data: job };
   } catch (error) { /* log + ServiceResult UNEXPECTED */ }
 }
@@ -179,6 +195,42 @@ Familia distinta con distinto perfil de retry/concurrencia (ej. sync a Elasticse
 3. **Registrá el caso** agregándolo al job map que la cola le pasa a `createProcessor` (`{ "xxx": processXxx }`).
 4. Si es cola nueva: nuevo `new Worker("xxx", createProcessor("xxxProcessor", { ... }), { autorun: false })` y arrancala en el bootstrap (`src/index.ts`).
 5. **`tsc`** verde y el email/efecto renderiza/ocurre igual.
+
+---
+
+## Idempotencia — `jobId` determinístico
+
+BullMQ es *at-least-once*: garantiza que el job se procese **al menos** una vez, no exactamente una.
+Con los reintentos activos, el productor tiene que asumir que puede encolar el mismo hecho dos veces.
+
+La herramienta es un `jobId` derivado del evento de dominio. **La clave identifica el hecho, no la
+invocación:**
+
+```ts
+// La reserva + la etapa del ciclo de vida.
+await emailQueue.add("emails", payload, { jobId: `booking-${booking.id}-${type}` });
+
+// Sin etapa que desambiguar: el id del usuario alcanza.
+await emailQueue.add("emails", payload, { jobId: `greet-${user.id}` });
+```
+
+`type` **tiene que ir en la clave**. Una misma reserva emite `pending`, `approved` y `cancelled`, y
+son mails distintos que sí deben salir todos; una clave sin `type` los colapsaría en uno.
+
+### Las dos cotas que hay que tener presentes
+
+**1. La ventana de dedup es la retención, no "para siempre".** BullMQ solo puede descartar un `jobId`
+repetido mientras ese job **siga en Redis**. Con `removeOnComplete: 1000`, pasados 1000 jobs
+completados el mismo id vuelve a entrar. Es una ventana de volumen, no de tiempo: cuanto más tráfico,
+más corta. Si hiciera falta una garantía real de "una sola vez", el dedup tendría que salir de la cola
+y pasar a una tabla de efectos ya aplicados.
+
+**2. Protege el encolado, no el envío.** `attempts` reintenta **ese mismo job**; no encola uno nuevo,
+así que el `jobId` no interviene. La dedup evita el **doble encolado**; el doble envío dentro de un
+mismo job (Resend mandó, la respuesta se perdió, el handler tiró) es otro problema y necesitaría
+idempotencia del efecto.
+
+> Esa distinción es la más fácil de pasar por alto: `jobId` resuelve el productor, no el consumer.
 
 ---
 

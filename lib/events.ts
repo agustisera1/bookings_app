@@ -6,21 +6,12 @@ import { getRedisConnectionParams } from "./redis-config";
 
 const connection = getRedisConnectionParams();
 
-/**
- * Delivery policy shared by both queues.
- *
- * Lives in the producer because job options travel WITH the job into Redis: a
- * worker restart can't change the policy of a job that was already enqueued.
- *
- * `removeOnComplete`/`removeOnFail` are counts, not booleans. `true` drops the
- * job the instant it settles, which bounds Redis but leaves nothing to inspect
- * when a delivery is questioned; keeping the last N bounds growth *and* keeps a
- * recent window visible. Failed jobs get the larger window on purpose — they're
- * rarer and they're the ones worth reading.
- */
+// Ver `docs/architecture/BULLMQ_QUEUES.md`.
 const defaultJobOptions: JobsOptions = {
   attempts: 3,
   backoff: { type: "exponential", delay: 5000 },
+  // Counts, no booleanos: `true` borra el job al instante y no deja ventana que
+  // inspeccionar. También es lo que acota la dedup por `jobId`.
   removeOnComplete: 1000,
   removeOnFail: 5000,
 };
