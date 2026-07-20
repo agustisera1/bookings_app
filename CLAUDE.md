@@ -69,8 +69,10 @@ pnpm lint     # linting
 
 **Relación entre los dos primeros:** `tech_debt/` responde *por qué esto es deuda*; `tickets/`
 responde *qué hago y cómo sé que terminé*. Se enlazan, no se duplican. Un ítem de deuda que se
-decide trabajar lleva su marca `TD-XX` inline; el que se descarta se **saca del doc**, no se archiva
-con justificativo.
+decide trabajar lleva su marca `TD-XX` inline; el que se descarta se saca de `tech_debt/` (que es un
+backlog de trabajo, no un archivo histórico) y su motivo de descarte va a la sección **"Descartado y
+por qué"** del `README.md` de `tickets/`. Esa lista no se borra: lo que evaluaste y decidiste no
+hacer, con el motivo, es tanta evidencia de criterio como el backlog mismo.
 
 ### Regla de deuda técnica
 
