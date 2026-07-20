@@ -17,9 +17,15 @@ export async function findMessagesByChatId(
   chatId: string,
 ): Promise<SerializableMessageDocument[]> {
   const collection = await getCollection();
-  const documents = await collection.find({ chat_id: chatId }).toArray();
+  const documents = await collection
+    .find({ chat_id: chatId })
+    // Descendente para que el `limit` corte por la cola del hilo, no por el principio;
+    // el orden cronológico se restaura con el `reverse` de abajo.
+    .sort({ timestamp: -1 })
+    .limit(50)
+    .toArray();
   // Project the ObjectId `_id` to a string so the service returns a domain type.
-  return documents.map((document) => ({
+  return documents.reverse().map((document) => ({
     ...document,
     _id: document._id.toString(),
   }));
