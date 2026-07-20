@@ -34,7 +34,12 @@ significa haber visto el duplicado antes de prevenirlo.
 
 ## Alcance
 
-`lib/events.ts`, del lado del productor.
+Los **call sites de `.add()`** en `lib/services/*`, no `lib/events.ts`: la clave se deriva del evento
+de dominio concreto (esta reserva, esta etapa), así que solo puede armarse donde ese evento existe.
+`lib/events.ts` define el contrato y la política de la cola; el `jobId` es por-job.
+
+- `lib/services/bookings.ts` → `emailBookingDetails`
+- `lib/services/auth.ts` → `greetUser`
 
 Un `jobId` determinístico derivado del evento de dominio, no aleatorio. La clave tiene que
 identificar **el hecho**, no la invocación:

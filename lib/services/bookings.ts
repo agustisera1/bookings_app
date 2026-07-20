@@ -389,9 +389,18 @@ async function emailBookingDetails(
   }
 
   try {
+    // Deterministic id: it names the FACT (this booking reached this stage),
+    // not the invocation, so re-enqueueing the same event is a no-op. `type`
+    // must stay in the key — one booking legitimately emits `pending`,
+    // `approved` and `cancelled`, and all three have to go out.
+    //
+    // The dedup window is the retention, not forever: BullMQ can only reject a
+    // repeated id while the job is still in Redis, so `removeOnComplete`
+    // (lib/events.ts) is what bounds it. See BULLMQ_QUEUES.md § Idempotencia.
     const job = await emailQueue.add(
       "emails",
       toBookingEmailPayload({ type, guestEmail, booking, host, listing }),
+      { jobId: `booking-${booking.id}-${type}` },
     );
     return {
       ok: true,
