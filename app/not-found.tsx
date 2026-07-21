@@ -1,15 +1,15 @@
 import Link from "next/link";
-import { Lock } from "lucide-react";
+import { Compass } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/empty-state";
 
-export default function Forbidden() {
+export default function NotFound() {
   return (
     <div className="flex min-h-full flex-1 flex-col items-center justify-center p-10">
       <EmptyState
-        icon={<Lock />}
-        title="You don't have access here"
-        description="This page is restricted. If you think that's a mistake, check that you're signed in to the right account."
+        icon={<Compass />}
+        title="We can't find that page"
+        description="The page you're looking for doesn't exist or may have moved."
         action={
           <Button
             className="mt-2"
