@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Field, FieldError, FormField } from "@/components/common/field";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -59,36 +60,35 @@ export default function SignUpPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="name">Full name</Label>
+          <FormField label="Full name" htmlFor="name" error={fieldErrors.name}>
             <Input id="name" name="name" />
-            {fieldErrors.name && (
-              <p className="text-xs text-destructive">{fieldErrors.name}</p>
-            )}
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Email</Label>
+          <FormField label="Email" htmlFor="email" error={fieldErrors.email}>
             <Input
               id="email"
               type="email"
               name="email"
               placeholder="you@example.com"
             />
-            {fieldErrors.email && (
-              <p className="text-xs text-destructive">{fieldErrors.email}</p>
-            )}
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
+          <Field>
             <Label htmlFor="password">Password</Label>
-            <Input id="password" name="password" type="password" />
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              aria-invalid={!!fieldErrors.password}
+            />
             {fieldErrors.password ? (
-              <p className="text-xs text-destructive">{fieldErrors.password}</p>
+              <FieldError>{fieldErrors.password}</FieldError>
             ) : (
-              <p className="text-xs text-muted-foreground">At least 8 characters</p>
+              <p className="text-xs text-muted-foreground">
+                At least 8 characters
+              </p>
             )}
-          </div>
+          </Field>
 
           {message &&
             (status === "success" ? (

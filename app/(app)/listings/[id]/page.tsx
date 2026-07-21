@@ -60,7 +60,7 @@ export default async function ListingDetailPage({
           <div className="flex items-start justify-start gap-4">
             <Badge
               variant="outline"
-              className="w-fit uppercase tracking-widest text-[10px]"
+              className="w-fit uppercase tracking-widest text-2xs"
             >
               {listing.type}
             </Badge>
@@ -93,7 +93,7 @@ export default async function ListingDetailPage({
               {listing.title}
             </h1>
             <div className="flex shrink-0 items-center gap-1.5">
-              <Star className="size-5 fill-yellow-400 text-yellow-400" />
+              <Star className="size-5 fill-rating text-rating" />
               <span className="text-base font-semibold">
                 {listing.rating_avg}
               </span>

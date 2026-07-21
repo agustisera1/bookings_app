@@ -137,7 +137,7 @@ function BookingCard({
               className={`absolute inset-0 bg-gradient-to-br ${gradient}`}
             />
           )}
-          <Badge className="relative bg-black/20 text-white/90 uppercase tracking-widest text-[10px] backdrop-blur-sm hover:bg-black/30">
+          <Badge className="relative bg-black/20 text-white/90 uppercase tracking-widest text-2xs backdrop-blur-sm hover:bg-black/30">
             {booking.type}
           </Badge>
         </div>
