@@ -23,7 +23,7 @@ export default function Chat({
    */
   fill?: boolean;
 }) {
-  const { status, error, history, chatMeta, viewerParty, sendMessage } =
+  const { status, error, history, chatMeta, viewerParty, connected, sendMessage } =
     useBookingChat(bookingId, currentUserId);
   // Captured once at mount: a stable "now" for relative day labels keeps render pure.
   const [now] = useState(() => new Date());
@@ -80,7 +80,11 @@ export default function Chat({
         )}
       </div>
 
-      <ChatComposer counterpart={counterpart} onSend={sendMessage} />
+      <ChatComposer
+        counterpart={counterpart}
+        connected={connected}
+        onSend={sendMessage}
+      />
     </div>
   );
 }

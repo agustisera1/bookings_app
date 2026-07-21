@@ -14,9 +14,11 @@ import type { Counterpart } from "./types";
  */
 export function ChatComposer({
   counterpart,
+  connected,
   onSend,
 }: {
   counterpart: Counterpart;
+  connected: boolean;
   onSend: (body: string) => void;
 }) {
   const [body, setBody] = useState("");
@@ -42,12 +44,16 @@ export function ChatComposer({
     // it read as a floating slab. The field keeps `border-input`, the one token
     // with enough contrast to stay visible on both `card` and `background`.
     <div className="border-t border-foreground/10 px-4 py-3 sm:px-6">
+      {!connected && (
+        <p className="px-1 pb-2 text-2xs text-muted-foreground">Reconnecting…</p>
+      )}
       <div className="flex items-end gap-1.5 rounded-2xl border border-input bg-muted p-1.5">
         <Textarea
           rows={1}
           value={body}
           onChange={(event) => setBody(event.target.value)}
           onKeyDown={handleKeyDown}
+          disabled={!connected}
           placeholder={`Message your ${counterpart.toLowerCase()}…`}
           className="min-h-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-2 text-sm shadow-none focus-visible:ring-0 disabled:bg-transparent disabled:opacity-100"
         />
@@ -56,7 +62,7 @@ export function ChatComposer({
           className="size-9 shrink-0 rounded-xl"
           aria-label="Send message"
           onClick={sendMessage}
-          disabled={!body.trim()}
+          disabled={!connected || !body.trim()}
         >
           <SendHorizontalIcon />
         </Button>

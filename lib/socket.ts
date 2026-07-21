@@ -70,3 +70,11 @@ export function getSocketConnection() {
     return globalThis.chatSocket;
   }
 }
+
+// Pure read of the current connection state — never constructs the socket, so
+// it's safe as a `useSyncExternalStore` snapshot. The connection is opened by
+// whoever calls `getSocketConnection` (the status hook's `subscribe`, the chat
+// effects), never by reading this.
+export function isSocketConnected() {
+  return globalThis.chatSocket?.connected ?? false;
+}

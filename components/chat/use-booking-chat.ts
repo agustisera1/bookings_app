@@ -1,101 +1,108 @@
 "use client";
 
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import {
+  useCallback,
+  useEffect,
+  useReducer,
+  useSyncExternalStore,
+} from "react";
 import { getChatHistory } from "@/lib/services/chat";
 import type { SerializableMessageDocument } from "@/lib/types/messages";
-import type { SerializableChatDocument } from "@/lib/types/chat";
-import type { ChatParties } from "@/lib/types/booking";
-import type { Status, ThreadMessage } from "./types";
 import {
   EVENTS,
   getSocketConnection,
+  isSocketConnected,
   type ClientMessage,
   type JoinAck,
   type MessageAck,
 } from "@/lib/socket";
+import { initialThreadState, threadReducer } from "./thread-model";
 
-// No-op subscription for now — connect/disconnect events get wired here later.
-const subscribe = () => () => {
-  // socket.on("connect", () => {})
-  // socket.on("connect_error", () => {});
-  // socket.on("disconnect", () => {});
-};
+// A message whose ack never arrives (worker down mid-flight) would sit
+// "pending" forever. socket.io's `timeout` fires the ack with an error once
+// this elapses, so the bubble can be marked failed instead.
+const SEND_TIMEOUT_MS = 10_000;
 
-export function useSocket() {
-  const socket = useSyncExternalStore(
-    subscribe,
-    () => getSocketConnection(), // client: the shared singleton (stable ref)
-    () => null, // server: don't open a connection during SSR
-  );
-  return { socket };
+// Reactive connection state. The socket lives outside React, so `connected` has
+// to be observed through useSyncExternalStore: `subscribe` wires React's
+// callback to the connection events; the snapshot is the boolean itself, read
+// without constructing the socket so it stays side-effect-free (the connection
+// opens here in `subscribe`). See docs/insights/USE_SYNC_EXTERNAL_STORE.md.
+function subscribe(onStoreChange: () => void) {
+  const socket = getSocketConnection();
+  socket.on("connect", onStoreChange);
+  socket.on("disconnect", onStoreChange);
+  socket.on("connect_error", onStoreChange);
+  return () => {
+    socket.off("connect", onStoreChange);
+    socket.off("disconnect", onStoreChange);
+    socket.off("connect_error", onStoreChange);
+  };
+}
+
+export function useSocketStatus() {
+  return useSyncExternalStore(subscribe, isSocketConnected, () => false);
 }
 
 /**
- * Loads a booking's chat history, keeps it in step with the socket, and sends.
+ * Loads a booking's thread, keeps it in step with the socket, and sends.
  *
- * Sending is optimistic: the message is appended immediately under a temporary
- * id and swapped for the server's copy when the ack lands. Note this is plain
- * `useState`, not `useOptimistic` — the latter ties optimistic state to an async
- * transition and rolls it back when that transition settles, which is right for
- * a Server Action but wrong here: a sent message has to *stay* on screen, and
- * the server never echoes it back to its sender.
+ * Every transition lives in `threadReducer` (pure, in thread-model); this hook
+ * only wires I/O to it — fetch, socket events, sending — and dispatches intent.
+ * Sending is optimistic: the bubble is appended at once under a temporary id and
+ * swapped for the server's copy when the ack lands. It's plain reducer state,
+ * not `useOptimistic`: that hook rolls its value back when the async transition
+ * settles, but a sent message has to *stay* on screen, and the server never
+ * echoes it back to its sender.
  */
 export function useBookingChat(bookingId: string, currentUserId: string) {
-  const [status, setStatus] = useState<Status>("loading");
-  const [error, setError] = useState<string | null>(null);
-  const [history, setHistory] = useState<ThreadMessage[]>([]);
-  const [parties, setParties] = useState<ChatParties | null>(null);
-  const [ticket, setTicket] = useState<string | null>(null);
-  const [chatMeta, setChatMeta] = useState<SerializableChatDocument | null>(
-    null,
-  );
+  const [state, dispatch] = useReducer(threadReducer, initialThreadState);
+  const connected = useSocketStatus();
 
+  // Join (and re-join) the room whenever a fresh ticket lands. A reconnect
+  // reloads the thread, which mints a new ticket, which re-fires this — so the
+  // brand-new socket, which joined no rooms on its own, gets put back in.
   useEffect(() => {
-    if (!ticket) return;
+    if (!state.ticket) return;
     const socket = getSocketConnection();
 
-    // The ack is the last argument of `emit` — socket.io recognises it by
-    // position and calls it with whatever the server passes to `ack(...)`.
-    // (`emitWithAck` is the promise-based variant and takes no callback.)
-    socket.emit(EVENTS.JOIN_CHAT, ticket, (res: JoinAck) => {
-      if (!res.ok) {
-        setError("Could not join chat");
-        setStatus("error");
-      }
+    socket.emit(EVENTS.JOIN_CHAT, state.ticket, (res: JoinAck) => {
+      if (!res.ok) dispatch({ type: "joinFailed" });
     });
 
     return () => {
       socket.emit(EVENTS.LEAVE_CHAT, bookingId);
     };
-  }, [bookingId, ticket]);
+  }, [bookingId, state.ticket]);
 
+  // Initial load, live messages, and a reload on every reconnect.
   useEffect(() => {
-    let ignore = false;
     const socket = getSocketConnection();
-    const onMessageReceived = (msg: SerializableMessageDocument) => {
-      setHistory((prev) => [...prev, msg]);
+    let ignore = false;
+
+    // A fresh load recovers messages missed while offline and mints a new
+    // ticket — which re-fires the join effect above. So one reload covers
+    // reconnection end to end.
+    const load = async () => {
+      const response = await getChatHistory(bookingId);
+      if (ignore) return;
+      if (response.ok) dispatch({ type: "loaded", data: response.data });
+      else dispatch({ type: "loadFailed", error: response.error });
     };
 
-    getChatHistory(bookingId).then((response) => {
-      if (ignore) return;
-      if (response.ok) {
-        const { chat, messages, parties, ticket } = response.data;
-        setHistory(messages);
-        setChatMeta(chat);
-        setParties(parties);
-        setTicket(ticket);
-        setStatus("ready");
-      } else {
-        setError(response.error);
-        setStatus("error");
-      }
-    });
+    const onMessageReceived = (message: SerializableMessageDocument) =>
+      dispatch({ type: "appended", message });
 
+    void load();
     socket.on(EVENTS.SERVER_MESSAGE, onMessageReceived);
+    // `reconnect` is a manager event — fires only on a successful re-connection,
+    // never the first connect, so mount doesn't double-fetch.
+    socket.io.on("reconnect", load);
 
     return () => {
       ignore = true;
       socket.off(EVENTS.SERVER_MESSAGE, onMessageReceived);
+      socket.io.off("reconnect", load);
     };
   }, [bookingId]);
 
@@ -104,13 +111,12 @@ export function useBookingChat(bookingId: string, currentUserId: string) {
       const trimmed = body.trim();
       if (!trimmed) return;
 
-      // A temporary id so the bubble can render and be located again when the
-      // ack arrives. It never reaches the server — the real one is minted by
-      // Mongo on insert.
+      // A temporary id so the bubble can render now and be located again when
+      // the ack arrives. It never reaches the server — Mongo mints the real one.
       const tempId = crypto.randomUUID();
-      setHistory((prev) => [
-        ...prev,
-        {
+      dispatch({
+        type: "appended",
+        message: {
           _id: tempId,
           chat_id: bookingId,
           sender_id: currentUserId,
@@ -118,36 +124,30 @@ export function useBookingChat(bookingId: string, currentUserId: string) {
           timestamp: new Date().toISOString(),
           pending: true,
         },
-      ]);
+      });
 
       const payload: ClientMessage = { chat_id: bookingId, body: trimmed };
-      getSocketConnection().emit(
-        EVENTS.CLIENT_MESSAGE,
-        payload,
-        (res: MessageAck) => {
-          setHistory((prev) =>
-            prev.map((message) => {
-              if (message._id !== tempId) return message;
-              // Confirmed: adopt the server's copy, real id and all. Refused or
-              // dropped: keep the text on screen but flag it, so the user sees
-              // what didn't send instead of losing it silently.
-              return res.ok
-                ? res.message
-                : { ...message, pending: false, failed: true };
-            }),
-          );
-        },
-      );
+      getSocketConnection()
+        .timeout(SEND_TIMEOUT_MS)
+        .emit(
+          EVENTS.CLIENT_MESSAGE,
+          payload,
+          (err: Error | null, res?: MessageAck) => {
+            if (err || !res || !res.ok) dispatch({ type: "sendFailed", tempId });
+            else dispatch({ type: "delivered", tempId, message: res.message });
+          },
+        );
     },
     [bookingId, currentUserId],
   );
 
   return {
-    status,
-    error,
-    history,
-    chatMeta,
-    viewerParty: parties?.current_party || "guest",
+    status: state.status,
+    error: state.error,
+    history: state.messages,
+    chatMeta: state.chatMeta,
+    viewerParty: state.parties?.current_party || "guest",
+    connected,
     sendMessage,
   };
 }
