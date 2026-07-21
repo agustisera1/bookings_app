@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { getChatHistory } from "@/lib/services/chat";
 import type { SerializableMessageDocument } from "@/lib/types/messages";
 import type { SerializableChatDocument } from "@/lib/types/chat";
-import type { BookingParty } from "@/lib/types/booking";
+import type { ChatParties } from "@/lib/types/booking";
 import type { Status, ThreadMessage } from "./types";
 import {
   EVENTS,
@@ -44,20 +44,20 @@ export function useBookingChat(bookingId: string, currentUserId: string) {
   const [status, setStatus] = useState<Status>("loading");
   const [error, setError] = useState<string | null>(null);
   const [history, setHistory] = useState<ThreadMessage[]>([]);
+  const [parties, setParties] = useState<ChatParties | null>(null);
+  const [ticket, setTicket] = useState<string | null>(null);
   const [chatMeta, setChatMeta] = useState<SerializableChatDocument | null>(
     null,
   );
-  // Comes from the server, which knows the ownership; `guest` is only the
-  // placeholder until the fetch lands.
-  const [viewerParty, setViewerParty] = useState<BookingParty>("guest");
 
   useEffect(() => {
+    if (!ticket) return;
     const socket = getSocketConnection();
 
     // The ack is the last argument of `emit` — socket.io recognises it by
     // position and calls it with whatever the server passes to `ack(...)`.
     // (`emitWithAck` is the promise-based variant and takes no callback.)
-    socket.emit(EVENTS.JOIN_CHAT, bookingId, (res: JoinAck) => {
+    socket.emit(EVENTS.JOIN_CHAT, ticket, (res: JoinAck) => {
       if (!res.ok) {
         setError("Could not join chat");
         setStatus("error");
@@ -67,7 +67,7 @@ export function useBookingChat(bookingId: string, currentUserId: string) {
     return () => {
       socket.emit(EVENTS.LEAVE_CHAT, bookingId);
     };
-  }, [bookingId]);
+  }, [bookingId, ticket]);
 
   useEffect(() => {
     let ignore = false;
@@ -79,10 +79,11 @@ export function useBookingChat(bookingId: string, currentUserId: string) {
     getChatHistory(bookingId).then((response) => {
       if (ignore) return;
       if (response.ok) {
-        const { chat, messages, viewerParty } = response.data;
+        const { chat, messages, parties, ticket } = response.data;
         setHistory(messages);
         setChatMeta(chat);
-        setViewerParty(viewerParty);
+        setParties(parties);
+        setTicket(ticket);
         setStatus("ready");
       } else {
         setError(response.error);
@@ -141,5 +142,12 @@ export function useBookingChat(bookingId: string, currentUserId: string) {
     [bookingId, currentUserId],
   );
 
-  return { status, error, history, chatMeta, viewerParty, sendMessage };
+  return {
+    status,
+    error,
+    history,
+    chatMeta,
+    viewerParty: parties?.current_party || "guest",
+    sendMessage,
+  };
 }

@@ -6,7 +6,8 @@ import * as messagesRepo from "../repositories/messages.mongo";
 import * as bookingsRepo from "../repositories/bookings.pg";
 import * as listingsRepo from "../repositories/listings.mongo";
 import { toMillis } from "../dates";
-import type { Booking, BookingParty } from "../types/booking";
+import { signToken } from "../jwt";
+import type { Booking, BookingParty, ChatParties } from "../types/booking";
 import type { ListingDocumentValues } from "../types/listing";
 import type { CurrentUser } from "../types/user";
 import { ChatHistory, Conversation } from "../types/chat";
@@ -106,23 +107,27 @@ export async function getUserConversations(): Promise<
 /**
  * Which side of `bookingId` this user sits on, or `null` if neither — i.e. they
  * have no business reading the thread. Guest is settled by the booking row;
- * host requires the listing, since ownership lives in Mongo.
- *
- * The worker answers this same question in `authorizeRoom` with its own copy —
- * one business rule implemented twice, across two repos. Why that's a boundary
- * problem rather than a code-sharing one, and the ways out, are in
- * `docs/tech_debt/CHAT_FEATURE_NEXT_STEPS.md`.
+ * host requires the listing, since ownership lives in Mongo. Sole owner of the
+ * rule: `getChatHistory` signs the result into the join ticket, which the
+ * worker verifies rather than re-deriving.
  */
-async function resolveViewerParty(
+async function getChatParties(
   bookingId: string,
   user: CurrentUser,
-): Promise<BookingParty | null> {
+): Promise<ChatParties | null> {
   const booking = await bookingsRepo.getBookingById(bookingId);
   if (!booking) return null;
-  if (booking.guest_id === user.id) return "guest";
-
   const listing = await listingsRepo.findListingById(booking.listing_id);
-  return listing?.host_id === user.id ? "host" : null;
+  if (!listing) return null;
+  const isHost = user.id === listing.host_id;
+  const isGuest = user.id === booking.guest_id;
+
+  return {
+    chat_id: bookingId,
+    host_id: listing.host_id,
+    guest_id: booking.guest_id,
+    current_party: isHost ? "host" : isGuest ? "guest" : null,
+  };
 }
 
 export async function getChatHistory(
@@ -133,17 +138,24 @@ export async function getChatHistory(
   const { data: user } = auth;
 
   try {
-    // `chat:view-own` only says this user may read *their* chats — it says
-    // nothing about this booking. Resolve which side they're on, which both
-    // authorizes the read and tells the UI who the counterpart is. Same two
-    // steps the worker runs in `authorizeRoom` before joining the room.
-    const viewerParty = await resolveViewerParty(bookingId, user);
-    if (!viewerParty)
+    const parties = await getChatParties(bookingId, user);
+    if (!parties)
+      return {
+        ok: false,
+        error: "There is no booking or listing associated for the current user",
+        code: "VALIDATION",
+      };
+
+    if (!parties.current_party)
       return {
         ok: false,
         error: "You are not part of this conversation",
         code: "FORBIDDEN",
       };
+
+    // Sign the join ticket only once the caller is confirmed a party — the
+    // worker verifies this signature instead of re-deriving the rule.
+    const ticket = signToken(parties, { expiresIn: "1h" });
 
     // A missing chat document is not an error: it just means nobody has spoken
     // on this booking yet. Reporting it as a failure is what put the UI in its
@@ -153,7 +165,7 @@ export async function getChatHistory(
       ? await messagesRepo.findMessagesByChatId(bookingId)
       : [];
 
-    return { ok: true, data: { chat, messages, viewerParty } };
+    return { ok: true, data: { chat, messages, parties, ticket } };
   } catch (error) {
     console.error("[getChatHistory]:", error);
     return {

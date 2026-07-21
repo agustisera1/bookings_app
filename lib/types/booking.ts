@@ -13,6 +13,12 @@ export type BookingStatus = "pending" | "accepted" | "rejected" | "cancelled";
  * so this expresses someone's relationship to *this* booking, not their roles.
  */
 export type BookingParty = "guest" | "host";
+export type ChatParties = {
+  chat_id: string;
+  host_id: string;
+  guest_id: string;
+  current_party: BookingParty | null;
+};
 
 /** Who cancelled a booking. Persisted in `cancelled_by`. */
 export type CancelActor = BookingParty;
