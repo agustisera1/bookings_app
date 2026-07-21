@@ -1,5 +1,6 @@
 import { io, Socket } from "socket.io-client";
 import type { SerializableMessageDocument } from "./types/messages";
+import { getUserToken } from "./services/auth";
 
 declare global {
   var chatSocket: Socket | undefined;
@@ -48,6 +49,11 @@ export function getSocketConnection() {
 
     const socket = io(url, {
       withCredentials: true,
+      auth(cb) {
+        getUserToken()
+          .then((token) => cb({ token }))
+          .catch(() => cb({ token: null }));
+      },
     });
 
     // Handle auth, telemetry, logging here because they don't need cleanup and detach
