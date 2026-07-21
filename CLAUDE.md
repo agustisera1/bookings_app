@@ -290,6 +290,7 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 | `DatePicker` | Campo de fecha única: trigger (ícono + fecha formateada) + `Calendar` en `Popover`. `open`/`onOpenChange` opcionales para coordinar pickers hermanos | Client |
 | `PageLayout` | Shell de página: heading grande sticky + contenido scrollable, con slots `actions`/`toolbar`. Es el borde de la ruta | ✓ |
 | `Section` | Encabezado (título + subtítulo) sobre un bloque **dentro** de una página, con `Card` opcional | ✓ |
+| `RouteError` | Cuerpo de un `error.tsx`: `EmptyState` + botón "Try again" (`reset`) + escape hatch (`homeAction`) | Client |
 
 ### Reglas de consistencia
 

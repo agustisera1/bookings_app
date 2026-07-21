@@ -8,6 +8,7 @@ import { EditListingButton } from "@/components/listings/edit-listing-button";
 import { DeleteListingButton } from "@/components/listings/delete-listing-button";
 import { MapPin, Star, ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { query } from "@/lib/apollo/client";
 import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
 import { getListingReviews } from "@/lib/services/reviews";
@@ -33,9 +34,7 @@ export default async function ListingDetailPage({
     variables: { listing_id: id },
   });
 
-  if (error || listing === null) {
-    return <div className="min-h-screen">Listing not found</div>;
-  }
+  if (error || listing === null) notFound();
 
   const currentUser = await getCurrentUser();
   const isHostMode =
