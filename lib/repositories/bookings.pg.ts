@@ -56,6 +56,18 @@ export async function getBookingById(
   return result.rows[0] ?? null;
 }
 
+export async function getBookingsByListingIds(
+  ids: string[],
+): Promise<Booking[]> {
+  const result = await db.query<Booking>(
+    `SELECT * FROM bookings
+    WHERE listing_id = ANY($1)`,
+    [ids],
+  );
+
+  return result.rows;
+}
+
 export async function getBookingsByListingId(
   listing_id: string,
 ): Promise<Booking[]> {
