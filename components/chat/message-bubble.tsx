@@ -73,7 +73,7 @@ export function MessageBubble({
           </span>
         ) : (
           time && (
-            <span className="mt-1 px-1 text-2xs text-muted-foreground">
+            <span className="mt-1 px-1 text-[11px] text-muted-foreground">
               {time}
             </span>
           )

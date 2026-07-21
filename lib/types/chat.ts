@@ -1,6 +1,6 @@
 import { WithId } from "mongodb";
 import { SerializableMessageDocument } from "./messages";
-import type { BookingParty, GuestBooking } from "./booking";
+import type { BookingParty, ChatParties, GuestBooking } from "./booking";
 
 export type ChatDocument = WithId<{
   booking_id: string;
@@ -30,7 +30,12 @@ export type ChatHistory = {
    * ownership is known, so the UI never has to guess it from `chat` — which is
    * null until someone speaks.
    */
-  viewerParty: BookingParty;
+  parties: ChatParties;
+  /**
+   * Short-lived JWT the socket join is authorized with. Signed here — the only
+   * place that ran the ownership rule — so the client never mints its own.
+   */
+  ticket: string;
 };
 
 /**

@@ -289,3 +289,24 @@ async function greetUser(
     };
   }
 }
+
+// Short-lived credential for the socket handshake. The client can't read the
+// httpOnly cookie, and returning the 1h access token would park it in JS
+// (XSS-reachable) — so mint a fresh minutes-long one. Claims mirror the access
+// token so the worker's `CurrentUser` cast holds.
+export async function getUserToken(): Promise<string | null> {
+  const user = await getCurrentUser();
+  if (!user) return null;
+
+  return signToken(
+    {
+      user_id: user.id,
+      email: user.email,
+      name: user.name,
+      is_host: user.is_host,
+      roles: user.roles,
+      permissions: user.permissions,
+    },
+    { expiresIn: "5m" },
+  );
+}

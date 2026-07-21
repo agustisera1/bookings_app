@@ -1,5 +1,6 @@
 import { io, Socket } from "socket.io-client";
 import type { SerializableMessageDocument } from "./types/messages";
+import { getUserToken } from "./services/auth";
 
 declare global {
   var chatSocket: Socket | undefined;
@@ -48,6 +49,11 @@ export function getSocketConnection() {
 
     const socket = io(url, {
       withCredentials: true,
+      auth(cb) {
+        getUserToken()
+          .then((token) => cb({ token }))
+          .catch(() => cb({ token: null }));
+      },
     });
 
     // Handle auth, telemetry, logging here because they don't need cleanup and detach
@@ -63,4 +69,12 @@ export function getSocketConnection() {
   } else {
     return globalThis.chatSocket;
   }
+}
+
+// Pure read of the current connection state — never constructs the socket, so
+// it's safe as a `useSyncExternalStore` snapshot. The connection is opened by
+// whoever calls `getSocketConnection` (the status hook's `subscribe`, the chat
+// effects), never by reading this.
+export function isSocketConnected() {
+  return globalThis.chatSocket?.connected ?? false;
 }
