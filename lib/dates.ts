@@ -21,7 +21,9 @@ export function parseTs(ts: string | null | undefined): Date | null {
  * de check-out (esa noche libre), habría que hacer el extremo superior
  * exclusivo (`to: end_date - 1 día`).
  */
-export function getAvailabilityFromBookings(bookings: Booking[]) {
+export function getAvailabilityFromBookings(
+  bookings: Pick<Booking, "start_date" | "end_date">[],
+) {
   const availability: Matcher[] = bookings.map((booking) => {
     const matcher: Matcher = {
       from: parsePgTimestamp(booking.start_date)!,
