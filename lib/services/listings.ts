@@ -15,6 +15,7 @@ import { revalidatePath } from "next/cache";
 import { Booking } from "./bookings";
 import { Matcher } from "react-day-picker";
 import { getAvailabilityFromBookings } from "../dates";
+import { SLOT_HOLDING_STATUSES } from "../bookings/policy";
 import {
   FiltersInput,
   InputMaybe,
@@ -293,7 +294,10 @@ export async function getListingAvailability(
   if (!auth.ok) return auth;
 
   try {
-    const bookings = await bookingsRepo.getBookingsByListingId(listing_id);
+    const bookings = await bookingsRepo.getBookingRangesByListingId(
+      listing_id,
+      SLOT_HOLDING_STATUSES,
+    );
     const availability = getAvailabilityFromBookings(bookings);
     return {
       ok: true,

@@ -16,15 +16,6 @@ export default async function MessagesLayout({
   children: ReactNode;
 }) {
   const conversations = await getUserConversations();
-
-  // The rail stays first in the DOM so it comes before the thread for keyboard
-  // and screen-reader order, and stacks on top on mobile. `order` only flips it
-  // to the right once the panes sit side by side.
-  //
-  // The rail carries `bg-sidebar` and the thread pane inherits `bg-background`.
-  // In dark mode those tokens differ by a step (0.213 vs 0.142), so the seam
-  // between the two panes is drawn by the surfaces themselves — the same way
-  // the nav sidebar separates from the page — instead of by a border.
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
       <aside className="flex shrink-0 flex-col border-b border-foreground/10 bg-sidebar text-sidebar-foreground md:order-2 md:w-80 md:border-b-0 md:border-l lg:w-96">

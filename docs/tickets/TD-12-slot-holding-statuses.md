@@ -52,6 +52,10 @@ export const SLOT_HOLDING_STATUSES: BookingStatus[] = ["pending", "accepted"];
 Va en `policy.ts` porque ahí ya viven las otras reglas puras del ciclo de vida (`canCancel`,
 `refundFor`) — cohesión: la constante y las transiciones que la usan son la misma unidad conceptual.
 
+> **Ya definida.** `SLOT_HOLDING_STATUSES` quedó creada en `policy.ts` y la consume
+> `getBookingRangesByListingId` (disponibilidad). Resta acá lo del `findBookedListingIds`: que
+> reciba la constante en vez de hardcodear el `WHERE`, y borrar la nota de deuda de `CLAUDE.md`.
+
 El service la pasa como parámetro a `findBookedListingIds`; el repo la recibe y la usa en el
 `WHERE`. Nota que el sentido se invierte: el repo hoy lista los estados que **no** cuentan
 (`NOT IN ('cancelled','rejected')`) y la constante lista los que **sí** (`pending`, `accepted`).

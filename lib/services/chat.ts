@@ -42,15 +42,11 @@ export async function getUserConversations(): Promise<
     const hostListings = user.is_host
       ? await listingsRepo.findListings({ host_id: user.id })
       : [];
+
+    const ids = hostListings.map((listing) => listing._id);
     const hostBookings = (
-      await Promise.all(
-        hostListings.map((listing) =>
-          bookingsRepo.getBookingsByListingId(listing._id),
-        ),
-      )
-    )
-      .flat()
-      .filter((booking) => booking.guest_id !== user.id);
+      ids.length === 0 ? [] : await bookingsRepo.getBookingsByListingIds(ids)
+    ).filter((booking) => booking.guest_id !== user.id);
 
     // One lookup covering every listing the guest side references; the host's
     // own listings are already in hand.

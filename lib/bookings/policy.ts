@@ -16,6 +16,13 @@ import type { Booking, BookingStatus, CancelActor } from "../types/booking";
 /** Statuses a booking can never leave. */
 export const TERMINAL_STATUSES: BookingStatus[] = ["rejected", "cancelled"];
 
+/**
+ * Statuses whose bookings still hold the listing's dates, so they block that
+ * range for new bookings. The positive form of the `no_overlap` constraint
+ * (003), which excludes `cancelled`/`rejected`: what it leaves is what holds.
+ */
+export const SLOT_HOLDING_STATUSES: BookingStatus[] = ["pending", "accepted"];
+
 /** Guests cancelling within this window of check-in forfeit their refund. */
 export const FREE_CANCELLATION_WINDOW_HOURS = 48;
 

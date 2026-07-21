@@ -29,22 +29,6 @@ resuelve.
   `totalDocsExamined` ≫ `nReturned`.
 - **Idea de fix:** índice compuesto `{ chat_id: 1, timestamp: 1 }` + `sort` y `limit` explícitos.
 
-### 3. N+1 en el rail de mensajería: una query por listing del host — **TD-06**
-
-- **Dónde:** `lib/services/chat.ts` (`getUserConversations`)
-- **Qué pasa:** el lado host resuelve las conversaciones listando los listings propios y
-  pidiendo las reservas **de a un listing por vez**:
-  ```ts
-  hostListings.map((listing) => bookingsRepo.getBookingsByListingId(listing._id))
-  ```
-  Están en `Promise.all`, así que corren en paralelo, pero siguen siendo N round trips a PG y
-  N conexiones del pool ocupadas. Un host con 40 listings paga 40 queries por cada carga de
-  `/messages`.
-- **Por qué es más interesante que un N+1 de manual:** el `Promise.all` lo **disfraza**. El código
-  se ve concurrente y el tiempo de pared no es terrible; lo que se agota no es el tiempo sino el pool.
-- **Cómo medirlo:** contar queries en el log de PG al abrir `/messages` con un usuario host.
-- **Idea de fix:** una sola query por lote: `SELECT * FROM bookings WHERE listing_id = ANY($1)`.
-
 ### 4. COLLSCAN en Mongo: filtros de búsqueda sin índices — ⏸️ Fase 4 (Elasticsearch)
 
 - **Dónde:** `lib/services/listings.ts` (`getListings`) + `lib/repositories/listings.mongo.ts` (`findListings`)

@@ -1,5 +1,5 @@
 import * as db from "../postgres";
-import type { Booking } from "../types/booking";
+import type { Booking, BookingStatus } from "../types/booking";
 
 export async function findBookingsByGuestId(
   guestId: string,
@@ -56,6 +56,18 @@ export async function getBookingById(
   return result.rows[0] ?? null;
 }
 
+export async function getBookingsByListingIds(
+  ids: string[],
+): Promise<Booking[]> {
+  const result = await db.query<Booking>(
+    `SELECT * FROM bookings
+    WHERE listing_id = ANY($1)`,
+    [ids],
+  );
+
+  return result.rows;
+}
+
 export async function getBookingsByListingId(
   listing_id: string,
 ): Promise<Booking[]> {
@@ -65,6 +77,19 @@ export async function getBookingsByListingId(
     WHERE listing_id = $1
     `,
     [listing_id],
+  );
+
+  return result.rows;
+}
+
+export async function getBookingRangesByListingId(
+  listingId: string,
+  statuses: BookingStatus[],
+): Promise<Pick<Booking, "start_date" | "end_date">[]> {
+  const result = await db.query<Pick<Booking, "start_date" | "end_date">>(
+    `SELECT start_date, end_date FROM bookings
+    WHERE listing_id = $1 AND status = ANY($2)`,
+    [listingId, statuses],
   );
 
   return result.rows;
