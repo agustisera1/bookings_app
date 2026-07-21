@@ -68,12 +68,12 @@ export function MessageBubble({
           {body}
         </div>
         {failed ? (
-          <span className="mt-1 px-1 text-[10px] font-medium text-destructive">
+          <span className="mt-1 px-1 text-2xs font-medium text-destructive">
             Not sent
           </span>
         ) : (
           time && (
-            <span className="mt-1 px-1 text-[10px] text-muted-foreground">
+            <span className="mt-1 px-1 text-2xs text-muted-foreground">
               {time}
             </span>
           )

@@ -87,7 +87,7 @@ export default async function ProfilePage() {
                   Permisos — {ROLE_LABELS[role]}
                 </CardTitle>
                 {!user.roles.includes(role) && (
-                  <span className="text-[10px] text-muted-foreground italic">
+                  <span className="text-2xs text-muted-foreground italic">
                     fuera de scope
                   </span>
                 )}
@@ -111,7 +111,7 @@ export default async function ProfilePage() {
                         {permission.phase && (
                           <Badge
                             variant="outline"
-                            className="text-[10px] px-1.5 py-0"
+                            className="text-2xs px-1.5 py-0"
                           >
                             {permission.phase}
                           </Badge>

@@ -13,7 +13,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormField } from "@/components/common/field";
 
 type Status = "idle" | "loading" | "success" | "error";
 
@@ -58,26 +58,22 @@ export default function SignInPage() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="email">Email</Label>
+          <FormField label="Email" htmlFor="email" error={fieldErrors.email}>
             <Input
               id="email"
               type="email"
               name="email"
               placeholder="you@example.com"
             />
-            {fieldErrors.email && (
-              <p className="text-xs text-destructive">{fieldErrors.email}</p>
-            )}
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="password">Password</Label>
+          <FormField
+            label="Password"
+            htmlFor="password"
+            error={fieldErrors.password}
+          >
             <Input id="password" name="password" type="password" />
-            {fieldErrors.password && (
-              <p className="text-xs text-destructive">{fieldErrors.password}</p>
-            )}
-          </div>
+          </FormField>
 
           {message && (
             <Alert variant={status === "success" ? "default" : "destructive"}>

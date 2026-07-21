@@ -37,7 +37,7 @@ export async function Listings({
                     className={`absolute inset-0 bg-gradient-to-br ${gradient}`}
                   />
                 )}
-                <Badge className="relative bg-black/20 text-white/90 backdrop-blur-sm hover:bg-black/30 uppercase tracking-widest text-[10px]">
+                <Badge className="relative bg-black/20 text-white/90 backdrop-blur-sm hover:bg-black/30 uppercase tracking-widest text-2xs">
                   {listing.type}
                 </Badge>
               </div>

@@ -29,7 +29,7 @@ export function StarRating({
           className={cn(
             "size-3.5",
             star <= rating
-              ? "fill-yellow-400 text-yellow-400"
+              ? "fill-rating text-rating"
               : "fill-muted text-muted",
           )}
         />
@@ -83,7 +83,7 @@ export function StarRatingInput({
             className={cn(
               "size-6",
               active >= star
-                ? "fill-yellow-400 text-yellow-400"
+                ? "fill-rating text-rating"
                 : "fill-muted text-muted-foreground/30",
             )}
           />

@@ -392,7 +392,6 @@ export function Filters() {
                   patch: { priceRange: value as number[] },
                 })
               }
-              className="bg-blue-500"
               aria-label="Price range"
             />
           </div>

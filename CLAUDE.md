@@ -264,6 +264,20 @@ components/<feature>/ Componentes de feature: componen common/ + ui/ + servicios
 
 Regla de dependencia: `feature → common → ui`. Un primitivo de `common/` **nunca** importa de una feature ni llama a un service: recibe datos y callbacks por props. Los archivos de `ui/` son código vendorizado — si algo de shadcn no alcanza, se envuelve en `common/`, no se edita en `ui/`.
 
+### Tokens de diseño
+
+Todo color, radio y tamaño de texto sale de un token en `app/globals.css` (`@theme inline` + `:root`/`.dark`, en `oklch`). **Nunca hardcodear** un color (`text-yellow-400`) ni un tamaño mágico (`text-[10px]`): si el token no existe, se define ahí y se usa la utilidad. El mismo valor a mano en dos lugares es la definición de un token que falta.
+
+| Grupo | Tokens | Cuándo usarlos |
+|---|---|---|
+| Superficies | `background`, `card`, `popover`, `muted`, `sidebar` | Fondos, por altitud |
+| Texto y bordes | `foreground`, `muted-foreground`, `border`, `input`, `ring` | Texto, separadores, foco |
+| Semánticos | `primary`, `secondary`, `accent`, `success`, `destructive`, `rating` | Acción, énfasis, estado. `rating` = amarillo de estrellas |
+| Radios | `--radius` → `radius-sm … radius-4xl` | Todo derivado de un único radio base |
+| Tipografía | `font-sans` / `font-heading` / `font-mono`; escala `text-2xs …` | `text-2xs` (10px) para meta y badges; el resto, la escala de Tailwind |
+
+Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nace como token con sus dos temas**, no como un `dark:` a mano. Un `dark:` legítimo solo ajusta la opacidad de un token existente (`bg-success/10` → `dark:bg-success/20`), nunca introduce un color crudo.
+
 ### Catálogo de `components/common/`
 
 | Primitivo | Qué resuelve | Server-safe |

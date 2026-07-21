@@ -29,7 +29,7 @@ export function Search() {
             value={term || ""}
             onChange={handleChange}
             aria-label="Search listings"
-            className="h-9 border-transparent bg-transparent px-1 pr-8 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-base dark:bg-transparent [&::-webkit-search-cancel-button]:appearance-none"
+            className="h-9 border-transparent bg-transparent px-1 pr-8 text-base shadow-none focus-visible:border-transparent focus-visible:ring-0 md:text-base [&::-webkit-search-cancel-button]:appearance-none"
           />
           {term && (
             <button
