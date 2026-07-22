@@ -28,8 +28,29 @@ import type {
   SessionRecord,
 } from "../types/user";
 import { emailQueue, toWelcomeEmailPayload } from "../events";
+import { getClientIp } from "../request";
+import { rateLimit, resetRateLimit, type RateLimitPolicy } from "../rate-limit";
 
 const SALT_ROUNDS = 10;
+
+// Cotas de abuso. Ver docs/tickets/TD-20-rate-limiting.md (límites y fail-open/closed).
+const LOGIN_IP_POLICY: RateLimitPolicy = {
+  limit: 10,
+  windowMs: 10 * 60_000,
+  failMode: "open",
+};
+const LOGIN_EMAIL_POLICY: RateLimitPolicy = {
+  limit: 5,
+  windowMs: 10 * 60_000,
+  failMode: "open",
+};
+const SIGNUP_IP_POLICY: RateLimitPolicy = {
+  limit: 5,
+  windowMs: 60 * 60_000,
+  failMode: "closed",
+};
+
+const TOO_MANY_ATTEMPTS = "Too many attempts. Please try again later.";
 
 export async function createAccessToken(
   user: PublicUser,
@@ -147,6 +168,13 @@ export async function createUser(
       code: "VALIDATION",
     };
 
+  // Cota antes de bcrypt y de encolar el mail: a partir de acá un bot no quema
+  // CPU ni la cuota de Resend.
+  const ip = await getClientIp();
+  const limit = await rateLimit(`rl:signup:ip:${ip}`, SIGNUP_IP_POLICY);
+  if (!limit.allowed)
+    return { ok: false, error: TOO_MANY_ATTEMPTS, code: "RATE_LIMITED" };
+
   const { email, password, name } = data;
   const password_hash = await hash(password, SALT_ROUNDS);
 
@@ -179,6 +207,19 @@ export async function authUser(
     };
 
   const { email, password } = data;
+  const ip = await getClientIp();
+  const ipKey = `rl:login:ip:${ip}`;
+  const emailKey = `rl:login:email:${email.toLowerCase()}`;
+
+  // Cota antes de tocar la DB o comparar el hash: el intento N+1 no llega al
+  // bcrypt. Corre antes del lookup, así el mensaje es idéntico exista o no el
+  // email (si no, la cota se vuelve un oráculo de enumeración de cuentas).
+  const [ipLimit, emailLimit] = await Promise.all([
+    rateLimit(ipKey, LOGIN_IP_POLICY),
+    rateLimit(emailKey, LOGIN_EMAIL_POLICY),
+  ]);
+  if (!ipLimit.allowed || !emailLimit.allowed)
+    return { ok: false, error: TOO_MANY_ATTEMPTS, code: "RATE_LIMITED" };
 
   try {
     const user = await usersRepo.findUserByEmail(email);
@@ -206,6 +247,9 @@ export async function authUser(
 
     const refresh = await createRefreshToken(user.id);
     if (!refresh.ok) return refresh;
+
+    // Login OK: libera ambos contadores, así solo los intentos fallidos suman.
+    await resetRateLimit(ipKey, emailKey);
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password_hash: _, ...safeUser } = user;

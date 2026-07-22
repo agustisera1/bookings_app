@@ -5,10 +5,28 @@ import {
   createAccessToken,
 } from "@/lib/services/auth";
 import { toHttpResponse } from "@/lib/http";
+import { rateLimit, type RateLimitPolicy } from "@/lib/rate-limit";
+import { getClientIp } from "@/lib/request";
 import { cookies } from "next/headers";
 import { JwtPayload } from "jsonwebtoken";
 
+// Ver docs/tickets/TD-20-rate-limiting.md.
+const REFRESH_IP_POLICY: RateLimitPolicy = {
+  limit: 30,
+  windowMs: 60_000,
+  failMode: "open",
+};
+
 export async function POST() {
+  const ip = await getClientIp();
+  const limit = await rateLimit(`rl:refresh:ip:${ip}`, REFRESH_IP_POLICY);
+  if (!limit.allowed)
+    return toHttpResponse({
+      ok: false,
+      error: "Too many attempts. Please try again later.",
+      code: "RATE_LIMITED",
+    });
+
   const cookieStore = await cookies();
   const refresh_token = cookieStore.get("refresh_token")?.value;
 
