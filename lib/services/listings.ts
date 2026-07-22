@@ -83,6 +83,9 @@ export type GetListingsDocumentParams = Omit<
   "own" | "availabilityRange"
 > & { host_id?: string };
 
+const DEFAULT_LISTINGS_LIMIT = 12;
+const MAX_LISTINGS_LIMIT = 100;
+
 export async function getListings(
   filters: InputMaybe<FiltersInput> | null,
 ): Promise<
@@ -91,7 +94,11 @@ export async function getListings(
   // TODO: Check for user authentication
 
   let own;
-  const limit = filters?.limit || 12;
+  // Mongo lee un limit negativo como abs(limit); clampar a [1, MAX] evita que limit: -1e6 evada el tope.
+  const limit = Math.min(
+    Math.max(filters?.limit ?? DEFAULT_LISTINGS_LIMIT, 1),
+    MAX_LISTINGS_LIMIT,
+  );
 
   if (filters?.own) {
     const auth = await authorize("listings:create");

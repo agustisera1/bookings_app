@@ -4,8 +4,13 @@ import { resolvers } from "./resolvers";
 import { NextRequest } from "next/server";
 import schema from "./schema.graphql";
 import type { ApolloContext } from "./context";
+import { maxRootFieldsRule } from "./limits";
 
-const server = new ApolloServer<ApolloContext>({ typeDefs: schema, resolvers });
+const server = new ApolloServer<ApolloContext>({
+  typeDefs: schema,
+  resolvers,
+  validationRules: [maxRootFieldsRule],
+});
 const handler = startServerAndCreateNextHandler<NextRequest, ApolloContext>(
   server,
   {
