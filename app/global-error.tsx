@@ -23,6 +23,7 @@ export default function GlobalError({ reset }: { reset: () => void }) {
               <Button variant="outline" onClick={() => reset()}>
                 Reload
               </Button>
+              {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- deliberate full-document nav out of the crashed app, not client routing; see docstring */}
               <Button nativeButton={false} render={<a href="/" />}>
                 Go home
               </Button>

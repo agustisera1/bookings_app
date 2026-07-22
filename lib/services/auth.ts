@@ -5,9 +5,10 @@ import type { ServiceResult } from "../types";
 import { hashToken, signToken, verifyToken } from "../jwt";
 import { cookies } from "next/headers";
 import {
-  formDataToObject,
   signInSchema,
   signUpSchema,
+  type SignInInput,
+  type SignUpInput,
 } from "../validation/auth";
 import { JwtPayload } from "jsonwebtoken";
 import { getPermissionsForRoles, getUserRoles } from "../permissions";
@@ -133,13 +134,11 @@ export async function getUserSession(
 }
 
 export async function createUser(
-  formData: FormData,
+  input: SignUpInput,
 ): Promise<ServiceResult<Pick<User, "id" | "email">>> {
   // A Server Action is callable directly, not just from this form, so the
   // service layer re-validates from scratch rather than trusting the client.
-  const { success, error, data } = signUpSchema.safeParse(
-    formDataToObject(formData),
-  );
+  const { success, error, data } = signUpSchema.safeParse(input);
 
   if (!success)
     return {
@@ -169,11 +168,9 @@ export async function createUser(
 }
 
 export async function authUser(
-  formData: FormData,
+  input: SignInInput,
 ): Promise<ServiceResult<Omit<User, "password_hash">>> {
-  const { success, error, data } = signInSchema.safeParse(
-    formDataToObject(formData),
-  );
+  const { success, error, data } = signInSchema.safeParse(input);
   if (!success)
     return {
       ok: false,

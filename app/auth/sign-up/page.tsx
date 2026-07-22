@@ -1,14 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { createUser } from "@/lib/services/auth";
-import {
-  fieldErrorsFrom,
-  formDataToObject,
-  signUpSchema,
-} from "@/lib/validation/auth";
 import { CheckCircle2, AlertCircle } from "lucide-react";
+import { createUser } from "@/lib/services/auth";
+import { signUpSchema, type SignUpInput } from "@/lib/validation/auth";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,41 +13,27 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Field, FieldError, FormField } from "@/components/common/field";
 
-type Status = "idle" | "loading" | "success" | "error";
-
 export default function SignUpPage() {
-  const [status, setStatus] = useState<Status>("idle");
-  const [message, setMessage] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setError,
+    formState: { errors, isSubmitting, isSubmitSuccessful },
+  } = useForm<SignUpInput>({
+    resolver: zodResolver(signUpSchema),
+    defaultValues: { name: "", email: "", password: "" },
+  });
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setMessage("");
-    setFieldErrors({});
-
-    const formData = new FormData(e.currentTarget);
-
-    // Client-side validation for fast feedback; server re-validates as the real boundary.
-    const { success, error } = signUpSchema.safeParse(
-      formDataToObject(formData),
-    );
-    if (!success) {
-      setStatus("error");
-      setFieldErrors(fieldErrorsFrom(error));
-      return;
-    }
-
-    setStatus("loading");
-    const response = await createUser(formData);
-
+  async function onSubmit(data: SignUpInput) {
+    const response = await createUser(data);
     if (!response.ok) {
-      setStatus("error");
-      setMessage(response.error);
-    } else {
-      setStatus("success");
-      setMessage("Account created! You can now sign in.");
-      e.currentTarget?.reset();
+      setError("root", { message: response.error });
+      throw new Error(response.error);
     }
+    // Keep the success flag through the reset so the confirmation stays up
+    // while the fields clear.
+    reset(undefined, { keepIsSubmitSuccessful: true });
   }
 
   return (
@@ -59,17 +42,17 @@ export default function SignUpPage() {
         <CardTitle>Create account</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <FormField label="Full name" htmlFor="name" error={fieldErrors.name}>
-            <Input id="name" name="name" />
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <FormField label="Full name" htmlFor="name" error={errors.name?.message}>
+            <Input id="name" {...register("name")} />
           </FormField>
 
-          <FormField label="Email" htmlFor="email" error={fieldErrors.email}>
+          <FormField label="Email" htmlFor="email" error={errors.email?.message}>
             <Input
               id="email"
               type="email"
-              name="email"
               placeholder="you@example.com"
+              {...register("email")}
             />
           </FormField>
 
@@ -77,12 +60,12 @@ export default function SignUpPage() {
             <Label htmlFor="password">Password</Label>
             <Input
               id="password"
-              name="password"
               type="password"
-              aria-invalid={!!fieldErrors.password}
+              aria-invalid={!!errors.password}
+              {...register("password")}
             />
-            {fieldErrors.password ? (
-              <FieldError>{fieldErrors.password}</FieldError>
+            {errors.password ? (
+              <FieldError>{errors.password.message}</FieldError>
             ) : (
               <p className="text-xs text-muted-foreground">
                 At least 8 characters
@@ -90,33 +73,34 @@ export default function SignUpPage() {
             )}
           </Field>
 
-          {message &&
-            (status === "success" ? (
-              <Alert className="animate-in fade-in-0 slide-in-from-top-1 border-success/40 bg-success/10 text-success dark:bg-success/20 [&>svg]:text-success">
-                <CheckCircle2 />
-                <AlertTitle>You&apos;re all set</AlertTitle>
-                <AlertDescription className="text-success/90">
-                  {message}
-                </AlertDescription>
-              </Alert>
-            ) : (
+          {isSubmitSuccessful ? (
+            <Alert className="animate-in fade-in-0 slide-in-from-top-1 border-success/40 bg-success/10 text-success dark:bg-success/20 [&>svg]:text-success">
+              <CheckCircle2 />
+              <AlertTitle>You&apos;re all set</AlertTitle>
+              <AlertDescription className="text-success/90">
+                Account created! You can now sign in.
+              </AlertDescription>
+            </Alert>
+          ) : (
+            errors.root && (
               <Alert
                 variant="destructive"
                 className="animate-in fade-in-0 slide-in-from-top-1 border-destructive/40 bg-destructive/10 dark:bg-destructive/20"
               >
                 <AlertCircle />
                 <AlertTitle>Something went wrong</AlertTitle>
-                <AlertDescription>{message}</AlertDescription>
+                <AlertDescription>{errors.root.message}</AlertDescription>
               </Alert>
-            ))}
+            )
+          )}
 
           <Button
             type="submit"
             size="lg"
-            disabled={status === "loading"}
+            disabled={isSubmitting}
             className="w-full"
           >
-            {status === "loading" ? "Creating account…" : "Sign Up"}
+            {isSubmitting ? "Creating account…" : "Sign Up"}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">

@@ -23,6 +23,16 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  // `__generated__/**` es salida de `pnpm codegen`, no se escribe a mano: los
+  // plugins de graphql-codegen emiten `any` en algunas firmas de resolver/scalar.
+  // No se lintea código regenerable por una regla que no podemos satisfacer sin
+  // editar el output a mano.
+  {
+    files: ["**/__generated__/**"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

@@ -1,54 +1,36 @@
 "use client";
 
-import { authUser } from "@/lib/services/auth";
-import {
-  fieldErrorsFrom,
-  formDataToObject,
-  signInSchema,
-} from "@/lib/validation/auth";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
 import Link from "next/link";
+import { authUser } from "@/lib/services/auth";
+import { signInSchema, type SignInInput } from "@/lib/validation/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/field";
 
-type Status = "idle" | "loading" | "success" | "error";
-
 export default function SignInPage() {
   const router = useRouter();
-  const [status, setStatus] = useState<Status>("idle");
-  const [message, setMessage] = useState("");
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const {
+    register,
+    handleSubmit,
+    setError,
+    formState: { errors, isSubmitting },
+  } = useForm<SignInInput>({
+    resolver: zodResolver(signInSchema),
+    defaultValues: { email: "", password: "" },
+  });
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    setMessage("");
-    setFieldErrors({});
-
-    const formData = new FormData(e.currentTarget);
-
-    const { success, error } = signInSchema.safeParse(
-      formDataToObject(formData),
-    );
-
-    if (!success) {
-      setStatus("error");
-      setFieldErrors(fieldErrorsFrom(error));
+  async function onSubmit(data: SignInInput) {
+    const response = await authUser(data);
+    if (!response.ok) {
+      setError("root", { message: response.error });
       return;
     }
-
-    setStatus("loading");
-    const response = await authUser(formData);
-
-    if (!response.ok) {
-      setStatus("error");
-      setMessage(response.error);
-    } else {
-      router.push("/listings");
-    }
+    router.push("/listings");
   }
 
   return (
@@ -57,37 +39,37 @@ export default function SignInPage() {
         <CardTitle>Sign in</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <FormField label="Email" htmlFor="email" error={fieldErrors.email}>
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
+          <FormField label="Email" htmlFor="email" error={errors.email?.message}>
             <Input
               id="email"
               type="email"
-              name="email"
               placeholder="you@example.com"
+              {...register("email")}
             />
           </FormField>
 
           <FormField
             label="Password"
             htmlFor="password"
-            error={fieldErrors.password}
+            error={errors.password?.message}
           >
-            <Input id="password" name="password" type="password" />
+            <Input id="password" type="password" {...register("password")} />
           </FormField>
 
-          {message && (
-            <Alert variant={status === "success" ? "default" : "destructive"}>
-              <AlertDescription>{message}</AlertDescription>
+          {errors.root && (
+            <Alert variant="destructive">
+              <AlertDescription>{errors.root.message}</AlertDescription>
             </Alert>
           )}
 
           <Button
             type="submit"
             size="lg"
-            disabled={status === "loading"}
+            disabled={isSubmitting}
             className="w-full"
           >
-            {status === "loading" ? "Signing in…" : "Sign In"}
+            {isSubmitting ? "Signing in…" : "Sign In"}
           </Button>
 
           <p className="text-center text-sm text-muted-foreground">

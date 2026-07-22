@@ -17,25 +17,3 @@ export const signInSchema = z.object({
 });
 
 export type SignInInput = z.infer<typeof signInSchema>;
-
-// FormData -> plain object, the shape zod (and most form libraries) expect.
-export function formDataToObject(formData: FormData): Record<string, string> {
-  const entries: Record<string, string> = {};
-  for (const [key, value] of formData.entries()) {
-    if (typeof value === "string") entries[key] = value;
-  }
-  return entries;
-}
-
-// Flattens a ZodError into { fieldName: firstErrorMessage } for displaying
-// inline next to each input, instead of one generic banner message.
-export function fieldErrorsFrom(error: z.ZodError): Record<string, string> {
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of error.issues) {
-    const key = issue.path[0];
-    if (typeof key === "string" && !fieldErrors[key]) {
-      fieldErrors[key] = issue.message;
-    }
-  }
-  return fieldErrors;
-}
