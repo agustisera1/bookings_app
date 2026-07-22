@@ -61,19 +61,6 @@ query {
 Cada alias es una ejecución independiente del resolver. **Un request HTTP, N `COLLSCAN`.** El rate
 limiting de TD-20 no lo cubre: cuenta requests, y esto es un solo request.
 
-### 3. La introspección depende de una variable de entorno
-
-`lib/apollo/index.ts` construye el servidor sin opciones:
-
-```ts
-const server = new ApolloServer<ApolloContext>({ typeDefs: schema, resolvers });
-```
-
-Apollo Server 4 desactiva la introspección solo cuando `NODE_ENV === "production"`, así que en un
-deploy bien configurado **esto ya está cubierto**. No es un agujero abierto — es una garantía que
-depende de que una variable de entorno esté bien puesta, en un proyecto donde nada valida el entorno
-(**TD-14**). Conviene declararla explícita en vez de heredarla.
-
 ## Por qué entra
 
 **Preguntas 1 y 2.**
@@ -87,21 +74,19 @@ depende de que una variable de entorno esté bien puesta, en un proyecto donde n
 
 ## Alcance
 
-**1. Acotar `limit` en el service** (`lib/services/listings.ts`). Una constante de dominio con el
-máximo, y `Math.min(filters?.limit ?? DEFAULT, MAX)`.
+**1. Acotar `limit` en el service** (`lib/services/listings.ts`). Dos constantes de dominio
+(default y máximo) y un clamp por ambos lados: `Math.min(Math.max(filters?.limit ?? DEFAULT, 1), MAX)`.
+El clamp inferior es parte del fix, no cosmético: `findListings` aplica `cursor.limit()` del driver
+nativo de Mongo, que trata un `limit` negativo como `abs(limit)` en un solo batch. Sin cota inferior,
+`limit: -1000000` devuelve un millón de documentos y evade el tope superior.
 
 Va en el **service**, no en el resolver: es una regla del dominio, y `getListings` también se llama
 desde RSC sin pasar por GraphQL. Acotarlo en el resolver dejaría el otro camino abierto.
 
-**2. Limitar la cantidad de operaciones por documento.** Un plugin de Apollo que inspeccione el
-documento antes de ejecutarlo y rechace los que superen N campos raíz. Es la defensa directa contra
-el punto 2.
-
-**3. Declarar `introspection` explícitamente** en la construcción del `ApolloServer`, en vez de
-depender de `NODE_ENV`.
-
-**4. Desactivar el batching de operaciones HTTP** si no se usa (verificar antes): permite mandar un
-array de operaciones en un request y multiplica cualquier cota por request.
+**2. Limitar la cantidad de campos raíz por documento.** Una validation rule que corre en la fase de
+validación —antes de la ejecución, así ningún resolver llega a correr— y rechaza los documentos que
+superen N campos raíz, contando a través de fragment spreads para que un `query { ...F }` no cuele
+alias por la ventana. Es la defensa directa contra el punto 2.
 
 ## Criterio de aceptación
 
@@ -110,8 +95,6 @@ array de operaciones en un request y multiplica cualquier cota por request.
 - [ ] El tope aplica también llamando a `getListings` desde un RSC, sin pasar por GraphQL.
 - [ ] Una query con más de N alias del mismo campo raíz es **rechazada antes de ejecutar** ningún
       resolver.
-- [ ] La introspección está apagada por configuración explícita, y sigue apagada aunque `NODE_ENV`
-      no esté seteado.
 - [ ] Las queries reales de la aplicación (`lib/apollo/queries/**`) siguen funcionando sin cambios.
 
 ## Si esto escalara
@@ -132,6 +115,11 @@ intercambio que a esta escala no conviene.
 ## Fuera de alcance
 
 - **Límite de profundidad.** El schema no lo permite hoy. Ver arriba.
+- **Declarar `introspection` y `allowBatchedHttpRequests` explícitos.** Evaluado y descartado:
+  Apollo ya apaga la introspección con `NODE_ENV === "production"` y el batching HTTP viene
+  deshabilitado por default, así que en cualquier deploy real ambos ya están cubiertos. Declararlos
+  a mano solo blinda el caso de un `NODE_ENV` mal seteado —improbable en un host manejado— a cambio
+  de config que hay que mantener. No compensa.
 - **Persisted queries / allowlist de operaciones.**
 - **Los índices de Mongo que hacen barato el `COLLSCAN`** → **TD-23** y Fase 4. Este ticket acota
   cuánto se pide; el costo de cada query es otro problema.
