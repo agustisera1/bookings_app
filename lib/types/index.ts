@@ -23,6 +23,7 @@ export type ErrorCode =
   | "FORBIDDEN"
   | "NOT_FOUND"
   | "CONFLICT"
+  | "RATE_LIMITED"
   | "UNEXPECTED";
 
 export type ServiceResult<T = unknown> =
