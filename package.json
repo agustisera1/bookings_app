@@ -7,6 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "codegen": "graphql-codegen",
     "db:status": "dotenv -e .env.local -- tsx scripts/migrate.ts status",
     "db:migrate": "dotenv -e .env.local -- tsx scripts/migrate.ts up",
@@ -71,6 +73,7 @@
     "eslint-config-next": "16.2.9",
     "tailwindcss": "^4",
     "tsx": "^4.22.4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.4"
   }
 }
