@@ -72,7 +72,10 @@ toca.
 
 ### 3. Superficie de red
 
-- Ninguna base con puerto público. Las tres solo alcanzables desde app y worker.
+- Ninguna base con puerto público. El tramo **worker↔bases** admite red privada estricta si comparten
+  host; el tramo **app↔bases**, con la app en un runtime serverless (sin IP de egress fija), es alcance
+  por internet con **TLS + credenciales + IP allowlist** donde el proveedor lo permita. "Sin puerto
+  público" se cumple en ambos; "red privada" en sentido estricto, sólo en el primero.
 - HTTPS en la app, **`wss://`** en el socket (hoy `lib/socket.ts:47` cae a `http://localhost:4000`).
 - Un usuario de DB para la aplicación, no el superusuario.
 
@@ -84,8 +87,9 @@ En `docs/architecture/`: qué corre dónde, qué habla con qué, qué es públic
 
 - [ ] La app responde en una URL pública con HTTPS válido.
 - [ ] El chat funciona end-to-end entre dos cuentas **sobre `wss://`**, con el worker en otro dominio.
-- [ ] Ninguna de las tres bases acepta conexiones desde fuera de la red privada. Verificado
-      intentando conectar desde afuera, no asumido.
+- [ ] Ninguna de las tres bases acepta conexiones públicas sin credencial ni allowlist. Acceso del
+      worker por red privada; de la app serverless, por TLS + allowlist. Verificado intentando
+      conectar desde afuera, no asumido.
 - [ ] Un redeploy del worker no pierde jobs encolados: se apagan los consumers, Redis retiene, se
       procesan al volver.
 - [ ] El diagrama de topología está en `docs/architecture/` y refleja lo desplegado.
@@ -110,3 +114,22 @@ conexiones. Ahí entra el pooling (`pgbouncer` o el pooler del proveedor).
   README del backlog.
 - **Variables de entorno y secretos** → **TD-14**.
 - **Health checks y observabilidad** → **TD-15**.
+
+## Estado — deploy diferido (blocker: costo / operación)
+
+El deploy no se ejecutó, y es un blocker real, no falta de tiempo:
+
+- **El worker exige un proceso always-on** (socket.io + loops de BullMQ). Eso descarta todo runtime
+  serverless y todo free tier que duerme o hace scale-to-zero — la mayoría de los PaaS gratuitos: al
+  dormirse cortan las conexiones del socket y frenan los consumers. Un always-on real tiene un piso de
+  costo mensual.
+- **Las rutas $0 existen, pero se pagan en operación y uptime, no en dinero:** un VM gratuito
+  autogestionado (Docker, reverse proxy para `wss://` + TLS, backups y updates a cargo tuyo) o una
+  máquina propia always-on detrás de un túnel. Cambian un costo chico por trabajo de infra y por el
+  riesgo de que se caiga justo cuando alguien lo mira.
+- **Para la fase actual no se justifica ninguna de las dos.** El contenido de arquitectura del deploy
+  ya está capturado en este plan; ejecutarlo agrega un costo fijo o una carga operativa que hoy no
+  aporta al objetivo.
+
+La configuración de entorno (**TD-14**) queda asentada de todos modos: el día que esto se destrabe, el
+deploy es proveer valores, no descubrir qué variables hacen falta.
