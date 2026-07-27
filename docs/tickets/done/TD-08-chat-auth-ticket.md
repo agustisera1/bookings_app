@@ -8,7 +8,7 @@
 | **Esfuerzo** | ~4-6 h |
 | **Depende de** | — |
 | **Origen** | [`tech_debt/CHAT_FEATURE_NEXT_STEPS.md`](../tech_debt/CHAT_FEATURE_NEXT_STEPS.md) § La regla de autorización está implementada dos veces |
-| **Repos** | `bookings_app` + `bookings-worker` |
+| **Repos** | `bookings_app` + `bookings-app-worker` |
 
 ## Problema
 

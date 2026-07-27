@@ -8,7 +8,7 @@
 | **Esfuerzo** | ~2-3 h |
 | **Depende de** | — (surge de **TD-08**) |
 | **Origen** | Hardening identificado al implementar TD-08 (ticket firmado para el join) |
-| **Repos** | `bookings_app` + `bookings-worker` |
+| **Repos** | `bookings_app` + `bookings-app-worker` |
 
 ## Problema
 

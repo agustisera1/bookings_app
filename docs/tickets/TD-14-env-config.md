@@ -7,13 +7,8 @@
 | **Prioridad** | 🔴 Alta |
 | **Momento** | Pre-deploy |
 | **Depende de** | **TD-13** (el destino define qué formato de conexión conviene) |
-<<<<<<< Updated upstream
 | **Origen** | `tech_debt/EVENTS_FEATURE_NEXT_STEPS.md` § Recordatorio de runtime + auditoría propia |
 | **Repos** | `bookings_app` + `bookings-app-worker` |
-=======
-| **Origen** | Auditoría de config de entorno de los dos repos |
-| **Repos** | `bookings_app` + `bookings-worker` |
->>>>>>> Stashed changes
 
 ## Problema
 
@@ -43,7 +38,7 @@ NEXT_PUBLIC_API · NEXT_PUBLIC_CHAT_SERVER_URL
 | Repo | Cómo lee Redis |
 |---|---|
 | `bookings_app` | `REDIS_HOST` + `REDIS_PORT` + `REDIS_USER` + `REDIS_PASSWORD` |
-| `bookings-worker` | `REDIS_URL` |
+| `bookings-app-worker` | `REDIS_URL` |
 
 **Es el mismo Redis.** El producer encola y el worker consume de la misma instancia, configurada de
 dos formas que hay que mantener sincronizadas a mano. En un solo ambiente ya es frágil; con app y

@@ -8,7 +8,7 @@
 | **Momento** | Post-deploy |
 | **Depende de** | **TD-13** (la topología de deploy es uno de los diagramas) |
 | **Origen** | Re-triage del backlog: las decisiones grandes no están justificadas por escrito |
-| **Repos** | `bookings_app` (+ referencia a `bookings-worker`) |
+| **Repos** | `bookings_app` (+ referencia a `bookings-app-worker`) |
 
 ## Problema
 

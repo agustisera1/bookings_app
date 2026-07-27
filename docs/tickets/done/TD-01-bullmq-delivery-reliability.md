@@ -8,7 +8,7 @@
 | **Esfuerzo** | ~30 min |
 | **Depende de** | — |
 | **Origen** | [`tech_debt/EVENTS_FEATURE_NEXT_STEPS.md`](../tech_debt/EVENTS_FEATURE_NEXT_STEPS.md) § Bloqueantes |
-| **Repos** | `bookings-worker` + `bookings_app` |
+| **Repos** | `bookings-app-worker` + `bookings_app` |
 
 ## Problema
 
@@ -63,7 +63,7 @@ bien separada.
 
 ## Alcance
 
-**Worker** (`bookings-worker`):
+**Worker** (`bookings-app-worker`):
 - `src/processors/email.ts` → `notifyBooking`: si Resend devuelve `error`, lanzar. El log se
   mantiene, pero deja de ser la única consecuencia.
 - `src/processors/email.ts` → `greetUser`: chequear el resultado igual que `notifyBooking`. Hoy ni

@@ -8,7 +8,7 @@
 | **Momento** | Pre-deploy |
 | **Depende de** | — (habilita TD-11, TD-14, TD-15) |
 | **Origen** | Re-triage del backlog contra el objetivo de portfolio |
-| **Repos** | `bookings_app` + `bookings-worker` |
+| **Repos** | `bookings_app` + `bookings-app-worker` |
 
 ## Problema
 
@@ -56,7 +56,7 @@ devops de trámite:
 | Pieza | Requisito | Nota |
 |---|---|---|
 | `bookings_app` | Runtime de Next.js | Serverless sirve |
-| `bookings-worker` | **Proceso persistente** | Serverless **no** sirve |
+| `bookings-app-worker` | **Proceso persistente** | Serverless **no** sirve |
 | PostgreSQL / MongoDB / Redis | Administrados, red privada | Los tres tienen free tier |
 
 **Bases administradas, las tres.** La justificación es explícita y va escrita: el aprendizaje que
