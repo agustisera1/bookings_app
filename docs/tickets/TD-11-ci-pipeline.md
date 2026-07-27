@@ -22,9 +22,8 @@ Que hoy funcione depende enteramente de acordarse de correr las cosas a mano.
 **Deploy.** Es el ticket que hace que "desplegable" sea una afirmación verificable en vez de una
 impresión.
 
-Tiene además un precedente concreto en el propio historial del proyecto: `fix/permission-ref`
-(`CANCELLATION_FEATURE_NEXT_STEPS.md`) fue un `permission.ref` que no existía en el tipo y que
-**ponía en rojo el build de cualquier branch**. Un error de tipos de una línea que sobrevivió lo
+Tiene además un precedente concreto en el propio historial del proyecto: `fix/permission-ref` fue un
+`permission.ref` que no existía en el tipo y que **ponía en rojo el build de cualquier branch**. Un error de tipos de una línea que sobrevivió lo
 suficiente como para bloquear trabajo no relacionado y merecer su propio branch en el ledger. Eso
 es exactamente lo que un CI agarra en el primer push.
 

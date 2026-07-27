@@ -105,6 +105,7 @@ la cola, poder seguir un job. Es lo que se usa de verdad cuando hay un solo par 
 
 ## Fuera de alcance
 
-- **Prometheus, Grafana, OpenTelemetry.** Ver `Descartado y por qué` en el README del backlog.
+- **Prometheus, Grafana, OpenTelemetry.** Un stack de observabilidad más grande que la app que
+  observa; la versión honesta a esta escala es este ticket. Va a «Si esto escalara».
 - **Alertas y on-call.** No hay quién esté de guardia.
 - **Uptime monitoring externo.** Puede sumarse después; es configuración de un servicio, no código.

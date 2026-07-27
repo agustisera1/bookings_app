@@ -102,18 +102,35 @@ estrella: `23P01` de solape → `CONFLICT` con copy de cara al usuario). Referen
 
 | Carpeta | Qué vive ahí |
 |---------|-------------|
-| `docs/architecture/` | Decisiones de arquitectura (ADRs): transporte realtime, colas BullMQ |
+| `docs/architecture/` | Decisiones de arquitectura (ADRs): transporte realtime, colas BullMQ, rate limiting |
 | `docs/tech_debt/` | **Deuda técnica conocida.** `PERFORMANCE.md` (backlog de tuning, por impacto) + un `<FEATURE>_NEXT_STEPS.md` por feature |
-| `docs/tickets/` | **Backlog priorizado.** Un `TD-XX-*.md` por tarea = un branch. `README.md` tiene el criterio de triage, la tabla y el grafo de dependencias |
+| `docs/tickets/` | **Backlog priorizado.** Un `TD-XX-*.md` por tarea = un branch; los cerrados se mueven a `done/`. El encabezado de cada ticket lleva bloque, prioridad, dependencias y origen |
 | `docs/insights/` | Notas de aprendizaje sobre APIs y conceptos |
 | `docs/guides/` | Setup de servicios externos |
 
 **Relación entre los dos primeros:** `tech_debt/` responde *por qué esto es deuda*; `tickets/`
 responde *qué hago y cómo sé que terminé*. Se enlazan, no se duplican. Un ítem de deuda que se
 decide trabajar lleva su marca `TD-XX` inline; el que se descarta se saca de `tech_debt/` (que es un
-backlog de trabajo, no un archivo histórico) y su motivo de descarte va a la sección **"Descartado y
-por qué"** del `README.md` de `tickets/`. Esa lista no se borra: lo que evaluaste y decidiste no
-hacer, con el motivo, es tanta evidencia de criterio como el backlog mismo.
+backlog de trabajo, no un archivo histórico) y su motivo de descarte queda inline en la sección
+**"Fuera de alcance"** del ticket que lo cubriría. Lo que evaluaste y decidiste no hacer, con el
+motivo, es tanta evidencia de criterio como el backlog mismo.
+
+### Regla de sincronía de documentación — parte de "terminar" un cambio
+
+**Ningún ajuste a una feature está terminado hasta correr este check** —igual que pasar `tsc`/`lint`—:
+preguntarse **qué documento afirma algo sobre lo que toqué** y actualizarlo si el cambio lo volvió
+inexacto. El default es que un cambio de feature toca al menos uno.
+
+| Si el cambio… | Revisar y actualizar |
+|---|---|
+| altera una **decisión o un comportamiento** documentado | el ADR de `docs/architecture/` que lo describe |
+| resuelve, agrava o vuelve obsoleta una **deuda** | el ticket de `docs/tickets/` (moverlo a `done/` si se cerró) y su doc en `docs/tech_debt/` |
+| toca **código que un insight cita** (archivo, función, patrón) | el doc de `docs/insights/` que lo referencia |
+| mueve/renombra archivos, cambia un patrón canónico o una capa | `CLAUDE.md` (catálogos, refs, mapa de capas) |
+
+**Una doc que dice que se hizo X cuando se hizo Y es peor que no tener doc:** quien la lee —humano o
+agente— actúa sobre el mapa equivocado. Si tras el check ninguno aplica, que sea una decisión
+consciente, no un olvido. No hay linter de prosa: este check lo corre quien hace el cambio, no CI.
 
 ### Regla de deuda técnica
 
@@ -173,6 +190,16 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/permissions.ts` | Roles, permisos y helpers de autorización |
 | `lib/jwt.ts` | Sign/verify de tokens |
 | `lib/events.ts` | Colas BullMQ: conexión, `*Queue`, contratos `*Payload` y mappers `to*Payload` |
+| `lib/authorize.ts` | `authorize(permission)` — gate de identidad y permisos (usa `getCurrentUser`) |
+| `lib/redis.ts` | Cliente de comandos Redis singleton (`getRedisClient`) |
+| `lib/redis-config.ts` | `getRedisConnectionParams` — params de conexión Redis validados (BullMQ) |
+| `lib/rate-limit.ts` | `rateLimit(key, policy)` / `resetRateLimit` — cota de abuso sobre Redis |
+| `lib/subscriber.ts` | `getSubscriber` — suscriptor Redis del fan-out SSE de notificaciones |
+| `lib/socket.ts` | Cliente socket.io del chat + contrato `EVENTS` y sus tipos |
+| `lib/s3.ts` | Cliente S3 y helpers de fotos (`addListingObject`, `deleteListingObject`) |
+| `lib/listings.ts` | Constantes de listings (`PROPERTY_TYPES`, `AMENITIES`) y `parseListingFilters` |
+| `lib/http.ts` | `toHttpResponse` — mapea `ServiceResult` a respuesta HTTP |
+| `lib/request.ts` | `getClientIp` — IP del request (para la cota) |
 
 > **Colas / workers (BullMQ + Redis):** antes de agregar un worker, job processor o payload de cola, leer `docs/architecture/BULLMQ_QUEUES.md`. Define el contrato del payload, las convenciones (`processorKey`, fechas ISO, sin secretos) y el paso a paso en el producer y en el worker. El productor encola desde `lib/services/*`; el contrato se replica a mano en el repo del worker.
 
@@ -190,7 +217,7 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 
 - **Cohesión:** ¿las piezas que agregué que se referencian entre sí viven juntas? Un conjunto que forma una unidad conceptual (p. ej. un tipo + sus transiciones + sus defaults + sus derivados) debería estar en un mismo lugar, no disperso.
 - **Acoplamiento:** ¿estoy mezclando cosas con dependencias distintas? Lógica pura (sin React, sin DB, sin framework) no debería quedar enredada con rendering o I/O. Si una parte no depende de React y la otra es toda React, separarlas baja el acoplamiento y sube la testeabilidad.
-- **Dónde ubicarlo:** dominio/utils general → `/lib`; estado o lógica pura específica de una feature → módulo colocado al lado del componente (`.ts` sin `"use client"`), importado de vuelta por el componente. Ref: `components/search/filters-draft.ts` (modelo del draft) consumido por `components/search/filters.tsx` (rendering + wiring).
+- **Dónde ubicarlo:** dominio/utils general → `/lib`; estado o lógica pura específica de una feature → módulo colocado al lado del componente (`.ts` sin `"use client"`), importado de vuelta por el componente. Ref: `components/search/filters-draft.ts` (modelo puro del draft) consumido por `components/search/use-filters.ts` (el hook con el `useReducer`); `components/search/filters.tsx` es el orquestador que compone el render.
 
 Esta evaluación es parte de "terminar" un cambio, igual que pasar `tsc`/`lint`.
 
@@ -436,7 +463,7 @@ if (isSubmitSuccessful) return <SuccessUI />;
 | Estado de envío | `isSubmitting` de RHF — **no** `useState` |
 | Estado de éxito | `isSubmitSuccessful` de RHF — **no** `useState` |
 | Estado puramente visual (hover, popover open) | `useState` local — no pertenece a RHF |
-| Estado local estructurado/complejo (varios campos relacionados + múltiples transiciones; p. ej. un panel de filtros con draft) | `useReducer`, no una maraña de `useState`. Reducer + acciones + defaults a nivel módulo (pensar en colocarlo aparte), acciones semánticas, y el componente solo despacha intención. El estado puramente visual (open, valor vivo de un slider) queda como `useState`. Ref: `components/search/filters.tsx` |
+| Estado local estructurado/complejo (varios campos relacionados + múltiples transiciones; p. ej. un panel de filtros con draft) | `useReducer`, no una maraña de `useState`. Reducer + acciones + defaults a nivel módulo (pensar en colocarlo aparte), acciones semánticas, y el componente solo despacha intención. El estado puramente visual (open, valor vivo de un slider) queda como `useState`. Ref: `components/search/filters-draft.ts` (reducer puro) + `components/search/use-filters.ts` (hook) + `components/search/filters.tsx` (orquestador) |
 | Mensajes de error | prop `error` de `FormField`, o `FieldError` suelto — nunca `<p className="text-xs text-destructive">` a mano |
 | Atributo `required` en inputs | Omitir — Zod ya lo valida |
 
@@ -522,12 +549,18 @@ Cada capa solo conoce a su vecina inmediata hacia abajo. Los componentes no impo
 
 Tipos que representan entidades del negocio, independientes de la DB y del cliente.
 
-| Archivo | Tipos |
-|---------|-------|
-| `index.ts` | `ServiceResult<T>`, `ErrorCode` |
-| `user.ts` | `User`, `PublicUser`, `SessionRecord`, `CurrentUser` |
-| `booking.ts` | `Booking`, `GuestBooking` |
-| `review.ts` | `Review` |
+| Archivo | Dominio (tipo ancla) |
+|---------|----------------------|
+| `index.ts` | Contratos transversales (`ServiceResult<T>`, `ErrorCode`) |
+| `user.ts` | Usuario y sesión (`User`, `CurrentUser`) |
+| `booking.ts` | Reserva (`Booking`) |
+| `review.ts` | Reseña (`Review`) |
+| `listing.ts` | Listado (`ListingDocumentValues`) |
+| `notification.ts` | Notificación in-app (`NotificationDocument`) |
+| `chat.ts` | Chat y conversaciones (`ChatDocument`, `Conversation`) |
+| `messages.ts` | Mensaje (`MessageDocument`) |
+
+> El tipo entre paréntesis es el ancla, no el inventario: el archivo es la fuente de verdad de su superficie completa. Esta tabla mapea **qué dominio vive en cada archivo**, no enumera sus tipos.
 
 **Regla:** los services re-exportan los tipos que consumen para mantener compatibilidad hacia arriba (`export type { Booking } from "../types/booking"`). Los consumers pueden importar del service o del archivo de types — ambos son válidos.
 
@@ -537,14 +570,18 @@ Tipos que representan entidades del negocio, independientes de la DB y del clien
 
 Una función por operación. El nombre del archivo indica la DB: `.pg.ts` para PostgreSQL, `.mongo.ts` para MongoDB.
 
-| Archivo | Operaciones |
-|---------|-------------|
-| `users.pg.ts` | `findUserByEmail`, `createUser` |
-| `sessions.pg.ts` | `findValidSession`, `createSession`, `rotateSession`, `deleteSessionsByUser` |
-| `bookings.pg.ts` | `findBookingsByGuestId`, `createBookingRecord`, `hasGuestBookingForListing`, `updateBooking` |
-| `reviews.pg.ts` | `findReviewsByListingId`, `createReviewRecord` |
-| `listings.mongo.ts` | `findListingById`, `findListings`, `findListingsByIds` |
-| `notifications.mongo.ts` | `getNotifications`, `getNotificationsCount`, `updateNotification` |
+| Archivo | Cubre |
+|---------|-------|
+| `users.pg.ts` | Usuarios: lookup por email, alta |
+| `sessions.pg.ts` | Sesiones: validación, creación, rotación del refresh, revocación |
+| `bookings.pg.ts` | Reservas: alta, queries por guest/listing, rangos de disponibilidad, update de estado |
+| `reviews.pg.ts` | Reseñas: listado por listing, alta |
+| `listings.mongo.ts` | Listados: lookup por id/ids, búsqueda con filtros |
+| `notifications.mongo.ts` | Notificaciones in-app: listado, conteo, update |
+| `chat.mongo.ts` | Chats: lookup del documento por booking |
+| `messages.mongo.ts` | Mensajes: historial por chat |
+
+> La firma exacta de cada función vive en el archivo — es la fuente de verdad. Esta tabla mapea **qué dominio cubre cada repo**, no enumera sus funciones (un inventario se desincroniza; un dominio no).
 
 **Reglas:**
 - Sin `"use server"`, sin `authorize()`, sin lógica de negocio

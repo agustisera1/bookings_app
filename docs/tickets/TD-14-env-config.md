@@ -7,7 +7,7 @@
 | **Prioridad** | 🔴 Alta |
 | **Momento** | Pre-deploy |
 | **Depende de** | **TD-13** (el destino define qué formato de conexión conviene) |
-| **Origen** | `tech_debt/EVENTS_FEATURE_NEXT_STEPS.md` § Recordatorio de runtime + auditoría propia |
+| **Origen** | Auditoría de config de entorno de los dos repos |
 | **Repos** | `bookings_app` + `bookings-app-worker` |
 
 ## Problema
@@ -118,7 +118,8 @@ sobran.
 
 ## Fuera de alcance
 
-- **Secret manager dedicado** (Vault y similares). Ver `Descartado y por qué`.
+- **Secret manager dedicado** (Vault y similares). Las variables de entorno del PaaS alcanzan y
+  sobran a esta escala.
 - **Rotación automática de credenciales.**
 - La decisión de qué proveedor de cada base → **TD-13**.
 
