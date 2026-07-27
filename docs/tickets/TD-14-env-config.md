@@ -97,7 +97,7 @@ alcanza, hay que asumir que la clave está comprometida.
 
 ## Criterio de aceptación
 
-- [ ] `bookings_app/.env.example` existe, lista todas las variables que la app lee, y no tiene un
+- [x] `bookings_app/.env.example` existe, lista todas las variables que la app lee, y no tiene un
       solo valor real.
 - [ ] Los dos repos leen Redis de `REDIS_URL`. `REDIS_HOST`/`PORT`/`USER`/`PASSWORD` no aparecen más
       en el código.
@@ -121,3 +121,13 @@ sobran.
 - **Secret manager dedicado** (Vault y similares). Ver `Descartado y por qué`.
 - **Rotación automática de credenciales.**
 - La decisión de qué proveedor de cada base → **TD-13**.
+
+## Estado
+
+- **Hecho:** `bookings_app/.env.example` — documenta las variables que la app lee hoy (incluidos los
+  cuatro vars de Redis, tal como los lee `lib/redis-config.ts`), con `CHANGE_ME` en todo lo sensible.
+  La config de entorno queda **documentada y asentada** como referencia.
+- **Pendiente (código, corre local — desacoplado del deploy):** unificar Redis en `REDIS_URL` en los
+  dos repos; validación del entorno al boot con Zod (que además elimina los `!` de `lib/s3.ts`); y la
+  auditoría del historial de git con rotación de lo que aparezca. Los cuatro criterios de arriba sin
+  tildar cubren esto — se pueden hacer sin destrabar TD-13, porque ninguno depende del deploy.
