@@ -4,7 +4,7 @@
 - **Fecha:** 2026-07-22
 - **Momento:** Pre-deploy (bloque Seguridad); se relaciona con Fase 6 (hardening)
 - **Ticket:** [`TD-20`](../tickets/TD-20-rate-limiting.md)
-- **Contexto conceptual:** ver [`SECURITY_LAYERS.md`](../insights/SECURITY_LAYERS.md) (capas de seguridad, mecanismo vs. decisión, la IP como clave)
+- **Contexto conceptual:** [`SECURITY_LAYERS.md`](../insights/SECURITY_LAYERS.md) (capas de seguridad, mecanismo vs. decisión, la IP como clave) · [`RATE_LIMITING_ALGORITHMS.md`](../insights/RATE_LIMITING_ALGORITHMS.md) (los algoritmos de conteo y el glosario)
 
 ---
 
@@ -56,7 +56,7 @@ En concreto:
 2. **El contador vive en Redis** (`lib/redis.ts`, cliente de comandos singleton), no en memoria.
 3. **Se implementa a mano** sobre Redis (`lib/rate-limit.ts`): `rateLimit(key, policy)` con
    `INCR` + `PEXPIRE` + `PTTL` atómico vía un script **Lua** (código que Redis corre del lado del
-   servidor de una sola vez — ver [Glosario](#glosario)). Sin dependencia nueva.
+   servidor de una sola vez — ver el [glosario](../insights/RATE_LIMITING_ALGORITHMS.md#glosario)). Sin dependencia nueva.
 4. **Algoritmo fixed window**, ventana anclada al primer hit de cada key (el `PEXPIRE` se setea
    cuando el contador nace).
 5. **Claves diferenciadas por operación:** login lleva **dos contadores independientes** (`rl:login:ip:*`
@@ -105,24 +105,8 @@ En concreto:
 | **Sliding window counter** | Pondera la ventana actual + la previa | Buen punto medio: O(1) y **sin boundary burst**. No lo elegimos porque el burst no nos duele hoy; es un **upgrade barato** si algún día molesta. |
 | **Token / leaky bucket** | Balde de tokens con refill a tasa fija | Pensados para **shaping de throughput** (permitir ráfagas + tasa sostenida), no para "cortar fuerza bruta". Más estado sin beneficio acá. Descartado. |
 
-**Qué hace cada algoritmo (en criollo).** Todos responden la misma pregunta —"¿este cliente ya pasó
-su cuota?"— pero la miden distinto:
-
-- **Fixed window (ventana fija)** — un contador que se **resetea cada X minutos**. Contás los hits del
-  bloque actual; si pasás el límite, cortás hasta que arranca el próximo bloque y el contador vuelve a
-  cero. Un número por cliente: lo más simple y barato. *(Es el que usamos.)*
-- **Sliding window log (registro deslizante)** — en vez de un contador, guardás la **marca de tiempo
-  de cada intento**. Para decidir, contás cuántas caen en los últimos X minutos *hacia atrás desde
-  ahora*. La ventana se "desliza" con el tiempo, así que es exacto — pero guardás una entrada por
-  intento (la memoria crece con el tráfico).
-- **Sliding window counter (contador deslizante)** — el punto medio: mantenés solo **dos contadores**
-  (la ventana actual y la previa) y estimás "los últimos X minutos" ponderando la previa por cuánto se
-  solapa. Casi tan preciso como el log, pero con dos números en vez de una lista.
-- **Token bucket (balde de fichas)** — un balde que se **rellena con fichas a ritmo fijo** (p. ej.
-  1/seg, tope 10). Cada request gasta una ficha; sin fichas, se rechaza. Permite **ráfagas** (gastar
-  10 juntas) pero impone una **tasa promedio**. Pensado para regular el caudal de una API.
-- **Leaky bucket (balde que gotea)** — los requests caen en un balde que **gotea a ritmo constante**;
-  si rebalsa, se descartan. Alisa la salida a una tasa fija. Primo del token bucket.
+**Qué hace cada algoritmo** (fixed window / sliding window log / sliding window counter / token /
+leaky bucket) está explicado en [`RATE_LIMITING_ALGORITHMS.md`](../insights/RATE_LIMITING_ALGORITHMS.md).
 
 **El *boundary burst* y por qué lo aceptamos:** con fixed window, apenas expira la ventana el cliente
 recupera la cuota entera de golpe. Con límite 10/10min, un atacante puede meter 10 al final de una
@@ -236,25 +220,6 @@ caída (eje 6). No lo blindamos con HA todavía porque a esta escala el costo op
 
 ## Glosario
 
-- **Atómico** — una operación que ocurre "todo o nada", sin estados intermedios visibles y sin que
-  otra se intercale en el medio. Es lo que evita que dos requests concurrentes pisen el mismo contador.
-- **`INCR` / `PEXPIRE` / `PTTL`** — comandos de Redis: `INCR` suma 1 al contador (y lo crea en 0 si no
-  existía); `PEXPIRE` le pone a la key un vencimiento en milisegundos (se borra sola al llegar a cero);
-  `PTTL` devuelve cuántos ms le quedan de vida.
-- **Lua** — un lenguaje de scripting minúsculo que Redis ejecuta **del lado del servidor y de forma
-  atómica**: le mandás un script y lo corre entero sin que otro comando se meta en el medio. Lo usamos
-  para que `INCR` + `PEXPIRE` + `PTTL` cuenten como una sola operación indivisible, en un round trip.
-- **Round trip** — un viaje de ida y vuelta app ↔ Redis (mandar comando, recibir respuesta). Menos
-  round trips = menos latencia; el script Lua hace las tres operaciones en uno.
-- **Boundary burst (ráfaga de borde)** — el agujero del fixed window: como el contador se resetea de
-  golpe al terminar la ventana, un cliente puede gastar toda la cuota justo antes del reset y toda de
-  nuevo justo después → hasta 2× el límite en un instante, en el "borde" entre ventanas. Detalle en el
-  Eje 4.
-- **SPOF (single point of failure)** — una pieza cuya caída voltea toda la función. Redis es el SPOF de
-  la cota: si se cae, no hay contador (de ahí el `failMode`).
-- **Cold / warm start** — en serverless, un *cold start* arranca un proceso nuevo desde cero (sin
-  conexiones abiertas); un *warm start* reusa uno ya "caliente" de un request anterior. Importa para no
-  reabrir la conexión a Redis en cada invocación.
-- **WAF · CAPTCHA · 2FA** — defensas del borde/producto: WAF = *Web Application Firewall* (filtra
-  requests HTTP antes de tu app); CAPTCHA = prueba "¿sos humano?"; 2FA = segundo factor de login,
-  además de la contraseña.
+Los conceptos usados en este ADR (atómico, `INCR`/`PEXPIRE`/`PTTL`, Lua, round trip, boundary burst,
+SPOF, cold/warm start) están en [`RATE_LIMITING_ALGORITHMS.md`](../insights/RATE_LIMITING_ALGORITHMS.md#glosario).
+WAF, CAPTCHA y 2FA, en [`SECURITY_LAYERS.md`](../insights/SECURITY_LAYERS.md#glosario).

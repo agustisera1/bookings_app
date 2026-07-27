@@ -55,9 +55,8 @@ Un ADR por decisión de la tabla, en `docs/architecture/`, siguiendo el formato 
 existen. Cada uno responde: **contexto** (qué problema), **decisión** (qué se eligió), **alternativas
 descartadas** (qué más se evaluó y por qué no), **consecuencias** (qué se acepta a cambio).
 
-La sección de **alternativas descartadas es la que más pesa** — es la misma lógica que la sección
-"Descartado y por qué" del backlog: mostrar lo que consideraste y rechazaste es más evidencia de
-criterio que mostrar lo que elegiste.
+La sección de **alternativas descartadas es la que más pesa**: mostrar lo que consideraste y
+rechazaste es más evidencia de criterio que mostrar lo que elegiste.
 
 **Diagramas en Mermaid**, no ASCII (regla del proyecto): un diagrama de topología de deploy, y un
 diagrama de datos que muestre qué entidad vive en qué base y cómo se referencian cruzando el límite
