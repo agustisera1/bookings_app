@@ -1,4 +1,4 @@
-# Bookings App
+# 🏡 Bookings App
 
 Marketplace de reservas de alojamientos (estilo Airbnb simplificado), construido como **proyecto de
 aprendizaje de arquitectura**. Demuestra de punta a punta: persistencia políglota (PostgreSQL +
@@ -11,25 +11,29 @@ usuario puede ser ambos.
 > Corre local. El deploy es deuda conocida y deliberada — el foco del proyecto está en la aplicación,
 > no en operar infraestructura (ver `docs/tickets/`).
 
-## Estado
+---
+
+## 🚦 Estado
 
 **Construido:** autenticación (JWT access + refresh, con sesiones en PostgreSQL) y RBAC; listados en
-MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (Apollo Server); notificaciones por
-email asíncronas (worker + BullMQ); chat host↔guest en vivo (socket.io); notificaciones in-app (SSE);
-y rate limiting en el borde de autenticación.
+MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (Apollo Server);
+notificaciones por email asíncronas (worker + BullMQ); chat host↔guest en vivo (socket.io);
+notificaciones in-app (SSE); y rate limiting en el borde de autenticación.
 
 **Próximo:** búsqueda full-text con Elasticsearch (sincronizando Mongo → índice) y el deploy con su
 observabilidad. El backlog priorizado —qué falta y qué es deuda técnica, con su justificación— vive en
 `docs/tickets/`. El plan de fases completo está en `CLAUDE.md`.
 
-## Arquitectura
+---
+
+## 🏗️ Arquitectura
 
 Dos procesos que comparten los mismos datastores:
 
 ```mermaid
 flowchart LR
   U[Cliente] --> APP["bookings_app<br/>Next.js · GraphQL · SSE"]
-  U --> WRK["bookings-app-worker<br/>socket.io · BullMQ"]
+  U --> WRK["bookings-worker<br/>socket.io · BullMQ"]
   APP -->|encola jobs| RD
   APP --> PG & MG
   WRK --> PG & MG & RD
@@ -42,7 +46,7 @@ flowchart LR
 
 - **`bookings_app`** (este repo) — UI, API GraphQL, Server Actions y el borde SSE de notificaciones;
   encola el trabajo asíncrono.
-- **`bookings-app-worker`** (repo aparte) — consumers de BullMQ (emails, notificaciones) y el servidor
+- **`bookings-worker`** (repo aparte) — consumers de BullMQ (emails, notificaciones) y el servidor
   socket.io del chat. Es un proceso persistente (no serverless): sostiene conexiones y loops de larga
   vida, y ese requisito es lo que justifica el split app/worker.
 - **PostgreSQL** — núcleo transaccional: usuarios, sesiones, reservas, reseñas.
@@ -53,7 +57,9 @@ flowchart LR
 worker). **Auth:** JWT access + refresh, con sesiones en PostgreSQL. El _por qué_ de estas decisiones
 está en `docs/architecture/`.
 
-## Estructura
+---
+
+## 📁 Estructura
 
 ```
 app/            Rutas de Next.js (App Router) + route handlers (graphql, auth, subscribe, s3)
@@ -64,9 +70,17 @@ docs/           ADRs, insights, backlog y deuda técnica
 scripts/        Migraciones, seeds y utilidades
 ```
 
-## Cómo correrlo
+---
 
-Requiere PostgreSQL, MongoDB y Redis accesibles.
+## 📦 Prerequisitos
+
+- **Node.js 20+** y **pnpm**
+- **PostgreSQL**, **MongoDB** y **Redis** accesibles (localmente o vía Docker)
+- Para emails y chat en vivo: el repo **`bookings-worker`** corriendo por separado
+
+---
+
+## 🚀 Cómo correrlo
 
 ```bash
 pnpm install
@@ -75,9 +89,12 @@ pnpm db:migrate                 # migraciones de PostgreSQL
 pnpm dev
 ```
 
-Para emails y chat en vivo, correr `bookings-app-worker` por separado (ver su repo).
+La app queda en `http://localhost:3000`. Para emails y chat en vivo, correr `bookings-worker` por
+separado (ver su repo).
 
-## Comandos
+---
+
+## ⚙️ Comandos
 
 |                                                 |                                               |
 | ----------------------------------------------- | --------------------------------------------- |
@@ -86,7 +103,9 @@ Para emails y chat en vivo, correr `bookings-app-worker` por separado (ver su re
 | `pnpm codegen`                                  | regenera los tipos de GraphQL desde el schema |
 | `pnpm db:migrate` · `db:rollback` · `db:status` | migraciones de PostgreSQL                     |
 
-## Documentación
+---
+
+## 📚 Documentación
 
 El README solo orienta; el detalle vive en `/docs` y `CLAUDE.md`, organizado por **qué pregunta
 responde cada uno**:
@@ -97,3 +116,16 @@ responde cada uno**:
 | el **concepto** detrás de una API o técnica               | `docs/insights/` — índices de Postgres, `useSyncExternalStore`, capas de seguridad… |
 | las **convenciones** para extender el código              | `CLAUDE.md` — patrones de services, componentes, tipos y errores                    |
 | qué falta y **qué es deuda**                              | `docs/tickets/` (backlog priorizado) · `docs/tech_debt/`                            |
+
+---
+
+## 📄 Licencia
+
+Sin licencia definida todavía: hasta que se agregue un archivo `LICENSE`, se reservan todos los
+derechos. Elegir una es un pendiente para exponer el proyecto públicamente.
+
+---
+
+## 👤 Autor
+
+**Agustín Tisera** — proyecto de portfolio. _(Contacto y links: a completar.)_

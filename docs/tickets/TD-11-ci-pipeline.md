@@ -8,7 +8,7 @@
 | **Esfuerzo** | ~1-2 h |
 | **Depende de** | **TD-10** (para el paso de tests) |
 | **Origen** | Detectado al auditar el backlog — no había doc de deuda que lo cubriera |
-| **Repos** | `bookings_app` (+ `bookings-app-worker`) |
+| **Repos** | `bookings_app` (+ `bookings-worker`) |
 
 ## Problema
 

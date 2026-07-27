@@ -8,7 +8,7 @@
 | **Momento** | Pre-deploy |
 | **Depende de** | **TD-13** (el destino define qué consume el health check) |
 | **Origen** | Re-triage del backlog: TD-01 y TD-02 no son verificables sin esto |
-| **Repos** | `bookings_app` + `bookings-app-worker` |
+| **Repos** | `bookings_app` + `bookings-worker` |
 
 ## Problema
 

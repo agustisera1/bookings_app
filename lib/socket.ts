@@ -8,7 +8,7 @@ declare global {
 
 /**
  * The chat wire contract, mirroring `EVENTS` and its companions in the worker
- * (`bookings-app-worker/src/chat/types.ts`). The two repos deploy separately,
+ * (`bookings-worker/src/chat/types.ts`). The two repos deploy separately,
  * so this is replicated by hand — same convention the BullMQ payloads follow.
  * It lives beside the connection because that's what carries it.
  */

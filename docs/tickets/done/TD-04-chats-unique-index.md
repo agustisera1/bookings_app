@@ -8,7 +8,7 @@
 | **Esfuerzo** | ~1-2 h |
 | **Depende de** | — |
 | **Origen** | [`tech_debt/CHAT_FEATURE_NEXT_STEPS.md`](../tech_debt/CHAT_FEATURE_NEXT_STEPS.md) § El upsert todavía puede duplicar |
-| **Repos** | `bookings_app` (+ verificación en `bookings-app-worker`) |
+| **Repos** | `bookings_app` (+ verificación en `bookings-worker`) |
 
 ## Problema
 
@@ -16,7 +16,7 @@
 
 ### 1. El upsert puede duplicar
 
-`upsertChatByBookingId` (`bookings-app-worker/src/mongo/chats.mongo.ts`) usa
+`upsertChatByBookingId` (`bookings-worker/src/mongo/chats.mongo.ts`) usa
 `updateOne(filter, { $setOnInsert }, { upsert: true })`. Eso **achica** la ventana de carrera que
 tenía el find-then-insert anterior, pero no la cierra: MongoDB solo garantiza la atomicidad de un
 upsert **si un índice único cubre el filtro**, y `chats.booking_id` no tiene ninguno. Dos mensajes
