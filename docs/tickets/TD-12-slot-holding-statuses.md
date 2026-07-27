@@ -7,7 +7,7 @@
 | **Prioridad** | 🟡 Baja |
 | **Esfuerzo** | ~30 min |
 | **Depende de** | — (afinidad con **TD-03**: misma query) |
-| **Origen** | [`tech_debt/CANCELLATION_FEATURE_NEXT_STEPS.md`](../tech_debt/CANCELLATION_FEATURE_NEXT_STEPS.md) + `CLAUDE.md` |
+| **Origen** | `CLAUDE.md` (§ Regla de deuda técnica — `findBookedListingIds`) |
 | **Repos** | `bookings_app` |
 
 ## Problema

@@ -188,3 +188,11 @@ confianza en el borde.
 - **Fuera de alcance (capa de borde):** WAF, protección de DDoS, CAPTCHA. Entran recién si el riesgo
   escala a ataque distribuido, que un contador por IP no frena. A la escala de este proyecto, la cota
   en Redis cubre el 100% del riesgo realista.
+
+---
+
+## Glosario
+
+- **WAF · CAPTCHA · 2FA** — defensas del borde/producto: WAF = *Web Application Firewall* (filtra
+  requests HTTP antes de tu app); CAPTCHA = prueba "¿sos humano?"; 2FA = segundo factor de login,
+  además de la contraseña.

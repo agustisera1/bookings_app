@@ -85,4 +85,6 @@ O sea que el índice **sí es candidato**. Lo que falla es el costo: con `listin
 
 De ahí la conclusión que vale para cualquier índice: **ser aplicable no es ser elegido, y la diferencia solo se ve midiendo**.
 
-> Relacionado: `docs/tickets/TD-03-bookings-daterange-gist.md` propone un `CREATE INDEX bookings_daterange_gist` explícito, además del que ya crea el constraint.
+> Resuelto por **TD-03** (migración `007_bookings_indexes.sql`): un `CREATE INDEX bookings_daterange_gist`
+> explícito —GiST sobre el rango, **sin** `listing_id` como columna líder— que esta query sí puede
+> aprovechar, además del que ya crea el constraint. Ver `docs/tickets/done/TD-03-bookings-daterange-gist.md`.

@@ -110,8 +110,9 @@ conexiones. Ahí entra el pooling (`pgbouncer` o el pooler del proveedor).
 ## Fuera de alcance
 
 - **CD automático.** Primero que exista el destino; automatizar el push es otro ticket.
-- **Kubernetes, load balancer, múltiples instancias, autoscaling.** Ver `Descartado y por qué` en el
-  README del backlog.
+- **Kubernetes, load balancer, múltiples instancias, autoscaling.** Una sola instancia sin tráfico no
+  lo justifica: construirlo no demuestra que sabés, sino que no sabés cuándo hace falta. Va a
+  «Si esto escalara».
 - **Variables de entorno y secretos** → **TD-14**.
 - **Health checks y observabilidad** → **TD-15**.
 

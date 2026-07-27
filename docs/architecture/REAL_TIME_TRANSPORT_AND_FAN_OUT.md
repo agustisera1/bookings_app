@@ -2,7 +2,7 @@
 
 - **Estado:** Decidido
 - **Fecha:** 2026-07-13
-- **Fase:** 5 (workers / notificaciones), con vistas a mensajería host↔guest
+- **Fase:** 5 (workers / notificaciones) + mensajería host↔guest — ambas implementadas
 - **Contexto conceptual:** ver [`TERMINOLOGY.md`](../insights/TERMINOLOGY.md) (qué es un *job*, *fan-out* y *el borde*)
 
 ---
@@ -13,7 +13,8 @@ Estamos integrando entrega en tiempo real. El primer caso son las **notificacion
 implementadas de punta a punta: el worker (proceso Node aparte) rehidrata usuario + listing, arma el
 documento de notificación, lo **persiste en Mongo** (`insertNotification`) y lo **publica** al canal
 Redis (`sendNotification` en el repo del worker); la ruta SSE de Next lo empuja al cliente. El segundo
-caso, más adelante, es **mensajería host↔guest**.
+caso, **mensajería host↔guest**, hoy también está implementado: socket.io en el worker, con rooms por
+conversación y un ticket firmado que autoriza el join.
 
 La duda que disparó este documento: **¿socket.io es la herramienta apropiada, o hay una solución de
 Redis / BullMQ que evite montar sockets?** Ya usamos Redis + BullMQ para los emails, así que valía
@@ -42,9 +43,9 @@ Worker ──[capa B: fan-out entre procesos]──▶ Proceso del borde ──[
      (server→client), que es exactamente lo que necesitan; socket.io sería overkill. Bonus decisivo:
      al vivir en el **mismo origen** que la app, la cookie httpOnly del JWT viaja sola → `authorize()`
      en la ruta funciona igual que en cualquier route handler, **sin CORS ni handshake especial**.
-   - **Mensajería (más adelante): socket.io**, porque es **bidireccional** (SSE no sirve ahí) y querés
-     rooms/acks/reconexión. Cuando llegue, se evalúa si convive con SSE o si las notificaciones migran
-     a un transporte único.
+   - **Mensajería: socket.io** (implementado, en el worker), porque es **bidireccional** (SSE no sirve
+     ahí) y necesita rooms/acks/reconexión. Hoy **convive** con SSE: notificaciones por SSE, chat por
+     socket.io — no se unificó en un transporte único.
 2. **Fan-out (capa B): Redis pub/sub — en ambos casos.** El worker persiste y **publica** a un canal;
    el proceso del borde (la ruta SSE de Next hoy; el servidor socket.io mañana) está **suscrito** y
    empuja al cliente. Para notificaciones se usa pub/sub **crudo** (un suscriptor Redis compartido en
@@ -69,7 +70,7 @@ notificación en vivo es lo **opuesto**: es *fan-out* efímero a quien esté con
 fuerza semántica de *consume-once* donde querés *broadcast*, y agrega durabilidad/retry que acá no
 sirve (la verdad ya está en Mongo). Herramienta equivocada para el trabajo.
 
-### Por qué SSE ahora y socket.io después (y no uno solo para todo)
+### Por qué SSE para notificaciones y socket.io para mensajería (y no uno solo para todo)
 
 El borde se elige **por feature**, según la dirección del tráfico:
 
@@ -77,9 +78,9 @@ El borde se elige **por feature**, según la dirección del tráfico:
   reconexión nativa del browser (`EventSource`), más simple, y —al servirse desde Next— **same-origin**,
   lo que hace que la cookie del JWT viaje sola. Montar socket.io acá sería overkill y encima
   reintroduciría el problema de auth cross-origin.
-- **Mensajería es bidireccional** (el guest escribe, el host escribe) → SSE **no sirve**. Ahí sí entra
+- **Mensajería es bidireccional** (el guest escribe, el host escribe) → SSE **no sirve**. Ahí entra
   **socket.io**: rooms (una por conversación), acks ("entregado") y reconexión, que a mano son mucho
-  código. Como esa inversión solo se justifica cuando llega el chat, no la adelantamos.
+  código. Esa inversión se hizo al construir el chat, no antes.
 - **`ws` pelado** queda descartado en los dos casos: reimplementaría reconexión/rooms/acks que SSE
   (para one-way) o socket.io (para bidireccional) ya dan.
 
@@ -100,7 +101,7 @@ sostiene conexiones con el cliente: solo publica.
 | Opción | Capa | Veredicto |
 |--------|------|-----------|
 | **SSE** | Borde | **Elegida para notificaciones (ahora).** One-way alcanza; servida desde Next es same-origin → auth trivial, sin CORS. No sirve para mensajería (unidireccional). |
-| **socket.io** | Borde | **Elegida para mensajería (más adelante).** Bidireccional, rooms, acks, reconexión. No se adelanta: para notificaciones sería overkill y agregaría auth cross-origin. |
+| **socket.io** | Borde | **Elegida e implementada para mensajería.** Bidireccional, rooms, acks, reconexión. Para notificaciones sería overkill y agregaría auth cross-origin, por eso no se usa ahí. |
 | **`ws` pelado** | Borde | Descartada en ambos casos: reimplementaría reconexión/rooms/acks que SSE (one-way) o socket.io (bidireccional) ya dan. |
 | **BullMQ como transporte realtime** | Fan-out | Descartada: semántica *consume-once* + durabilidad, opuesta al *fan-out* efímero que necesitamos. Se queda para jobs durables. |
 | **Redis pub/sub** | Fan-out | **Elegida (ambos bordes).** Fan-out nativo, reusa el Redis existente. Crudo para la ruta SSE; vía adapter/emitter para socket.io. |
@@ -136,7 +137,7 @@ correctitud.
 **Cuándo *sí* haría falta durabilidad en el fan-out (Redis Streams):** solo si el canal en vivo fuera
 la **fuente de verdad** — sin una DB que respalde el historial y con necesidad de replay desde la
 propia infra de mensajería. No es nuestro caso ni para notificaciones ni para el chat futuro (su
-historial también vivirá en una tabla). Por eso Streams sería resolver un problema que ya diseñamos
+historial también vive en una colección de Mongo). Por eso Streams sería resolver un problema que ya diseñamos
 afuera: complejidad (consumer groups, acks, trimming) sin pago. Se revisita solo si aparece un caso
 donde la entrega en vivo sea la fuente de verdad. (Nota: el "redis-streams-adapter" diferido es la
 variante **de socket.io** para transporte cross-instancia; usar Streams acá sería `XADD`/`XREADGROUP`
@@ -151,38 +152,41 @@ crudo, otra cosa.)
 - El worker sigue desacoplado: publica al canal, no sostiene conexiones.
 - Reusa el Redis que ya existe; BullMQ no se toca y conserva su rol claro.
 - **Notificaciones no agregan un proceso nuevo:** el borde SSE vive dentro de Next (same-origin,
-  auth trivial). El proceso de sockets recién aparece con la mensajería.
-- Camino incremental: entregás valor ahora con lo más simple y difereís la complejidad de socket.io
-  a cuando el chat la justifique.
+  auth trivial). El proceso de sockets aparece sólo con la mensajería, y quedó alojado en el worker.
+- Camino incremental: las notificaciones se entregaron con lo más simple (SSE) y la complejidad de
+  socket.io se sumó recién al construir el chat.
 
-**A resolver al implementar — notificaciones (SSE, ahora)**
-- **Ruta SSE en Next.js.** Route handler que devuelve un stream `text/event-stream`, en **runtime
-  Node** (no edge) para sostener la conexión larga. Auth con `authorize()` en la ruta (same-origin,
-  la cookie viaja sola).
+**Implementado — notificaciones (SSE)**
+- **Ruta SSE en Next.js.** Route handler que devuelve un stream `text/event-stream` en **runtime
+  Node** (no edge) para sostener la conexión larga (`app/api/subscribe/route.ts`). Auth con
+  `authorize()` en la ruta (same-origin, la cookie viaja sola).
 - **Un suscriptor Redis compartido.** El proceso Next abre **una** suscripción al canal y reparte a
-  las conexiones SSE en memoria filtrando por `userId` — **no** una suscripción Redis por cliente.
+  las conexiones SSE en memoria filtrando por `userId` (`lib/subscriber.ts`) — **no** una suscripción
+  Redis por cliente.
 - **Refetch en el (re)connect.** Al abrir/reabrir el `EventSource`, el cliente refetchea de Mongo para
   reconciliar lo que se haya perdido mientras estuvo desconectado (ver la sección de at-most-once).
-- **Orden en el worker.** Persistir en Mongo **primero**, publicar después. Ya implementado:
-  `sendNotification` inserta con `insertNotification` y recién ahí publica al canal
-  (`src/processors/notifications.ts`).
+- **Orden en el worker.** Persistir en Mongo **primero**, publicar después: `sendNotification` inserta
+  con `insertNotification` y recién ahí publica al canal (`src/processors/notifications.ts`).
 
-**A resolver más adelante — mensajería (socket.io)**
-- **Proceso de sockets.** Definir si vive junto al worker o como proceso propio (el emitter permite
-  separarlos; el worker no necesita ser servidor de sockets).
-- **Auth del handshake.** Acá **sí** aplica el problema cross-origin que SSE-en-Next evita: el
-  servidor socket.io está en otro origen/puerto → cookie cross-origin (CORS con credentials) o token
-  corto en el handshake. Sin esto, cualquiera se suscribe a conversaciones ajenas (RNF-05, ownership).
-- **Routing.** En el connect, autenticar el socket y unirlo a las rooms que correspondan (por `userId`
-  y por conversación); emitir con `io.to(room).emit(...)`.
+**Implementado — mensajería (socket.io)**
+- **Proceso de sockets: vive en el worker.** El mismo proceso que corre los consumers de BullMQ
+  levanta el servidor socket.io (`chatServer.listen` en `src/index.ts`); no hizo falta un proceso
+  aparte. El Redis adapter (`src/redis/socket.ts`) permite separarlos el día que convenga escalar.
+- **Auth del handshake: token, no cookie.** El handshake verifica un JWT que viaja por `auth` (no por
+  cookie), con CORS `credentials` para el origen del cliente. La autorización del room va por un
+  **ticket firmado** aparte (`ChatParties`): el handshake autentica *quién*, el ticket autoriza *a qué
+  room* — el worker sólo verifica firma, sin PG ni Mongo (TD-08, `src/chat/auth.ts`).
+- **Routing: rooms por conversación.** En el join, el ticket nombra su propio `chat_id` y el socket
+  entra a esa room; la entrega usa `socket.to(room)`, que excluye al emisor (por eso el emisor
+  reconcilia con el ack). La reconexión y el re-join están cubiertos por TD-09.
 
 **Transversal**
 - **Seguridad de Redis.** pub/sub no firma ni cifra los mensajes → Redis no debe quedar expuesto a
   redes no confiables.
 
 **Negativas / deuda asumida**
-- Una conexión Redis extra (el suscriptor del borde), y —cuando llegue la mensajería— un proceso de
-  sockets más para operar.
-- Posible convivencia de **dos transportes** (SSE + socket.io) si no se unifica al llegar el chat.
+- Una conexión Redis extra (el suscriptor del borde) y el proceso de sockets del worker para operar.
+- **Conviven dos transportes** (SSE para notificaciones + socket.io para el chat): no se unificó, y es
+  la deuda aceptada de haber elegido el borde por feature.
 - Sin durabilidad en la entrega en vivo (pub/sub es at-most-once) — asumido a propósito: la DB es la
   fuente de verdad. Ver [Sobre el at-most-once del fan-out](#sobre-el-at-most-once-del-fan-out-por-qué-lo-aceptamos).
