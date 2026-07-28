@@ -33,6 +33,25 @@ export const AMENITIES = [
   "mascotas_permitidas",
 ] as const;
 
+// Photo upload constraints. Shared on purpose: the picker uses them to reject
+// a file before spending an upload on it, and `/api/s3` re-checks them because
+// the route is reachable without going through the picker.
+export const ACCEPTED_PHOTO_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+] as const;
+
+export type AcceptedPhotoType = (typeof ACCEPTED_PHOTO_TYPES)[number];
+
+export const MAX_PHOTO_BYTES = 10 * 1024 * 1024;
+
+export const MAX_PHOTO_MB = MAX_PHOTO_BYTES / 1024 / 1024;
+
+export function isAcceptedPhotoType(type: string): type is AcceptedPhotoType {
+  return (ACCEPTED_PHOTO_TYPES as readonly string[]).includes(type);
+}
+
 // Raw URL search params written by the search/Filters panel. Everything is a
 // string (or absent) because it comes off the query string; parsing lives in
 // `parseListingFilters` so every route consuming these decodes them the same way.

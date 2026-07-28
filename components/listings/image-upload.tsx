@@ -2,9 +2,14 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 import { ImagePlus, X } from "lucide-react";
-
-const ACCEPTED_TYPES = ["image/png", "image/jpeg"];
+import {
+  ACCEPTED_PHOTO_TYPES,
+  MAX_PHOTO_BYTES,
+  MAX_PHOTO_MB,
+  isAcceptedPhotoType,
+} from "@/lib/listings";
 
 type ImageUploadProps = {
   value: File[];
@@ -12,15 +17,30 @@ type ImageUploadProps = {
   maxFiles?: number;
 };
 
-export function ImageUpload({ value, onChange, maxFiles = 10 }: ImageUploadProps) {
+export function ImageUpload({
+  value,
+  onChange,
+  maxFiles = 10,
+}: ImageUploadProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const atLimit = value.length >= maxFiles;
 
   function addFiles(fileList: FileList | null) {
     if (!fileList) return;
-    const incoming = Array.from(fileList).filter((file) =>
-      ACCEPTED_TYPES.includes(file.type),
-    );
+
+    const incoming: File[] = [];
+    for (const file of Array.from(fileList)) {
+      if (!isAcceptedPhotoType(file.type)) {
+        toast.error(`${file.name} is not a PNG, JPEG or WebP`);
+        continue;
+      }
+      if (file.size > MAX_PHOTO_BYTES) {
+        toast.error(`${file.name} is over ${MAX_PHOTO_MB} MB`);
+        continue;
+      }
+      incoming.push(file);
+    }
+
     onChange([...value, ...incoming].slice(0, maxFiles));
   }
 
@@ -47,14 +67,14 @@ export function ImageUpload({ value, onChange, maxFiles = 10 }: ImageUploadProps
           <span className="text-muted-foreground">or drag and drop</span>
         </p>
         <p className="text-xs text-muted-foreground">
-          PNG or JPEG, up to {maxFiles} photos
+          PNG, JPEG or WebP · up to {MAX_PHOTO_MB} MB each · {maxFiles} photos
         </p>
       </button>
 
       <input
         ref={inputRef}
         type="file"
-        accept="image/png,image/jpeg"
+        accept={ACCEPTED_PHOTO_TYPES.join(",")}
         multiple
         className="hidden"
         onChange={(e) => {
@@ -91,10 +111,8 @@ function ImagePreview({
 
   return (
     <div className="group relative aspect-square overflow-hidden rounded-lg ring-1 ring-foreground/10">
-      {/* Local blob preview: the Next.js image optimizer can't fetch a
-          client-only blob URL, so this stays unoptimized. Real AVIF/WebP
-          transcoding happens once these are uploaded and rendered from a
-          hosted URL elsewhere. */}
+      {/* The optimizer runs server-side and cannot fetch a `blob:` URL that
+          only exists in this tab, so this one preview stays unoptimized. */}
       <Image
         src={url}
         alt={file.name}

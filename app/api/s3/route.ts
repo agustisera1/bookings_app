@@ -1,27 +1,30 @@
-import { addListingObject } from "@/lib/s3";
-import { NextRequest, NextResponse } from "next/server";
+import { addListingPhoto } from "@/lib/services/listings";
+import { toHttpResponse } from "@/lib/http";
+import type { ServiceResult } from "@/lib/types";
+import { NextRequest } from "next/server";
 
-const error = {
-  code: 500,
-  error: "Could not upload image for listing",
+const failed: ServiceResult<string> = {
   ok: false,
+  error: "Could not upload image for listing",
+  code: "UNEXPECTED",
 };
 
 export async function POST(req: NextRequest) {
   try {
     const formData = await req.formData();
-    const url = await addListingObject(
-      formData.get("file") as File,
-      formData.get("listingId") as string,
-    );
+    const file = formData.get("file");
+    const listingId = formData.get("listingId");
 
-    if (!url) return NextResponse.json(error);
-    return NextResponse.json({
-      data: url,
-      ok: true,
-      code: 201,
-    });
-  } catch {
-    return NextResponse.json(error);
+    if (!(file instanceof File) || typeof listingId !== "string" || !listingId)
+      return toHttpResponse({
+        ok: false,
+        error: "A photo and a listing are required",
+        code: "VALIDATION",
+      });
+
+    return toHttpResponse(await addListingPhoto(listingId, file));
+  } catch (error) {
+    console.error("[POST /api/s3]", error);
+    return toHttpResponse(failed);
   }
 }

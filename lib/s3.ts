@@ -3,7 +3,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
-import { MIME_TYPES, ValidMimeType } from "@/lib/utils";
+import { normalizeListingPhoto } from "@/lib/images";
 
 export const s3 = new S3Client({
   region: process.env.AWS_S3_REGION,
@@ -33,20 +33,23 @@ export async function addListingObject(
     const Bucket = process.env.AWS_LISTINGS_BUCKET;
     const region = process.env.AWS_S3_REGION;
     const randId = crypto.randomUUID();
-    const type = MIME_TYPES[file.type as ValidMimeType];
-    const Key = `listings/${listingId}/${randId}.${type}`;
-    const Body = Buffer.from(await file.arrayBuffer());
+    const { body, contentType, extension } = await normalizeListingPhoto(file);
+    const Key = `listings/${listingId}/${randId}.${extension}`;
 
     const insertCmd = new PutObjectCommand({
       Bucket,
       Key,
-      Body,
-      ContentType: file.type,
+      Body: body,
+      ContentType: contentType,
+      // The key carries a UUID, so an object is never rewritten under the same
+      // URL: it can be cached permanently by the optimizer and the browser.
+      CacheControl: "public, max-age=31536000, immutable",
     });
 
     await s3.send(insertCmd);
     return `https://${Bucket}.s3.${region}.amazonaws.com/${Key}`;
-  } catch {
+  } catch (error) {
+    console.error("[addListingObject]", error);
     return null;
   }
 }

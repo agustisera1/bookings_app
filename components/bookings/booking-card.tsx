@@ -47,7 +47,6 @@ export function BookingCard({
               src={cover}
               alt={booking.title ?? ""}
               fill
-              unoptimized
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
@@ -68,8 +67,10 @@ export function BookingCard({
             <div className="flex items-center gap-1.5">
               <CalendarRange className="size-3.5 shrink-0" />
               <span>
-                {formatDate(booking.start_date)} — {formatDate(booking.end_date)}
-                {nights != null && ` · ${nights} night${nights !== 1 ? "s" : ""}`}
+                {formatDate(booking.start_date)} —{" "}
+                {formatDate(booking.end_date)}
+                {nights != null &&
+                  ` · ${nights} night${nights !== 1 ? "s" : ""}`}
               </span>
             </div>
             {booking.guests != null && (
@@ -89,7 +90,9 @@ export function BookingCard({
               </span>
               <Badge
                 variant={
-                  booking.status ? bookingStatusVariant[booking.status] : "outline"
+                  booking.status
+                    ? bookingStatusVariant[booking.status]
+                    : "outline"
                 }
                 className="capitalize"
               >
