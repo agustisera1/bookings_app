@@ -197,7 +197,8 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/subscriber.ts` | `getSubscriber` — suscriptor Redis del fan-out SSE de notificaciones |
 | `lib/socket.ts` | Cliente socket.io del chat + contrato `EVENTS` y sus tipos |
 | `lib/s3.ts` | Cliente S3 y helpers de fotos (`addListingObject`, `deleteListingObject`) |
-| `lib/listings.ts` | Constantes de listings (`PROPERTY_TYPES`, `AMENITIES`) y `parseListingFilters` |
+| `lib/images.ts` | `normalizeListingPhoto` — transforma la foto subida con sharp (rotate EXIF, resize, WebP) antes de S3. Server-only: importa sharp, nunca desde un Client Component |
+| `lib/listings.ts` | Constantes de listings (`PROPERTY_TYPES`, `AMENITIES`, restricciones de foto) y `parseListingFilters` |
 | `lib/http.ts` | `toHttpResponse` — mapea `ServiceResult` a respuesta HTTP |
 | `lib/request.ts` | `getClientIp` — IP del request (para la cota) |
 

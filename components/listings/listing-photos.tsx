@@ -69,7 +69,6 @@ export function ListingPhotos({
                         src={photo}
                         alt={`${title} photo ${i + 1}`}
                         fill
-                        unoptimized
                         sizes="160px"
                         className="object-cover"
                       />
@@ -117,7 +116,6 @@ export function ListingPhotos({
                 src={activePhoto}
                 alt={title}
                 fill
-                unoptimized
                 sizes="(min-width: 640px) 512px, 100vw"
                 className="object-cover"
               />

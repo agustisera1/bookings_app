@@ -37,13 +37,10 @@ export function ConversationItem({
     >
       <div className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-muted">
         {photo ? (
-          // `unoptimized` matches listing-photos.tsx: the photo URLs are
-          // remote and next.config declares no remotePatterns for them.
           <Image
             src={photo}
-            alt=""
+            alt="message-photo"
             fill
-            unoptimized
             sizes="48px"
             className="object-cover"
           />

@@ -21,46 +21,45 @@ export async function Listings({
         return (
           <li key={listing._id}>
             <Link href={`/listings/${listing._id}`}>
-            <Card className="group overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer p-0">
-              <div className="relative h-40 flex items-end p-3 overflow-hidden">
-                {cover ? (
-                  <Image
-                    src={cover}
-                    alt={listing.title}
-                    fill
-                    unoptimized
-                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
-                    className="object-cover transition-transform duration-300 group-hover:scale-105"
-                  />
-                ) : (
-                  <div
-                    className={`absolute inset-0 bg-gradient-to-br ${gradient}`}
-                  />
-                )}
-                <Badge className="relative bg-black/20 text-white/90 backdrop-blur-sm hover:bg-black/30 uppercase tracking-widest text-2xs">
-                  {listing.type}
-                </Badge>
-              </div>
-              <CardContent className="p-4 flex flex-col gap-2">
-                <h3 className="font-semibold text-xl leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-                  {listing.title}
-                </h3>
-                {(listing.location?.city || listing.location?.country) && (
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <MapPin className="size-3.5 shrink-0" />
-                    <span>
-                      {[listing.location?.city, listing.location?.country]
-                        .filter(Boolean)
-                        .join(", ")}
-                    </span>
-                  </div>
-                )}
-                <p className="text-sm text-muted-foreground line-clamp-2">
-                  {listing.description}
-                </p>
-                <PriceLabel price={listing.price} className="mt-auto" />
-              </CardContent>
-            </Card>
+              <Card className="group overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer p-0">
+                <div className="relative h-40 flex items-end p-3 overflow-hidden">
+                  {cover ? (
+                    <Image
+                      src={cover}
+                      alt={listing.title}
+                      fill
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div
+                      className={`absolute inset-0 bg-gradient-to-br ${gradient}`}
+                    />
+                  )}
+                  <Badge className="relative bg-black/20 text-white/90 backdrop-blur-sm hover:bg-black/30 uppercase tracking-widest text-2xs">
+                    {listing.type}
+                  </Badge>
+                </div>
+                <CardContent className="p-4 flex flex-col gap-2">
+                  <h3 className="font-semibold text-xl leading-snug line-clamp-2 group-hover:text-primary transition-colors">
+                    {listing.title}
+                  </h3>
+                  {(listing.location?.city || listing.location?.country) && (
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <MapPin className="size-3.5 shrink-0" />
+                      <span>
+                        {[listing.location?.city, listing.location?.country]
+                          .filter(Boolean)
+                          .join(", ")}
+                      </span>
+                    </div>
+                  )}
+                  <p className="text-sm text-muted-foreground line-clamp-2">
+                    {listing.description}
+                  </p>
+                  <PriceLabel price={listing.price} className="mt-auto" />
+                </CardContent>
+              </Card>
             </Link>
           </li>
         );
