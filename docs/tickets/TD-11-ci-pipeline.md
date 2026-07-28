@@ -34,12 +34,12 @@ a uno. Sin CI, cada merge es una apuesta.
 
 Workflow de GitHub Actions en `bookings_app`, disparado en push y PR:
 
-1. **Setup** — pnpm con cache de dependencias.
+1. **Setup** — pnpm con cache de dependencias. ✅
 2. **Typecheck** — `tsc --noEmit`. Hoy no existe como script suelto: hay que agregarlo. Es el paso
    que habría atajado `permission.ref`.
-3. **Lint** — `pnpm lint`.
-4. **Test** — `pnpm test` (llega con TD-10).
-5. **Build** — `pnpm build`.
+3. **Lint** — `pnpm lint`. ✅
+4. **Test** — `pnpm test` (llega con TD-10). ✅
+5. **Build** — `pnpm build`. ⏸️ Bloqueado: ver la nota al pie.
 
 Detalle que vale la pena: los archivos generados de GraphQL (`lib/apollo/__generated__/`) **están
 trackeados**. Un paso que corra `pnpm codegen` y falle si el diff no queda limpio detecta el caso
@@ -49,8 +49,14 @@ rompe en runtime.
 **Worker:** un workflow análogo, más corto (`tsc` + build). No comparte lockfile ni pipeline con la
 app; son deploys separados y conviene que los CI también lo sean.
 
-> `pnpm build` de Next.js necesita variables de entorno para no fallar. Resolver eso con valores
-> dummy en el workflow es parte del ticket — y **no** meter secretos reales en el repo.
+> **El paso de build no entra por ahora.** No alcanza con valores dummy: `lib/mongo.ts` y
+> `lib/events.ts` abren I/O en el import, así que el build necesita Mongo y Redis *alcanzables*, no
+> sólo las env vars presentes. El detalle y el fix de raíz están en
+> [`tech_debt/BUILD_NEXT_STEPS.md`](../tech_debt/BUILD_NEXT_STEPS.md) — punto 1. Mientras siga así,
+> el workflow corre lint y test, y **nada verifica tipos en CI**: el typecheck del paso 2 es lo que
+> tapa ese hueco sin depender de infra.
+>
+> Cuando el build vuelva: valores dummy en el workflow, **nunca** secretos reales en el repo.
 
 ## Criterio de aceptación
 
@@ -58,7 +64,8 @@ app; son deploys separados y conviene que los CI también lo sean.
 - [ ] Un error de tipos introducido a propósito hace fallar el pipeline.
 - [ ] Un cambio en `schema.graphql` sin regenerar hace fallar el pipeline.
 - [ ] El worker tiene su propio workflow.
-- [ ] No hay secretos reales en el workflow.
+- [x] No hay secretos reales en el workflow.
+- [ ] `pnpm build` corre en CI — depende de `tech_debt/BUILD_NEXT_STEPS.md` punto 1.
 
 ## Fuera de alcance
 
