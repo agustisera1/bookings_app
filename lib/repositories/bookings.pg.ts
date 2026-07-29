@@ -1,5 +1,6 @@
 import * as db from "../postgres";
 import type { Booking, BookingStatus } from "../types/booking";
+import type { OutboxEvent } from "../types/outbox";
 
 export async function findBookingsByGuestId(
   guestId: string,
@@ -11,18 +12,31 @@ export async function findBookingsByGuestId(
   return result.rows;
 }
 
-export async function createBookingRecord(params: {
-  listingId: string;
-  guestId: string;
-  checkIn: string;
-  checkOut: string;
-  totalPrice: number;
-  guests: number;
-}): Promise<{ id: string; created_at: string } | null> {
+// Same CTE trick as `rotateSession`: one statement is one transaction, so the
+// booking and its outbox row land together or not at all. The outbox INSERT
+// selects from the first CTE, which is what makes it see the generated id.
+export async function createBookingRecord(
+  params: {
+    listingId: string;
+    guestId: string;
+    checkIn: string;
+    checkOut: string;
+    totalPrice: number;
+    guests: number;
+  },
+  event: OutboxEvent,
+): Promise<{ id: string; created_at: string } | null> {
   const result = await db.query<{ id: string; created_at: string }>(
-    `INSERT INTO bookings (listing_id, guest_id, start_date, end_date, total_price, guests)
-     VALUES ($1,$2,$3,$4,$5,$6)
-     RETURNING id, created_at`,
+    `WITH new_booking AS (
+       INSERT INTO bookings (listing_id, guest_id, start_date, end_date, total_price, guests)
+       VALUES ($1,$2,$3,$4,$5,$6)
+       RETURNING id, created_at
+     ), outbox_event AS (
+       INSERT INTO outbox (aggregate_type, aggregate_id, event_type, payload)
+       SELECT 'booking', new_booking.id::text, $7, $8::jsonb
+       FROM new_booking
+     )
+     SELECT id, created_at FROM new_booking`,
     [
       params.listingId,
       params.guestId,
@@ -30,6 +44,8 @@ export async function createBookingRecord(params: {
       params.checkOut,
       params.totalPrice,
       params.guests,
+      event.type,
+      event.payload ?? {},
     ],
   );
   return result.rows[0] ?? null;
@@ -110,6 +126,7 @@ type UpdateBookingFields = Pick<
 export async function updateBooking(
   booking_id: string,
   values: Partial<UpdateBookingFields>,
+  event: OutboxEvent,
 ) {
   const entries = Object.entries(values);
   if (entries.length === 0) return false;
@@ -118,14 +135,23 @@ export async function updateBooking(
     .map(([key], index) => `${key} = $${index + 1}`)
     .join(", ");
   const params = entries.map(([, val]) => val);
+  const id = entries.length + 1;
 
   const result = await db.query(
     `
-    UPDATE bookings
-    SET ${setClause}
-    WHERE id = $${entries.length + 1}
+    WITH updated AS (
+      UPDATE bookings
+      SET ${setClause}
+      WHERE id = $${id}
+      RETURNING id
+    ), outbox_event AS (
+      INSERT INTO outbox (aggregate_type, aggregate_id, event_type, payload)
+      SELECT 'booking', updated.id::text, $${id + 1}, $${id + 2}::jsonb
+      FROM updated
+    )
+    SELECT id FROM updated
     `,
-    [...params, booking_id],
+    [...params, booking_id, event.type, event.payload ?? {}],
   );
 
   return (result.rowCount ?? 0) > 0;

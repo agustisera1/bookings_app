@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const s3 = "https://bookings-app-listings-bucket.s3.us-east-2.amazonaws.com/**";
-const mocks = "https://dummyimage.com/*"; // Reset DB and clearup mock images
+const mocks = "https://dummyimage.com/**"; // Reset DB and clearup mock images
 
 const nextConfig: NextConfig = {
   /* config options here */
