@@ -5,11 +5,6 @@ import { authorize } from "../authorize";
 import * as notificationsRepo from "../repositories/notifications.mongo";
 import { ServiceResult } from "../types";
 import { NotificationDocument } from "../types/notification";
-import {
-  notificationsQueue,
-  toNotificationPayload,
-  type InAppNotificationType,
-} from "../events";
 
 export type { NotificationDocument } from "../types/notification";
 
@@ -72,15 +67,4 @@ export async function markAsRead(
       ok: false,
     };
   }
-}
-
-type QueueNotificationParams = {
-  type: InAppNotificationType;
-  listingId: string;
-  bookingId: string;
-  userId: string;
-};
-
-export async function queueNotification(params: QueueNotificationParams) {
-  await notificationsQueue.add("notifications", toNotificationPayload(params));
 }

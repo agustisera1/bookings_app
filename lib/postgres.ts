@@ -11,7 +11,7 @@ const pool = new Pool({
 
 export const query = <R extends QueryResultRow = QueryResultRow>(
   text: string,
-  params: unknown[]
+  params: unknown[],
 ): Promise<QueryResult<R>> => {
   return pool.query<R>(text, params);
 };

@@ -189,10 +189,9 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/mongo.ts` | Cliente MongoDB |
 | `lib/permissions.ts` | Roles, permisos y helpers de autorización |
 | `lib/jwt.ts` | Sign/verify de tokens |
-| `lib/events.ts` | Colas BullMQ: conexión, `*Queue`, contratos `*Payload` y mappers `to*Payload` |
 | `lib/authorize.ts` | `authorize(permission)` — gate de identidad y permisos (usa `getCurrentUser`) |
 | `lib/redis.ts` | Cliente de comandos Redis singleton (`getRedisClient`) |
-| `lib/redis-config.ts` | `getRedisConnectionParams` — params de conexión Redis validados (BullMQ) |
+| `lib/redis-config.ts` | `getRedisConnectionParams` — params de conexión Redis validados (SSE, cota) |
 | `lib/rate-limit.ts` | `rateLimit(key, policy)` / `resetRateLimit` — cota de abuso sobre Redis |
 | `lib/subscriber.ts` | `getSubscriber` — suscriptor Redis del fan-out SSE de notificaciones |
 | `lib/socket.ts` | Cliente socket.io del chat + contrato `EVENTS` y sus tipos |
@@ -202,7 +201,7 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/http.ts` | `toHttpResponse` — mapea `ServiceResult` a respuesta HTTP |
 | `lib/request.ts` | `getClientIp` — IP del request (para la cota) |
 
-> **Colas / workers (BullMQ + Redis):** antes de agregar un worker, job processor o payload de cola, leer `docs/architecture/BULLMQ_QUEUES.md`. Define el contrato del payload, las convenciones (`processorKey`, fechas ISO, sin secretos) y el paso a paso en el producer y en el worker. El productor encola desde `lib/services/*`; el contrato se replica a mano en el repo del worker.
+> **Colas / workers (BullMQ + Redis):** antes de agregar un job processor o un evento asíncrono, leer `docs/architecture/BULLMQ_QUEUES.md`. **Esta app ya no encola**: los services escriben una fila de `outbox` en la misma transacción que la entidad, y el relay del worker es quien publica. El contrato del payload vive sólo en el repo del worker.
 
 ### Regla DRY
 
@@ -230,18 +229,17 @@ Esta evaluación es parte de "terminar" un cambio, igual que pasar `tsc`/`lint`.
 
 | Fuente | Qué vive ahí | Ejemplos |
 |--------|--------------|----------|
-| `lib/types/*` | Tipos de dominio (entidades, `ServiceResult`, `ErrorCode`) | `User`, `Booking`, `ListingDocumentValues` |
-| `lib/events.ts` | Contratos de cola `*Payload` y sus mappers `to*Payload` | `BookingEmailPayload`, `toBookingEmailPayload` |
+| `lib/types/*` | Tipos de dominio (entidades, `ServiceResult`, `ErrorCode`) y el contrato del outbox | `User`, `Booking`, `OutboxEvent` |
 | El service correspondiente | Tipos de parámetros y re-exports del dominio | `CreateBookingParams` |
 | `__generated__/resolvers-types.ts` / `operations.ts` | Tipos de schema/inputs y de operaciones GraphQL | `FiltersInput`, `GetListingsQuery` |
 
 **Cómo reutilizar en vez de duplicar:**
 
-- Si un tipo nuevo comparte forma con uno existente, **derivarlo** con `Pick`/`Omit`/`Partial`/`&` o `ReturnType`, no re-escribir los campos a mano. Un sub-shape que ya existe (p. ej. `BookingEmailPayload["booking"]`) se referencia, no se re-inlina.
-- Si la misma forma aparece en más de un módulo → extraerla a su lugar canónico (`lib/types/*` si es dominio; `lib/events.ts` si es contrato de cola; al lado del componente si es estado de feature) **antes** de copiarla. Es la regla DRY de `/lib` aplicada a los tipos.
-- Un tipo va donde ya viven sus pares conceptuales (cohesión): dominio → `lib/types/*`; wire contract + mapper → `lib/events.ts`; params de un service → el propio service; estado puro de feature → módulo colocado junto al componente.
+- Si un tipo nuevo comparte forma con uno existente, **derivarlo** con `Pick`/`Omit`/`Partial`/`&` o `ReturnType`, no re-escribir los campos a mano. Un sub-shape que ya existe (p. ej. `UpdateBookingFields`) se referencia, no se re-inlina.
+- Si la misma forma aparece en más de un módulo → extraerla a su lugar canónico (`lib/types/*` si es dominio; al lado del componente si es estado de feature) **antes** de copiarla. Es la regla DRY de `/lib` aplicada a los tipos.
+- Un tipo va donde ya viven sus pares conceptuales (cohesión): dominio y contratos transversales → `lib/types/*`; params de un service → el propio service; estado puro de feature → módulo colocado junto al componente.
 
-> **Anti-patrón concreto (a no repetir):** re-inlinear el shape `{ id, checkIn, checkOut, guests, totalPrice }` en tres lugares (el `*Payload`, el input del mapper y el param del helper) en vez de definirlo una vez y derivar las variantes. Si estás por escribir una forma que "se parece" a otra, casi siempre corresponde derivar.
+> **Anti-patrón concreto (a no repetir):** re-inlinear el mismo shape en tres lugares (el tipo, el input del mapper y el param del helper) en vez de definirlo una vez y derivar las variantes. Si estás por escribir una forma que "se parece" a otra, casi siempre corresponde derivar.
 
 ---
 

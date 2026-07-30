@@ -6,18 +6,9 @@ import * as bookingsRepo from "../repositories/bookings.pg";
 import * as listingsRepo from "../repositories/listings.mongo";
 import * as usersRepo from "../repositories/users.pg";
 import { revalidatePath } from "next/cache";
-import {
-  emailQueue,
-  pgBookingToEmailBooking,
-  toBookingEmailPayload,
-  type NotificationType,
-} from "../events";
-import type { CurrentUser, User } from "../types/user";
-import type { ListingDocumentValues } from "../types/listing";
-import type { Booking, BookingParty, CancelActor } from "../types/booking";
+import type { CurrentUser } from "../types/user";
+import type { Booking, CancelActor } from "../types/booking";
 import { canCancel, toCancellableBooking } from "../bookings/policy";
-import { Job } from "bullmq";
-import { queueNotification } from "./notifications";
 
 export type {
   Booking,
@@ -68,16 +59,20 @@ export async function createBooking(
     // 1. Acquire lock (Phase 3 — Redis)
 
     // 2. Write on DB
-    const booking = await bookingsRepo.createBookingRecord({
-      listingId: params.listingId,
-      guestId: auth.data.id,
-      checkIn: params.checkIn.toISOString(),
-      checkOut: params.checkOut.toISOString(),
-      totalPrice: params.totalPrice,
-      guests: params.guests,
-    });
-
-    // 3. Queue notification and email events
+    const booking = await bookingsRepo.createBookingRecord(
+      {
+        listingId: params.listingId,
+        guestId: auth.data.id,
+        checkIn: params.checkIn.toISOString(),
+        checkOut: params.checkOut.toISOString(),
+        totalPrice: params.totalPrice,
+        guests: params.guests,
+      },
+      {
+        type: "booking.created",
+        payload: { listingId: params.listingId, guestId: auth.data.id },
+      },
+    );
 
     if (!booking)
       return {
@@ -85,39 +80,6 @@ export async function createBooking(
         error: "Could not create the booking",
         code: "UNEXPECTED",
       };
-
-    const listing = await listingsRepo.findListingById(params.listingId);
-    const host = listing ? await usersRepo.findUserById(listing.host_id) : null;
-
-    // In-app: let the host know a new booking landed on their listing. Async and
-    // best-effort (RNF-04) — a queue hiccup must never fail the persisted booking.
-    if (host) {
-      await queueNotification({
-        type: "notify_user",
-        listingId: params.listingId,
-        bookingId: booking.id,
-        userId: host.id,
-      }).catch((err) =>
-        console.error(
-          "[createBooking]: could not queue host notification",
-          err,
-        ),
-      );
-    }
-
-    await emailBookingDetails({
-      type: "pending",
-      guestEmail: auth.data.email,
-      booking: {
-        id: booking.id,
-        checkIn: params.checkIn,
-        checkOut: params.checkOut,
-        guests: params.guests,
-        totalPrice: params.totalPrice,
-      },
-      host,
-      listing,
-    });
 
     return { ok: true, data: booking };
   } catch (error) {
@@ -192,7 +154,10 @@ export async function cancelBooking(
       ...(reason ? { status_reason: reason.trim() } : {}),
     } satisfies Partial<Booking>;
 
-    const cancelled = await bookingsRepo.updateBooking(bookingId, updates);
+    const cancelled = await bookingsRepo.updateBooking(bookingId, updates, {
+      type: "booking.cancelled",
+      payload: { listingId: booking.listing_id, guestId: booking.guest_id },
+    });
 
     if (!cancelled)
       return {
@@ -200,16 +165,6 @@ export async function cancelBooking(
         error: "Booking not found or already cancelled",
         code: "NOT_FOUND",
       };
-
-    // The email carries the refund, so it needs the post-update row — the one
-    // we just wrote, not the one we read. Applying `updates` to it beats a
-    // re-fetch and keeps the written and announced values from diverging.
-    // The counterparty is the recipient: the actor already knows what they did.
-    await notifyBookingStatusChange(
-      { ...booking, ...updates },
-      "cancelled",
-      actor === "guest" ? "host" : "guest",
-    );
 
     revalidatePath("/bookings");
     revalidatePath("/bookings/[id]", "page");
@@ -269,10 +224,17 @@ export async function acceptBooking(
         code: "VALIDATION",
       };
 
-    const accepted = await bookingsRepo.updateBooking(bookingId, {
-      status: "accepted",
-      ...(hostMessage ? { status_reason: hostMessage.trim() } : {}),
-    });
+    const accepted = await bookingsRepo.updateBooking(
+      bookingId,
+      {
+        status: "accepted",
+        ...(hostMessage ? { status_reason: hostMessage.trim() } : {}),
+      },
+      {
+        type: "booking.accepted",
+        payload: { listingId: booking.listing_id, guestId: booking.guest_id },
+      },
+    );
 
     if (!accepted) {
       return {
@@ -282,8 +244,6 @@ export async function acceptBooking(
         code: "NOT_FOUND",
       };
     }
-
-    await notifyBookingStatusChange(booking, "approved");
 
     revalidatePath("/listings/[id]", "page");
     revalidatePath("/listings/mine");
@@ -325,10 +285,17 @@ export async function rejectBooking(
         code: "VALIDATION",
       };
 
-    const rejected = await bookingsRepo.updateBooking(bookingId, {
-      status: "rejected",
-      ...(hostMessage ? { status_reason: hostMessage.trim() } : {}),
-    });
+    const rejected = await bookingsRepo.updateBooking(
+      bookingId,
+      {
+        status: "rejected",
+        ...(hostMessage ? { status_reason: hostMessage.trim() } : {}),
+      },
+      {
+        type: "booking.rejected",
+        payload: { listingId: booking.listing_id, guestId: booking.guest_id },
+      },
+    );
 
     if (!rejected) {
       return {
@@ -337,8 +304,6 @@ export async function rejectBooking(
         code: "NOT_FOUND",
       };
     }
-
-    await notifyBookingStatusChange(booking, "rejected");
 
     revalidatePath("/listings/[id]", "page");
     revalidatePath("/listings/mine");
@@ -357,118 +322,3 @@ export async function rejectBooking(
   }
 }
 
-// Mirrors the mapper's input (so `booking` accepts either `Date` from the
-// create path or ISO strings from a persisted row) but lets host/listing be
-// null: emailBookingDetails guards on that before enqueueing.
-type EmailBookingParams = Omit<
-  Parameters<typeof toBookingEmailPayload>[0],
-  "host" | "listing"
-> & {
-  host: User | null;
-  listing: ListingDocumentValues | null;
-};
-
-// Single enqueue point for every booking email. Building the payload and the
-// `queue.add` live together so the try/catch that turns an ACK failure into a
-// ServiceResult is written once, not per notification type.
-async function emailBookingDetails(
-  bookingDetails: EmailBookingParams,
-): Promise<ServiceResult<Job>> {
-  const { type, guestEmail, booking, host, listing } = bookingDetails;
-
-  // The email needs a host name and listing details; without them there is
-  // nothing worth rendering, so skip the dispatch instead of enqueueing a
-  // broken job.
-  if (!host || !listing) {
-    console.error("[emailBookingDetails]: missing host or listing", booking.id);
-    return {
-      ok: false,
-      error: "Could not dispatch email notification",
-      code: "NOT_FOUND",
-    };
-  }
-
-  try {
-    // `type` va en la clave: una misma reserva emite `pending`, `approved` y
-    // `cancelled`, y sin él los tres colapsarían en un solo job.
-    const job = await emailQueue.add(
-      "emails",
-      toBookingEmailPayload({ type, guestEmail, booking, host, listing }),
-      { jobId: `booking-${booking.id}-${type}` },
-    );
-    return {
-      ok: true,
-      data: job,
-    };
-  } catch (error) {
-    console.error("[emailBookingDetails]:", error);
-    return {
-      ok: false,
-      error: "ACK Failed when dispatching email notification",
-      code: "UNEXPECTED",
-    };
-  }
-}
-
-// Status-change path (approved / rejected / updated): starts from a persisted
-// booking row and rehydrates the guest, listing and host the email needs before
-// delegating to the single enqueue point above. Fire-and-forget relative to the
-// mutation's happy path, so it never throws — it logs and returns.
-//
-// `recipient` is who the in-app notification is for: always the counterparty of
-// whoever acted, since the actor already knows what they did. The email still
-// goes to the guest regardless — `BookingEmailPayload` is guest-addressed, so
-// mailing the host needs a change to the contract the worker mirrors.
-async function notifyBookingStatusChange(
-  booking: Booking,
-  type: NotificationType,
-  recipient: BookingParty = "guest",
-): Promise<void> {
-  const [guest, listing] = await Promise.all([
-    usersRepo.findUserById(booking.guest_id),
-    listingsRepo.findListingById(booking.listing_id),
-  ]);
-  const host = listing ? await usersRepo.findUserById(listing.host_id) : null;
-
-  if (!guest) {
-    console.error("[notifyBookingStatusChange]: missing guest", booking.id);
-    return;
-  }
-
-  if (!listing) {
-    console.error("[notifyBookingStatusChange]: missing listing");
-    return;
-  }
-
-  const notifyUserId = recipient === "host" ? host?.id : guest.id;
-
-  if (!notifyUserId) {
-    console.error(
-      "[notifyBookingStatusChange]: missing recipient",
-      recipient,
-      booking.id,
-    );
-  } else {
-    // Best-effort (RNF-04): honour this function's "never throws" contract so a
-    // queue hiccup can't bubble up and fail the mutation that triggered it.
-    await queueNotification({
-      type: "notify_booking_update",
-      listingId: listing._id,
-      bookingId: booking.id,
-      userId: notifyUserId,
-    }).catch((err) =>
-      console.error(
-        "[notifyBookingStatusChange]: could not queue notification",
-        err,
-      ),
-    );
-  }
-
-  await emailBookingDetails({
-    type,
-    guestEmail: guest.email,
-    booking: pgBookingToEmailBooking(booking),
-    host,
-    listing,
-  });
-}

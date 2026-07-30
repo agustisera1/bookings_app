@@ -162,14 +162,15 @@ describe("createBooking", () => {
   it("injects the authed guest and normalizes the dates to ISO", async () => {
     const res = await createBooking(params);
     expect(res.ok).toBe(true);
-    // Contract: the guest is taken from auth (not the params), and the Date
-    // inputs are persisted as ISO strings.
+    // Contract: the guest is taken from auth (not the params), the Date inputs
+    // are persisted as ISO strings, and the outbox event rides along with them.
     expect(bookingsRepo.createBookingRecord).toHaveBeenCalledWith(
       expect.objectContaining({
         guestId: "u1",
         checkIn: "2026-08-01T00:00:00.000Z",
         checkOut: "2026-08-05T00:00:00.000Z",
       }),
+      expect.objectContaining({ type: "booking.created" }),
     );
   });
 
@@ -224,6 +225,7 @@ describe("cancelBooking", () => {
         cancelled_by: "guest",
         refund_amount: "500.00",
       }),
+      expect.objectContaining({ type: "booking.cancelled" }),
     );
   });
 });
@@ -256,6 +258,7 @@ describe("acceptBooking", () => {
     expect(bookingsRepo.updateBooking).toHaveBeenCalledWith(
       "b1",
       expect.objectContaining({ status: "accepted" }),
+      expect.objectContaining({ type: "booking.accepted" }),
     );
   });
 });
@@ -284,6 +287,7 @@ describe("rejectBooking", () => {
     expect(bookingsRepo.updateBooking).toHaveBeenCalledWith(
       "b1",
       expect.objectContaining({ status: "rejected" }),
+      expect.objectContaining({ type: "booking.rejected" }),
     );
   });
 });

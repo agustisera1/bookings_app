@@ -14,7 +14,8 @@
     "db:migrate": "dotenv -e .env.local -- tsx scripts/migrate.ts up",
     "db:rollback": "dotenv -e .env.local -- tsx scripts/migrate.ts down",
     "db:mark": "dotenv -e .env.local -- tsx scripts/migrate.ts mark",
-    "db:schema": "dotenv -e .env.local -- tsx scripts/db_schema.ts"
+    "db:schema": "dotenv -e .env.local -- tsx scripts/db_schema.ts",
+    "db:reset": "dotenv -e .env.local -- tsx scripts/reset_data.ts"
   },
   "dependencies": {
     "@apollo/client": "^4.2.3",
