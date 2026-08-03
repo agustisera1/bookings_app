@@ -97,6 +97,15 @@ const db = db.getSiblingDB(DB_NAME);
 db.createCollection(COLLECTION);
 db[COLLECTION].createIndex({ target_id: 1, is_read: 1 });
 
+// Idempotencia del consumer de la cola `notifications`: el insert del worker es
+// a la vez el claim del evento. Parcial y no total porque los documentos sembrados
+// acá —y los previos a la migración 009— no tienen `event_id`, y un índice único
+// los colapsaría a todos contra el mismo null.
+db[COLLECTION].createIndex(
+  { event_id: 1 },
+  { unique: true, partialFilterExpression: { event_id: { $exists: true } } },
+);
+
 const result = db[COLLECTION].insertMany(notifications);
 
 print(

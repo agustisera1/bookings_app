@@ -79,3 +79,8 @@ Puntos a resolver al implementar:
   problema y a esta escala no se justifica.
 - Idempotencia de la cola `notifications`. Escribe en Mongo, no manda mail; el costo de un duplicado
   es una notificación repetida en la campana. Evaluar recién si molesta.
+
+> Los dos puntos de arriba se implementaron después, en `feat/transactions-idempotency`: claim en
+> `processed_events` (migración `009`) para los mails y unique index sobre `notifications.event_id`
+> para la campana. Ver [`architecture/BULLMQ_QUEUES.md`](../../architecture/BULLMQ_QUEUES.md)
+> § Idempotencia — dos capas.
