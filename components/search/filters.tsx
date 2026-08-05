@@ -40,7 +40,10 @@ export function Filters() {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
         render={
-          <Button variant="outline" className="h-12 shrink-0 px-2 shadow-sm">
+          <Button
+            variant="outline"
+            className="h-12 shrink-0 gap-2 border-input px-4 shadow-sm"
+          >
             <SlidersHorizontal />
             Filters
             {activeCount > 0 && (

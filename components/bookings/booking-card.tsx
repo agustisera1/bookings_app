@@ -10,7 +10,7 @@ import {
   listingTypeGradient,
 } from "@/lib/utils";
 import { CancelBookingButton } from "@/components/bookings/cancel-booking-button";
-import type { BookingRow } from "./user-bookings-model";
+import { toCancellableRow, type BookingRow } from "./bookings-model";
 
 export function BookingCard({
   booking,
@@ -53,7 +53,7 @@ export function BookingCard({
           ) : (
             <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
           )}
-          <Badge className="relative bg-black/20 text-white/90 uppercase tracking-widest text-2xs backdrop-blur-sm hover:bg-black/30">
+          <Badge className="relative bg-overlay/20 text-overlay-foreground/90 uppercase tracking-widest text-2xs backdrop-blur-sm hover:bg-overlay/30">
             {booking.type}
           </Badge>
         </div>
@@ -104,11 +104,7 @@ export function BookingCard({
               <CancelBookingButton
                 bookingId={booking.id ?? ""}
                 actor="guest"
-                booking={{
-                  status: booking.status ?? "pending",
-                  startDate: booking.start_date ?? "",
-                  totalPrice: booking.total_price ?? 0,
-                }}
+                booking={toCancellableRow(booking)}
               />
             </div>
           </div>

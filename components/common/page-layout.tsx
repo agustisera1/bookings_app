@@ -18,26 +18,35 @@ import { cn } from "@/lib/utils";
  * `inlineToolbar` compacts the header: the toolbar shares the heading's row,
  * pinned to the right at half the header width, instead of taking a row of its
  * own, collapsing back to a stacked layout below `md`.
+ *
+ * `back` renders a way out above the heading (see `BackLink`); `maxWidth` takes
+ * a `max-w-*` utility and applies it to the header **and** the content, so a
+ * narrower page keeps its title and actions on the same column as its body.
  */
 export function PageLayout({
   title,
   subtitle,
+  back,
   actions,
   toolbar,
   inlineToolbar = false,
+  maxWidth,
   className,
   contentClassName,
   children,
 }: {
   title: ReactNode;
   subtitle?: ReactNode;
+  back?: ReactNode;
   actions?: ReactNode;
   toolbar?: ReactNode;
   inlineToolbar?: boolean;
+  maxWidth?: string;
   className?: string;
   contentClassName?: string;
   children: ReactNode;
 }) {
+  const column = cn("mx-auto w-full", maxWidth);
   const heading = (
     <div className="flex flex-col gap-1">
       <h1 className="font-heading text-3xl font-semibold tracking-tight text-balance md:text-4xl">
@@ -57,7 +66,10 @@ export function PageLayout({
       className={cn("flex min-h-full flex-col", className)}
     >
       <header className="sticky top-0 z-10 border-b bg-background/80 backdrop-blur-md">
-        <div className="flex flex-col gap-4 px-6 py-5 md:px-10 md:py-6">
+        <div
+          className={cn("flex flex-col gap-4 px-6 py-5 md:px-10 md:py-6", column)}
+        >
+          {back}
           {inlineToolbar && toolbar ? (
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-6">
               <div className="md:shrink-0">{heading}</div>
@@ -79,7 +91,11 @@ export function PageLayout({
       </header>
 
       <div
-        className={cn("flex-1 px-6 py-6 md:px-10 md:py-8", contentClassName)}
+        className={cn(
+          "flex-1 px-6 py-6 md:px-10 md:py-8",
+          column,
+          contentClassName,
+        )}
       >
         {children}
       </div>

@@ -58,6 +58,13 @@ export function hasStarted(booking: CancellableBooking, now: Date): boolean {
   return new Date(booking.startDate).getTime() <= now.getTime();
 }
 
+/** The instant the guest's free-cancellation window closes. */
+export function freeCancellationDeadline(booking: CancellableBooking): Date {
+  return new Date(
+    new Date(booking.startDate).getTime() - FREE_CANCELLATION_WINDOW_MS,
+  );
+}
+
 /**
  * What a cancellation refunds, in the listing's currency.
  *
@@ -77,8 +84,7 @@ export function refundFor(
   // The host broke a confirmed commitment: no forfeit window applies to them.
   if (actor === "host") return booking.totalPrice;
 
-  const freeUntil =
-    new Date(booking.startDate).getTime() - FREE_CANCELLATION_WINDOW_MS;
+  const freeUntil = freeCancellationDeadline(booking).getTime();
   return now.getTime() < freeUntil ? booking.totalPrice : 0;
 }
 

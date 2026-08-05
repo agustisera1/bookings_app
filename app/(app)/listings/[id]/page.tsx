@@ -6,9 +6,9 @@ import { ReviewForm } from "@/components/reviews/review-form";
 import { ListingPhotos } from "@/components/listings/listing-photos";
 import { EditListingButton } from "@/components/listings/edit-listing-button";
 import { DeleteListingButton } from "@/components/listings/delete-listing-button";
-import { MapPin, Star, ChevronLeft } from "lucide-react";
-import Link from "next/link";
+import { MapPin, Star } from "lucide-react";
 import { notFound } from "next/navigation";
+import { BackLink } from "@/components/common/back-link";
 import { query } from "@/lib/apollo/client";
 import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
 import { getListingReviews } from "@/lib/services/reviews";
@@ -47,13 +47,12 @@ export default async function ListingDetailPage({
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-6xl px-6 py-10">
-        <Link
+        <BackLink
           href={isHostMode ? "/listings/mine" : "/listings"}
-          className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="mb-6"
         >
-          <ChevronLeft className="size-4" />
           Back to listings
-        </Link>
+        </BackLink>
 
         <header className="flex flex-col gap-2 border-b pb-8">
           <div className="flex items-start justify-start gap-4">

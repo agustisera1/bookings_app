@@ -1,5 +1,5 @@
 import { BookingCard } from "./booking-card";
-import type { BookingRow } from "./user-bookings-model";
+import type { BookingRow } from "./bookings-model";
 
 export function BookingSection({
   title,

@@ -5,7 +5,8 @@ import { ApolloClient } from "@apollo/client";
 import { GetUserBookingsQuery } from "@/lib/apollo/__generated__/operations";
 import { EmptyState } from "@/components/common/empty-state";
 import { BookingSection } from "./booking-section";
-import { partitionBookings, type BookingRow } from "./user-bookings-model";
+import type { BookingRow } from "./bookings-model";
+import { partitionBookings } from "./user-bookings-model";
 
 export function UserBookings({
   userBookingsPromise,

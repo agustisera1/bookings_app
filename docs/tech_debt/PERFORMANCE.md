@@ -47,3 +47,23 @@ resuelve.
   así que las dos latencias se suman.
 - **Idea de fix:** con ES la disponibilidad se resuelve como filtro en el índice de búsqueda, en vez
   de un `$nin` post-hoc. Va en el mismo paquete que el punto 4.
+
+---
+
+## 🟡 Impacto medio — capa de datos
+
+### 6. El detalle de una reserva trae todas las reservas del usuario — sin ticket
+
+- **Dónde:** `app/(app)/bookings/[id]/page.tsx`
+- **Qué pasa:** no existe una query de una reserva sola, así que la ruta corre `GetUserBookings`
+  —el mismo payload que la lista— y descarta todo menos la fila cuyo `id` matchea en memoria.
+- **Por qué duele:** el costo por request crece con el historial del usuario, no con lo que la
+  página muestra. Para renderizar una reserva, el resolver hace un `SELECT *` de todas
+  (`findBookingsByGuestId`) **más** un lookup en Mongo de todos los listings involucrados
+  (`getListingsByIds`).
+- **Cómo medirlo:** filas devueltas por el resolver vs. las renderizadas (1), con una cuenta de
+  reservas realista para un usuario activo.
+- **Idea de fix:** una query `booking(id)` que resuelva una sola. `bookingsRepo.getBookingById` ya
+  existe; falta el service con `authorize` + ownership y el resolver. Va junto con los gaps de
+  contrato de [`BOOKINGS_NEXT_STEPS.md`](./BOOKINGS_NEXT_STEPS.md), que se cierran en el mismo
+  cambio de schema.

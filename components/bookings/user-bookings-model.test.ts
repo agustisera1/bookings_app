@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { partitionBookings, type BookingRow } from "./user-bookings-model";
+import type { BookingRow } from "./bookings-model";
+import { partitionBookings } from "./user-bookings-model";
 
 function booking(id: string, start: number, end: number): BookingRow {
   return { id, start_date: String(start), end_date: String(end) } as unknown as BookingRow;
