@@ -5,7 +5,6 @@ export default function BookingDetailLoading() {
   return (
     <PageLayout
       title={<Skeleton className="h-9 w-64 max-w-full" />}
-      maxWidth="max-w-6xl"
       back={<Skeleton className="h-5 w-36 rounded-md" />}
       actions={
         <>

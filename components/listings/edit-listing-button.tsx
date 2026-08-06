@@ -86,7 +86,7 @@ export function EditListingButton({
           render={
             <Button variant="outline" size="sm">
               <Pencil className="size-4" />
-              Manage
+              Edit
             </Button>
           }
         />
@@ -115,10 +115,7 @@ export function EditListingButton({
           </DialogDescription>
         </DialogHeader>
 
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-col gap-4"
-        >
+        <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
           <FormField
             label="Title"
             htmlFor="edit-listing-title"
