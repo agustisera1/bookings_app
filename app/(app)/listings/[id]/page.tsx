@@ -2,13 +2,12 @@ import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/common/section";
 import { PriceLabel } from "@/components/common/price-label";
 import { BookingForm } from "@/components/bookings/booking-form";
-import { ReviewForm } from "@/components/reviews/review-form";
 import { ListingPhotos } from "@/components/listings/listing-photos";
 import { EditListingButton } from "@/components/listings/edit-listing-button";
 import { DeleteListingButton } from "@/components/listings/delete-listing-button";
-import { MapPin, Star, ChevronLeft } from "lucide-react";
-import Link from "next/link";
+import { MapPin, Star } from "lucide-react";
 import { notFound } from "next/navigation";
+import { BackLink } from "@/components/common/back-link";
 import { query } from "@/lib/apollo/client";
 import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
 import { getListingReviews } from "@/lib/services/reviews";
@@ -47,13 +46,12 @@ export default async function ListingDetailPage({
   return (
     <div className="min-h-screen">
       <div className="mx-auto max-w-6xl px-6 py-10">
-        <Link
+        <BackLink
           href={isHostMode ? "/listings/mine" : "/listings"}
-          className="mb-6 inline-flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+          className="mb-6"
         >
-          <ChevronLeft className="size-4" />
           Back to listings
-        </Link>
+        </BackLink>
 
         <header className="flex flex-col gap-2 border-b pb-8">
           <div className="flex items-start justify-start gap-4">
@@ -122,40 +120,23 @@ export default async function ListingDetailPage({
               />
             </Section>
 
-            {isHostMode ? (
-              <Section
-                title="Other reviews"
-                subtitle="What guests are saying about this listing"
-                card
-                cardSize="sm"
-              >
-                <ListingReviews
-                  reviewsPromise={reviewsPromise}
-                  isHostMode={isHostMode}
-                />
-              </Section>
-            ) : (
-              <>
-                <Section
-                  title="Leave a review"
-                  subtitle="Share your experience to help other guests."
-                >
-                  <ReviewForm listingId={listing._id} />
-                </Section>
-
-                <Section
-                  title="Other reviews"
-                  subtitle="Check out other customer comments"
-                  card
-                  cardSize="sm"
-                >
-                  <ListingReviews
-                    reviewsPromise={reviewsPromise}
-                    isHostMode={isHostMode}
-                  />
-                </Section>
-              </>
-            )}
+            {/* Reviews are written from the booking they belong to
+                (`bookings/[id]`), so this page only shows them. */}
+            <Section
+              title="Reviews"
+              subtitle={
+                isHostMode
+                  ? "What guests are saying about this listing"
+                  : "What guests who stayed here are saying"
+              }
+              card
+              cardSize="sm"
+            >
+              <ListingReviews
+                reviewsPromise={reviewsPromise}
+                isHostMode={isHostMode}
+              />
+            </Section>
           </div>
 
           <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:pl-10">

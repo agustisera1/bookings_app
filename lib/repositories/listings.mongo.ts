@@ -1,5 +1,5 @@
 import mongoClientPromise from "@/lib/mongo";
-import { Document, Filter, InsertOneResult, ObjectId, WithId } from "mongodb";
+import { Document, Filter, InsertOneResult, ObjectId } from "mongodb";
 import {
   EditListingDocumentValues,
   ListingDocumentValues,
@@ -27,14 +27,13 @@ export async function findListings(
   return docs.map((doc) => ({ ...doc, _id: doc._id.toString() }));
 }
 
-export async function findListingsByIds(
-  ids: string[],
-): Promise<WithId<Document>[]> {
+export async function findListingsByIds(ids: string[]) {
   const collection = await getCollection();
   const filtering: Filter<Document> = {};
   if (ids.length > 0)
     filtering["_id"] = { $in: ids.map((id) => new ObjectId(id)) };
-  return collection.find(filtering).toArray();
+  const docs = await collection.find(filtering).toArray();
+  return docs.map((doc) => ({ ...doc, _id: doc._id.toString() }));
 }
 
 export async function createListing(

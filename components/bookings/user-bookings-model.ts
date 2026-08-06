@@ -1,9 +1,5 @@
-import type { GetUserBookingsQuery } from "@/lib/apollo/__generated__/operations";
 import { parseTs } from "@/lib/dates";
-
-export type BookingRow = NonNullable<
-  NonNullable<GetUserBookingsQuery["guestBookings"]>[number]
->;
+import type { BookingRow } from "./bookings-model";
 
 function endTime(b: BookingRow) {
   return parseTs(b.end_date)?.getTime() ?? 0;

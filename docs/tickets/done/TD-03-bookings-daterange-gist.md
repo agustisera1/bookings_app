@@ -73,7 +73,7 @@ CREATE INDEX bookings_listing_id_idx ON bookings (listing_id);
 |---|---|---|
 | `bookings_daterange_gist` | `findBookedListingIds` | El GiST de `no_overlap` es aplicable pero pierde por costo (ver Problema) |
 | `bookings_guest_id_idx` | `findBookingsByGuestId` (`/bookings`) | `guest_fk` es una FK, y una FK **no** crea índice sobre la columna referenciante |
-| `bookings_listing_id_idx` | `getBookingsByListingId`, `hasGuestBookingForListing` | El GiST tiene `listing_id` como columna líder, pero es **parcial** y estas queries no filtran por status → no implican su predicado |
+| `bookings_listing_id_idx` | `getBookingsByListingId` | El GiST tiene `listing_id` como columna líder, pero es **parcial** y esta query no filtra por status → no implica su predicado |
 
 El `WHERE` del índice parcial tiene que **coincidir con el de la query** para que el planner lo
 considere aplicable — es la parte que hay que verificar, no asumir.

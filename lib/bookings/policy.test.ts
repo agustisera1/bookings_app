@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   canCancel,
+  isCompleted,
   refundFor,
   FREE_CANCELLATION_WINDOW_HOURS,
   type CancellableBooking,
@@ -95,5 +96,31 @@ describe("canCancel — host on a pending request", () => {
       allowed: false,
       reason: expect.stringContaining("Reject this request"),
     });
+  });
+});
+
+describe("isCompleted — a stay that actually happened", () => {
+  const CHECK_OUT = "2026-08-05T00:00:00.000Z";
+  const stay = { status: "accepted", endDate: CHECK_OUT } as const;
+  const checkOut = new Date(CHECK_OUT);
+
+  it("is not complete one instant before check-out", () => {
+    expect(isCompleted(stay, new Date(checkOut.getTime() - 1))).toBe(false);
+  });
+
+  // `now < endDate` is strict the other way round: at equality the last night
+  // is still running, same reading the availability range gives it.
+  it("is not complete at the check-out instant itself", () => {
+    expect(isCompleted(stay, checkOut)).toBe(false);
+  });
+
+  it("is complete one instant after check-out", () => {
+    expect(isCompleted(stay, new Date(checkOut.getTime() + 1))).toBe(true);
+  });
+
+  it("needs the host's acceptance, not just elapsed dates", () => {
+    const after = new Date(checkOut.getTime() + 1);
+    for (const status of ["pending", "rejected", "cancelled"] as const)
+      expect(isCompleted({ status, endDate: CHECK_OUT }, after)).toBe(false);
   });
 });

@@ -20,10 +20,12 @@ export function CancelBookingButton({
   bookingId,
   booking,
   actor,
+  variant = "icon",
 }: {
   bookingId: string;
   booking: CancellableBooking;
   actor: CancelActor;
+  variant?: "icon" | "button";
 }) {
   // Captured once at mount: reading the clock during render is impure.
   const [now] = useState(() => new Date());
@@ -53,19 +55,27 @@ export function CancelBookingButton({
         ? `You'll be refunded ${formatPrice(check.refundAmount)} in full. This action cannot be undone.`
         : `Check-in is less than ${FREE_CANCELLATION_WINDOW_HOURS} hours away, so this cancellation is not refundable. This action cannot be undone.`;
 
+  const trigger =
+    variant === "button" ? (
+      <Button variant="destructive">
+        <CircleXIcon />
+        Cancel booking
+      </Button>
+    ) : (
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        className="text-muted-foreground hover:text-destructive"
+      >
+        <CircleXIcon />
+        <span className="sr-only">Cancel booking</span>
+      </Button>
+    );
+
   return (
     <ConfirmDialog
-      tooltip="Cancel"
-      trigger={
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="text-muted-foreground hover:text-destructive"
-        >
-          <CircleXIcon />
-          <span className="sr-only">Cancel booking</span>
-        </Button>
-      }
+      tooltip={variant === "icon" ? "Cancel" : undefined}
+      trigger={trigger}
       title="Cancel this booking?"
       description={description}
       confirmLabel="Yes, cancel"

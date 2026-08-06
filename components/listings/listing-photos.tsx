@@ -72,8 +72,8 @@ export function ListingPhotos({
                         sizes="160px"
                         className="object-cover"
                       />
-                      <span className="absolute inset-0 flex items-center justify-center bg-black/0 opacity-0 transition-colors group-hover:bg-black/30 group-hover:opacity-100">
-                        <Search className="size-4 text-white" />
+                      <span className="absolute inset-0 flex items-center justify-center bg-overlay/0 opacity-0 transition-colors group-hover:bg-overlay/30 group-hover:opacity-100">
+                        <Search className="size-4 text-overlay-foreground" />
                       </span>
                     </button>
 

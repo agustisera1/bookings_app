@@ -47,3 +47,4 @@ resuelve.
   así que las dos latencias se suman.
 - **Idea de fix:** con ES la disponibilidad se resuelve como filtro en el índice de búsqueda, en vez
   de un `$nin` post-hoc. Va en el mismo paquete que el punto 4.
+

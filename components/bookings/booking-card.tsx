@@ -10,7 +10,7 @@ import {
   listingTypeGradient,
 } from "@/lib/utils";
 import { CancelBookingButton } from "@/components/bookings/cancel-booking-button";
-import type { BookingRow } from "./user-bookings-model";
+import { toCancellableRow, type BookingRow } from "./bookings-model";
 
 export function BookingCard({
   booking,
@@ -20,8 +20,8 @@ export function BookingCard({
   muted: boolean;
 }) {
   const nights = calcNights(booking.start_date, booking.end_date);
-  const gradient = listingTypeGradient(booking.type);
-  const cover = booking.photos?.[0];
+  const gradient = listingTypeGradient(booking.listing?.type);
+  const cover = booking.listing?.photos?.[0];
 
   return (
     <li>
@@ -35,7 +35,7 @@ export function BookingCard({
         <Link
           href={`/bookings/${booking.id}`}
           className="absolute inset-0 z-0"
-          aria-label={`View booking for ${booking.title ?? "listing"}`}
+          aria-label={`View booking for ${booking.listing?.title ?? "listing"}`}
         />
         <div
           className={`relative flex h-24 items-end overflow-hidden p-3 ${
@@ -45,7 +45,7 @@ export function BookingCard({
           {cover ? (
             <Image
               src={cover}
-              alt={booking.title ?? ""}
+              alt={booking.listing?.title ?? ""}
               fill
               sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
               className="object-cover transition-transform duration-300 group-hover:scale-105"
@@ -53,14 +53,14 @@ export function BookingCard({
           ) : (
             <div className={`absolute inset-0 bg-gradient-to-br ${gradient}`} />
           )}
-          <Badge className="relative bg-black/20 text-white/90 uppercase tracking-widest text-2xs backdrop-blur-sm hover:bg-black/30">
-            {booking.type}
+          <Badge className="relative bg-overlay/20 text-overlay-foreground/90 uppercase tracking-widest text-2xs backdrop-blur-sm hover:bg-overlay/30">
+            {booking.listing?.type}
           </Badge>
         </div>
 
         <CardContent className="flex flex-1 flex-col gap-3 p-4">
           <h3 className="line-clamp-2 min-w-0 text-lg font-semibold leading-snug transition-colors group-hover:text-primary">
-            {booking.title}
+            {booking.listing?.title}
           </h3>
 
           <div className="flex flex-col gap-1.5 text-sm text-muted-foreground">
@@ -104,11 +104,7 @@ export function BookingCard({
               <CancelBookingButton
                 bookingId={booking.id ?? ""}
                 actor="guest"
-                booking={{
-                  status: booking.status ?? "pending",
-                  startDate: booking.start_date ?? "",
-                  totalPrice: booking.total_price ?? 0,
-                }}
+                booking={toCancellableRow(booking)}
               />
             </div>
           </div>

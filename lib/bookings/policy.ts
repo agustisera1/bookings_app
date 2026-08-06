@@ -50,12 +50,42 @@ export function toCancellableBooking(booking: Booking): CancellableBooking {
   };
 }
 
+export function toCompletableBooking(booking: Booking): CompletableBooking {
+  return { status: booking.status, endDate: booking.end_date };
+}
+
 export function isTerminal(status: BookingStatus): boolean {
   return TERMINAL_STATUSES.includes(status);
 }
 
+/** The fields the completion rule reads. Same reasoning as `CancellableBooking`. */
+export type CompletableBooking = {
+  status: BookingStatus;
+  endDate: string;
+};
+
+/**
+ * A stay that actually happened: the host accepted it and its end date has
+ * passed. There is no `completed` status to read (see `BookingStatus`) — this
+ * predicate *is* the definition, which is why reviewing gates on it rather than
+ * on merely having booked.
+ */
+export function isCompleted(booking: CompletableBooking, now: Date): boolean {
+  return (
+    booking.status === "accepted" &&
+    new Date(booking.endDate).getTime() < now.getTime()
+  );
+}
+
 export function hasStarted(booking: CancellableBooking, now: Date): boolean {
   return new Date(booking.startDate).getTime() <= now.getTime();
+}
+
+/** The instant the guest's free-cancellation window closes. */
+export function freeCancellationDeadline(booking: CancellableBooking): Date {
+  return new Date(
+    new Date(booking.startDate).getTime() - FREE_CANCELLATION_WINDOW_MS,
+  );
 }
 
 /**
@@ -77,8 +107,7 @@ export function refundFor(
   // The host broke a confirmed commitment: no forfeit window applies to them.
   if (actor === "host") return booking.totalPrice;
 
-  const freeUntil =
-    new Date(booking.startDate).getTime() - FREE_CANCELLATION_WINDOW_MS;
+  const freeUntil = freeCancellationDeadline(booking).getTime();
   return now.getTime() < freeUntil ? booking.totalPrice : 0;
 }
 

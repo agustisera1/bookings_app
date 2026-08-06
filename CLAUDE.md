@@ -183,7 +183,7 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/dates.ts` | `parseTs`, `formatDate`, `calcNights`, `datePickerTriggerClass` |
 | `lib/types/index.ts` | Tipos compartidos (`ServiceResult`, etc.) |
 | `lib/services/*` | Lógica de negocio server-side (siempre retornan `ServiceResult`) |
-| `lib/bookings/policy.ts` | Reglas puras del ciclo de vida de una reserva: transiciones legales, `canCancel`, `refundFor` |
+| `lib/bookings/policy.ts` | Reglas puras del ciclo de vida de una reserva: transiciones legales, `canCancel`, `refundFor`, `isCompleted` |
 | `lib/apollo/*` | Cliente Apollo, resolvers, schema, tipos generados |
 | `lib/postgres.ts` | Cliente PostgreSQL y helpers de error |
 | `lib/mongo.ts` | Cliente MongoDB |
@@ -338,6 +338,7 @@ Todo color, radio y tamaño de texto sale de un token en `app/globals.css` (`@th
 | Grupo | Tokens | Cuándo usarlos |
 |---|---|---|
 | Superficies | `background`, `card`, `popover`, `muted`, `sidebar` | Fondos, por altitud |
+| Sobre imagen | `overlay`, `overlay-foreground` | Scrim y texto encima de una foto (badge sobre la portada, degradado del hero). Único sin par light/dark a propósito: va sobre la imagen, no sobre una superficie de la página |
 | Texto y bordes | `foreground`, `muted-foreground`, `border`, `input`, `ring` | Texto, separadores, foco |
 | Semánticos | `primary`, `secondary`, `accent`, `success`, `destructive`, `rating` | Acción, énfasis, estado. `rating` = amarillo de estrellas |
 | Radios | `--radius` → `radius-sm … radius-4xl` | Todo derivado de un único radio base |
@@ -355,7 +356,8 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 | `EmptyState` | Estado vacío centrado (icono + título + descripción + acción) | ✓ |
 | `PriceLabel` | Precio "por noche" formateado con `formatPrice` | ✓ |
 | `DatePicker` | Campo de fecha única: trigger (ícono + fecha formateada) + `Calendar` en `Popover`. `open`/`onOpenChange` opcionales para coordinar pickers hermanos | Client |
-| `PageLayout` | Shell de página: heading grande sticky + contenido scrollable, con slots `actions`/`toolbar`. Es el borde de la ruta | ✓ |
+| `BackLink` | Salida de una ruta de detalle hacia su lista (chevron + label) | ✓ |
+| `PageLayout` | Shell de página: heading grande sticky + contenido scrollable, con slots `back`/`actions`/`toolbar`. `maxWidth` acota header y contenido a la misma columna. Es el borde de la ruta | ✓ |
 | `Section` | Encabezado (título + subtítulo) sobre un bloque **dentro** de una página, con `Card` opcional | ✓ |
 | `RouteError` | Cuerpo de un `error.tsx`: `EmptyState` + botón "Try again" (`reset`) + escape hatch (`homeAction`) | Client |
 
@@ -365,6 +367,8 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 |-----------|----------|
 | Encabezado + estructura de una página (ruta) | `PageLayout` con `title` (y `subtitle`/`actions`/`toolbar` opcionales) — nunca rearmar el `<div className="p-10 flex flex-col …">` con un `<h1>` a mano |
 | Bloque titulado **dentro** de una página | `Section` (h2). Regla de altitud: `PageLayout` en el borde de la ruta, `Section` para los bloques que viven adentro |
+| Volver desde una ruta de detalle (`[id]/page.tsx`) | `BackLink` con `href` explícito — nunca `router.back()` ni el `<Link>` + `ChevronLeft` a mano. Toda ruta `[id]` lo debe ofrecer, salvo que su layout ya deje la lista en pantalla (ref: `messages/`, cuyo rail no se va). Dentro de `PageLayout` va por el slot `back` |
+| Ancho de una página de detalle | `maxWidth="max-w-6xl"` en `PageLayout` — la medida de `listings/[id]`; las de detalle van todas iguales. Nunca un `mx-auto max-w-*` solo en el contenido: deja el título y las acciones en una columna distinta a la del cuerpo |
 | Fila de formulario (label + control + error) | `FormField` — nunca reconstruir el `<div className="flex flex-col gap-1.5">` a mano |
 | Mensaje de error de un campo suelto | `FieldError` (o el prop `error` de `FormField`) — nunca `<p className="text-xs text-destructive">` |
 | Área de texto | `Textarea` de `ui/` — nunca un `<textarea>` con clases crudas |
@@ -666,7 +670,7 @@ Browser → cookies → Next.js (AsyncLocalStorage store A)
 | Necesitás… | Importá desde | Ejemplos |
 |------------|---------------|----------|
 | Resultado de una query / sus variables / el document | `__generated__/operations.ts` | `GetListingsQuery`, `GetListingsQueryVariables`, `GetListingsDocument` |
-| Tipos del schema (outputs) e **inputs** | `__generated__/resolvers-types.ts` | `Listing`, `Location`, `GuestBooking`, `FiltersInput`, `LocationInput` |
+| Tipos del schema (outputs) e **inputs** | `__generated__/resolvers-types.ts` | `Listing`, `Location`, `Booking`, `FiltersInput`, `LocationInput` |
 | Resolvers del server GraphQL | `__generated__/resolvers-types.ts` | `QueryResolvers`, `ListingResolvers` |
 | Tipo de dominio de la app (no-GraphQL) | `lib/types/*` o el service | `Booking`, `Review`, `ServiceResult` |
 

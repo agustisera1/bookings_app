@@ -51,17 +51,6 @@ export async function createBookingRecord(
   return result.rows[0] ?? null;
 }
 
-export async function hasGuestBookingForListing(
-  guestId: string,
-  listingId: string,
-): Promise<boolean> {
-  const result = await db.query(
-    `SELECT 1 FROM bookings WHERE guest_id = $1 AND listing_id = $2 LIMIT 1`,
-    [guestId, listingId],
-  );
-  return (result.rowCount ?? 0) > 0;
-}
-
 export async function getBookingById(
   bookingId: string,
 ): Promise<Booking | null> {

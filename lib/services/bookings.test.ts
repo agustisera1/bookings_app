@@ -33,6 +33,7 @@ import {
   acceptBooking,
   cancelBooking,
   createBooking,
+  getBooking,
   getUserBookings,
   rejectBooking,
 } from "./bookings";
@@ -140,6 +141,57 @@ describe("getUserBookings", () => {
     vi.mocked(bookingsRepo.findBookingsByGuestId).mockRejectedValue(new Error("connection reset"));
     const res = await getUserBookings();
     expect(res).toEqual({ ok: false, error: "Could not retrieve your bookings", code: "UNEXPECTED" });
+  });
+});
+
+describe("getBooking", () => {
+  const NOT_FOUND = {
+    ok: false,
+    error: "Booking not found",
+    code: "NOT_FOUND",
+  };
+
+  it("returns the auth failure without hitting the repo", async () => {
+    vi.mocked(authorize).mockResolvedValue({ ok: false, error: "Unauthenticated", code: "UNAUTHORIZED" });
+    const res = await getBooking("b1");
+    expect(res).toEqual({ ok: false, error: "Unauthenticated", code: "UNAUTHORIZED" });
+    expect(bookingsRepo.getBookingById).not.toHaveBeenCalled();
+  });
+
+  it("resolves the guest's own booking", async () => {
+    const row = makeBooking({ guest_id: "u1" });
+    vi.mocked(bookingsRepo.getBookingById).mockResolvedValue(row);
+    const res = await getBooking("b1");
+    expect(res).toEqual({ ok: true, data: { booking: row, party: "guest" } });
+    // The guest branch answers from the row itself — no listing lookup needed.
+    expect(listingsRepo.findListingById).not.toHaveBeenCalled();
+  });
+
+  it("resolves it for the host of the listing", async () => {
+    vi.mocked(authorize).mockResolvedValue({ ok: true, data: hostUser() });
+    const row = makeBooking({ guest_id: "someone-else" });
+    vi.mocked(bookingsRepo.getBookingById).mockResolvedValue(row);
+    vi.mocked(listingsRepo.findListingById).mockResolvedValue(listingDoc({ host_id: "h1" }));
+
+    const res = await getBooking("b1");
+    expect(res).toEqual({ ok: true, data: { booking: row, party: "host" } });
+  });
+
+  // The point of the collapse: a stranger can't tell an existing booking from
+  // a missing one, so this route never confirms someone else's reservation.
+  it("gives a bystander the same NOT_FOUND as a booking that doesn't exist", async () => {
+    vi.mocked(bookingsRepo.getBookingById).mockResolvedValue(makeBooking({ guest_id: "someone-else" }));
+    vi.mocked(listingsRepo.findListingById).mockResolvedValue(listingDoc({ host_id: "another-host" }));
+    expect(await getBooking("b1")).toEqual(NOT_FOUND);
+
+    vi.mocked(bookingsRepo.getBookingById).mockResolvedValue(null);
+    expect(await getBooking("b1")).toEqual(NOT_FOUND);
+  });
+
+  it("maps an unexpected repo failure to a generic message", async () => {
+    vi.mocked(bookingsRepo.getBookingById).mockRejectedValue(new Error("connection reset"));
+    const res = await getBooking("b1");
+    expect(res).toEqual({ ok: false, error: "Could not retrieve the booking", code: "UNEXPECTED" });
   });
 });
 
