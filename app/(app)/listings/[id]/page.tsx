@@ -2,7 +2,6 @@ import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/common/section";
 import { PriceLabel } from "@/components/common/price-label";
 import { BookingForm } from "@/components/bookings/booking-form";
-import { ReviewForm } from "@/components/reviews/review-form";
 import { ListingPhotos } from "@/components/listings/listing-photos";
 import { EditListingButton } from "@/components/listings/edit-listing-button";
 import { DeleteListingButton } from "@/components/listings/delete-listing-button";
@@ -121,40 +120,23 @@ export default async function ListingDetailPage({
               />
             </Section>
 
-            {isHostMode ? (
-              <Section
-                title="Other reviews"
-                subtitle="What guests are saying about this listing"
-                card
-                cardSize="sm"
-              >
-                <ListingReviews
-                  reviewsPromise={reviewsPromise}
-                  isHostMode={isHostMode}
-                />
-              </Section>
-            ) : (
-              <>
-                <Section
-                  title="Leave a review"
-                  subtitle="Share your experience to help other guests."
-                >
-                  <ReviewForm listingId={listing._id} />
-                </Section>
-
-                <Section
-                  title="Other reviews"
-                  subtitle="Check out other customer comments"
-                  card
-                  cardSize="sm"
-                >
-                  <ListingReviews
-                    reviewsPromise={reviewsPromise}
-                    isHostMode={isHostMode}
-                  />
-                </Section>
-              </>
-            )}
+            {/* Reviews are written from the booking they belong to
+                (`bookings/[id]`), so this page only shows them. */}
+            <Section
+              title="Reviews"
+              subtitle={
+                isHostMode
+                  ? "What guests are saying about this listing"
+                  : "What guests who stayed here are saying"
+              }
+              card
+              cardSize="sm"
+            >
+              <ListingReviews
+                reviewsPromise={reviewsPromise}
+                isHostMode={isHostMode}
+              />
+            </Section>
           </div>
 
           <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:pl-10">

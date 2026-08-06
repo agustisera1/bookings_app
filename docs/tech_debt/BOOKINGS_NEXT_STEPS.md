@@ -1,56 +1,39 @@
 # BOOKINGS_NEXT_STEPS.md — Deuda estructural de reservas
 
-Gaps de contrato y de alcance de la feature de reservas. El costo de query del detalle es otra
-cosa y vive en [`PERFORMANCE.md`](./PERFORMANCE.md) punto 6; los tres se cierran en el mismo
-cambio de schema.
+## 1. Un host no tiene vista propia de una reserva recibida — sin ticket
 
-## 1. `GuestBooking` proyecta menos de lo que ya tiene en memoria — sin ticket
+- **Dónde:** `app/(app)/bookings/[id]/page.tsx`.
 
-- **Dónde:** `lib/apollo/schema.graphql` (`type GuestBooking`) + el `.map()` de
-  `lib/apollo/resolvers.ts`.
+- **Qué pasa:** el dato ya está: `Query.booking(id)` resuelve para **cualquiera** de las dos partes
+  y devuelve `party` con el lado del que mira. Lo que falta es la vista: la página está escrita para
+  el guest —"Your stay", "Message host", el botón de cancelar con `actor="guest"`— así que hoy hace
+  `notFound()` cuando `party === "host"` en vez de mostrarle copy equivocado.
 
-- **Qué pasa:** el resolver ya tiene el row completo de PG (`findBookingsByGuestId` hace `SELECT *`)
-  y el doc completo de Mongo (`findListingsByIds` no proyecta), y descarta todo lo que no entra en
-  los 10 campos del tipo.
+- **Por qué duele:** el rol host gestiona reservas recibidas (RF-02), pero su única vista sigue
+  siendo el bloque embebido en `listings/[id]`. No tiene página por reserva, ni el accept/reject
+  desde ahí.
 
-- **Por qué duele:** son datos que la UI necesita y que no cuestan I/O adicional.
-  - Del row: `listing_id` (sin él el detalle no puede linkear al listing), `status_reason` (el
-    motivo que el host escribió), `refund_amount` (lo reembolsado **de verdad**; hoy la UI solo
-    estima con `refundFor`), `cancelled_by`, `cancelled_at`.
-  - Del doc: `location`, `price` (la tarifa real por noche — hoy `booking-detail-model.ts` la
-    deriva como `total ÷ noches`), `attributes.check_in_time` / `check_out_time`, `host_id`.
+- **Idea de fix:** ramificar el detalle por `party`. Lo que cambia es copy, las acciones
+  (accept/reject vía `ManageBookingActions` en vez de cancelar) y el contraparte que se muestra
+  (`guest` en lugar de `host`, que el schema todavía no expone). El acceso a datos no se toca.
 
-- **Idea de fix:** un campo `listing: Listing` en vez de aplanar campo por campo — el tipo `Listing`
-  ya existe en el schema con `location`, `price` y `rating_avg`. No toca services ni repos.
-
-## 2. Un host no puede abrir el detalle de una reserva recibida — sin ticket
-
-- **Dónde:** `app/(app)/bookings/[id]/page.tsx`, que resuelve contra `Query.guestBookings`.
-
-- **Qué pasa:** `guestBookings` devuelve solo las filas donde el usuario es **guest**. Para un host,
-  la reserva que recibió no está en la lista y la ruta responde 404 — indistinguible de una reserva
-  que no existe, porque ese colapso es deliberado (evita confirmar reservas ajenas).
-
-- **Por qué duele:** el rol host existe y gestiona reservas recibidas (RF-02), pero su única vista
-  es el bloque embebido en `listings/[id]`. No tiene página propia por reserva.
-
-- **Idea de fix:** el `Query.booking(id)` del punto 6 de `PERFORMANCE.md`, con el scoping por
-  ownership aceptando guest **u** host. No hace falta un `findBookingsByHostId` nuevo: es
-  componible con `getListings({ own: true })` → `getBookingsByListingIds`, que ya existen.
-
-## 3. Una reseña no se puede atar a una reserva ni a su autor — sin ticket
+## 2. Una reseña no queda atada a la reserva que la originó — sin ticket
 
 - **Dónde:** tabla `reviews` (`db/migrations/001_initial_schema.sql:35-43`), `reviews.pg.ts`.
 
-- **Qué pasa:** la tabla es `listing_id` + `author_name` (texto libre). No tiene `booking_id` ni
-  `author_id`.
+- **Qué pasa:** `createReview` ya **recibe** un `bookingId`, verifica ownership y exige
+  `isCompleted`. Pero la fila que escribe es `listing_id` + `author_name` (texto libre): la reserva
+  y el autor se usan para autorizar y después se tiran.
 
-- **Por qué duele:** no hay forma de preguntar "¿este huésped ya reseñó esta estadía?", así que el
-  detalle de una reserva completada no puede ofrecer el CTA de reseña ni evitar duplicados. La
-  regla de negocio "solo reseña quien completó una reserva" no es verificable contra los datos.
+- **Por qué duele:** nada impide reseñar **la misma estadía muchas veces**. El detalle de la reserva
+  ofrece el formulario cada vez que se abre, porque no hay forma de preguntar "¿esta reserva ya
+  tiene reseña?". Tampoco se puede listar "mis reseñas" ni editar una propia: `author_name` es una
+  copia del nombre al momento de escribir, no una referencia al usuario.
 
-- **Idea de fix:** migración que agregue `booking_id` y `author_id` con FK. Es la única de las tres
-  que no se resuelve con schema de GraphQL.
+- **Idea de fix:** migración que agregue `booking_id` (UNIQUE) y `author_id` con FK. El UNIQUE es lo
+  que convierte "no duplicar" en una garantía de la DB en vez de un chequeo que se puede olvidar —
+  mismo criterio que el `no_overlap` de las reservas. Con eso el formulario se puede esconder cuando
+  ya hay reseña, en vez de fallar al enviar.
 
 > **Nota:** el modelo de datos de `CLAUDE.md` describe `REVIEWS` con `booking_id` y `author_id`.
 > La tabla real nunca los tuvo. Corregir esa sección es parte de este ítem.

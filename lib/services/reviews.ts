@@ -5,33 +5,38 @@ import * as db from "../postgres";
 import * as reviewsRepo from "../repositories/reviews.pg";
 import * as bookingsRepo from "../repositories/bookings.pg";
 import * as listingsRepo from "../repositories/listings.mongo";
+import { isCompleted, toCompletableBooking } from "../bookings/policy";
 import { revalidatePath } from "next/cache";
 
 export type { Review } from "../types/review";
 
+/**
+ * A review belongs to a stay, so it's written from the booking: the listing is
+ * read off the booking rather than trusted from the caller, and the same
+ * `isCompleted` rule the UI uses decides whether there's anything to review.
+ */
 export async function createReview({
+  bookingId,
   rating,
   comment,
-  listing_id,
 }: {
+  bookingId: string;
   rating: number;
   comment: string;
-  listing_id: string;
 }): Promise<ServiceResult> {
   const auth = await authorize("reviews:create");
   if (!auth.ok) return auth;
 
   try {
-    const hasBooking = await bookingsRepo.hasGuestBookingForListing(
-      auth.data.id,
-      listing_id,
-    );
+    const booking = await bookingsRepo.getBookingById(bookingId);
+    // A booking that isn't the caller's own reads the same as a missing one.
+    if (!booking || booking.guest_id !== auth.data.id)
+      return { ok: false, error: "Booking not found", code: "NOT_FOUND" };
 
-    if (!hasBooking)
+    if (!isCompleted(toCompletableBooking(booking), new Date()))
       return {
         ok: false,
-        error:
-          "You need a completed booking for this listing to leave a review",
+        error: "You can only review a stay once it's finished",
         code: "FORBIDDEN",
       };
 
@@ -39,7 +44,7 @@ export async function createReview({
       rating,
       comment,
       authorName: auth.data.name,
-      listingId: listing_id,
+      listingId: booking.listing_id,
     });
 
     if (!review)
@@ -50,7 +55,8 @@ export async function createReview({
       };
 
     revalidatePath("/listings");
-    revalidatePath(`/listings/${listing_id}`);
+    revalidatePath(`/listings/${booking.listing_id}`);
+    revalidatePath(`/bookings/${bookingId}`);
     return { data: review, ok: true };
   } catch (error) {
     const code = db.pgErrorToCode(error);

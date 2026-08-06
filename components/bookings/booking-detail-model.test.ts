@@ -1,18 +1,21 @@
 import { describe, expect, it } from "vitest";
 import {
+  cancellationRecord,
   describeStatus,
   priceBreakdown,
   refundDeadline,
   stayStage,
 } from "./booking-detail-model";
-import type { BookingRow } from "./bookings-model";
+import type { BookingDetailRow } from "./bookings-model";
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
 const START = Date.UTC(2026, 7, 10);
 const END = Date.UTC(2026, 7, 15);
 
-function booking(overrides: Partial<BookingRow> = {}): BookingRow {
+function booking(
+  overrides: Partial<BookingDetailRow> = {},
+): BookingDetailRow {
   return {
     id: "b1",
     status: "accepted",
@@ -20,7 +23,7 @@ function booking(overrides: Partial<BookingRow> = {}): BookingRow {
     end_date: String(END),
     total_price: 500,
     ...overrides,
-  } as unknown as BookingRow;
+  } as unknown as BookingDetailRow;
 }
 
 describe("stayStage — boundaries of the stay window", () => {
@@ -83,6 +86,44 @@ describe("describeStatus — the stage disambiguates a status that never moved",
       "Stay in progress",
     );
     expect(describeStatus("accepted", "past").headline).toBe("Completed");
+  });
+});
+
+describe("cancellationRecord — a settlement, not a forecast", () => {
+  it("is null while the booking is still live", () => {
+    expect(cancellationRecord(booking({ status: "accepted" }))).toBeNull();
+  });
+
+  it("is null for a rejection — the host declined, nobody cancelled", () => {
+    expect(cancellationRecord(booking({ status: "rejected" }))).toBeNull();
+  });
+
+  it("reads who cancelled, when, and what was actually refunded", () => {
+    const cancelled = booking({
+      status: "cancelled",
+      cancelled_by: "host",
+      cancelled_at: String(START - DAY_MS),
+      refund_amount: 500,
+    });
+    expect(cancellationRecord(cancelled)).toEqual({
+      actor: "host",
+      at: String(START - DAY_MS),
+      refundAmount: 500,
+    });
+  });
+
+  it("reports a zero refund rather than falling back to the total", () => {
+    const cancelled = booking({
+      status: "cancelled",
+      cancelled_by: "guest",
+      cancelled_at: null,
+      refund_amount: 0,
+    });
+    expect(cancellationRecord(cancelled)).toEqual({
+      actor: "guest",
+      at: null,
+      refundAmount: 0,
+    });
   });
 });
 

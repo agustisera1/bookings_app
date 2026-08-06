@@ -183,7 +183,7 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 | `lib/dates.ts` | `parseTs`, `formatDate`, `calcNights`, `datePickerTriggerClass` |
 | `lib/types/index.ts` | Tipos compartidos (`ServiceResult`, etc.) |
 | `lib/services/*` | Lógica de negocio server-side (siempre retornan `ServiceResult`) |
-| `lib/bookings/policy.ts` | Reglas puras del ciclo de vida de una reserva: transiciones legales, `canCancel`, `refundFor` |
+| `lib/bookings/policy.ts` | Reglas puras del ciclo de vida de una reserva: transiciones legales, `canCancel`, `refundFor`, `isCompleted` |
 | `lib/apollo/*` | Cliente Apollo, resolvers, schema, tipos generados |
 | `lib/postgres.ts` | Cliente PostgreSQL y helpers de error |
 | `lib/mongo.ts` | Cliente MongoDB |
@@ -670,7 +670,7 @@ Browser → cookies → Next.js (AsyncLocalStorage store A)
 | Necesitás… | Importá desde | Ejemplos |
 |------------|---------------|----------|
 | Resultado de una query / sus variables / el document | `__generated__/operations.ts` | `GetListingsQuery`, `GetListingsQueryVariables`, `GetListingsDocument` |
-| Tipos del schema (outputs) e **inputs** | `__generated__/resolvers-types.ts` | `Listing`, `Location`, `GuestBooking`, `FiltersInput`, `LocationInput` |
+| Tipos del schema (outputs) e **inputs** | `__generated__/resolvers-types.ts` | `Listing`, `Location`, `Booking`, `FiltersInput`, `LocationInput` |
 | Resolvers del server GraphQL | `__generated__/resolvers-types.ts` | `QueryResolvers`, `ListingResolvers` |
 | Tipo de dominio de la app (no-GraphQL) | `lib/types/*` o el service | `Booking`, `Review`, `ServiceResult` |
 

@@ -12,6 +12,28 @@ export type Scalars = {
   Float: { input: number; output: number; }
 };
 
+export type Booking = {
+  __typename?: 'Booking';
+  cancelled_at?: Maybe<Scalars['String']['output']>;
+  cancelled_by?: Maybe<BookingParty>;
+  created_at?: Maybe<Scalars['String']['output']>;
+  end_date?: Maybe<Scalars['String']['output']>;
+  guests?: Maybe<Scalars['Int']['output']>;
+  host?: Maybe<UserSummary>;
+  id: Scalars['ID']['output'];
+  listing?: Maybe<Listing>;
+  party?: Maybe<BookingParty>;
+  refund_amount?: Maybe<Scalars['Float']['output']>;
+  start_date?: Maybe<Scalars['String']['output']>;
+  status?: Maybe<BookingStatus>;
+  status_reason?: Maybe<Scalars['String']['output']>;
+  total_price?: Maybe<Scalars['Float']['output']>;
+};
+
+export type BookingParty =
+  | 'guest'
+  | 'host';
+
 export type BookingStatus =
   | 'accepted'
   | 'cancelled'
@@ -34,23 +56,10 @@ export type FiltersInput = {
   type?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type GuestBooking = {
-  __typename?: 'GuestBooking';
-  created_at?: Maybe<Scalars['String']['output']>;
-  end_date?: Maybe<Scalars['String']['output']>;
-  guests?: Maybe<Scalars['Int']['output']>;
-  id?: Maybe<Scalars['ID']['output']>;
-  photos?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
-  start_date?: Maybe<Scalars['String']['output']>;
-  status?: Maybe<BookingStatus>;
-  title?: Maybe<Scalars['String']['output']>;
-  total_price?: Maybe<Scalars['Float']['output']>;
-  type?: Maybe<Scalars['String']['output']>;
-};
-
 export type Listing = {
   __typename?: 'Listing';
   _id: Scalars['String']['output'];
+  attributes?: Maybe<ListingAttributes>;
   availabilityRange?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   description: Scalars['String']['output'];
   host_id: Scalars['String']['output'];
@@ -61,6 +70,18 @@ export type Listing = {
   rating_avg?: Maybe<Scalars['Float']['output']>;
   title: Scalars['String']['output'];
   type: Scalars['String']['output'];
+};
+
+export type ListingAttributes = {
+  __typename?: 'ListingAttributes';
+  amenities?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
+  bathrooms?: Maybe<Scalars['Int']['output']>;
+  beds?: Maybe<Scalars['Int']['output']>;
+  check_in_time?: Maybe<Scalars['String']['output']>;
+  check_out_time?: Maybe<Scalars['String']['output']>;
+  max_guests?: Maybe<Scalars['Int']['output']>;
+  minimum_nights?: Maybe<Scalars['Int']['output']>;
+  property_type?: Maybe<Scalars['String']['output']>;
 };
 
 export type Location = {
@@ -81,9 +102,15 @@ export type LocationInput = {
 
 export type Query = {
   __typename?: 'Query';
-  guestBookings?: Maybe<Array<Maybe<GuestBooking>>>;
+  booking?: Maybe<Booking>;
+  guestBookings?: Maybe<Array<Maybe<Booking>>>;
   listing?: Maybe<Listing>;
   listings?: Maybe<Array<Listing>>;
+};
+
+
+export type QueryBookingArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -94,6 +121,12 @@ export type QueryListingArgs = {
 
 export type QueryListingsArgs = {
   filters?: InputMaybe<FiltersInput>;
+};
+
+export type UserSummary = {
+  __typename?: 'UserSummary';
+  id: Scalars['ID']['output'];
+  name?: Maybe<Scalars['String']['output']>;
 };
 
 export type WithIndex<TObject> = TObject & Record<string, any>;
@@ -170,50 +203,60 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
+  Booking: ResolverTypeWrapper<Booking>;
+  BookingParty: BookingParty;
   BookingStatus: BookingStatus;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
   FiltersInput: FiltersInput;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
-  GuestBooking: ResolverTypeWrapper<GuestBooking>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
   Listing: ResolverTypeWrapper<Listing>;
+  ListingAttributes: ResolverTypeWrapper<ListingAttributes>;
   Location: ResolverTypeWrapper<Location>;
   LocationInput: LocationInput;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
+  UserSummary: ResolverTypeWrapper<UserSummary>;
 }>;
 
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
+  Booking: Booking;
   Boolean: Scalars['Boolean']['output'];
   FiltersInput: FiltersInput;
   Float: Scalars['Float']['output'];
-  GuestBooking: GuestBooking;
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
   Listing: Listing;
+  ListingAttributes: ListingAttributes;
   Location: Location;
   LocationInput: LocationInput;
   Query: Record<PropertyKey, never>;
   String: Scalars['String']['output'];
+  UserSummary: UserSummary;
 }>;
 
-export type GuestBookingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['GuestBooking'] = ResolversParentTypes['GuestBooking']> = ResolversObject<{
+export type BookingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Booking'] = ResolversParentTypes['Booking']> = ResolversObject<{
+  cancelled_at?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  cancelled_by?: Resolver<Maybe<ResolversTypes['BookingParty']>, ParentType, ContextType>;
   created_at?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   end_date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   guests?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
-  id?: Resolver<Maybe<ResolversTypes['ID']>, ParentType, ContextType>;
-  photos?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  host?: Resolver<Maybe<ResolversTypes['UserSummary']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  listing?: Resolver<Maybe<ResolversTypes['Listing']>, ParentType, ContextType>;
+  party?: Resolver<Maybe<ResolversTypes['BookingParty']>, ParentType, ContextType>;
+  refund_amount?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   start_date?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   status?: Resolver<Maybe<ResolversTypes['BookingStatus']>, ParentType, ContextType>;
-  title?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  status_reason?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   total_price?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
-  type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
 }>;
 
 export type ListingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Listing'] = ResolversParentTypes['Listing']> = ResolversObject<{
   _id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  attributes?: Resolver<Maybe<ResolversTypes['ListingAttributes']>, ParentType, ContextType>;
   availabilityRange?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   host_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -226,6 +269,17 @@ export type ListingResolvers<ContextType = ApolloContext, ParentType extends Res
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
+export type ListingAttributesResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['ListingAttributes'] = ResolversParentTypes['ListingAttributes']> = ResolversObject<{
+  amenities?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
+  bathrooms?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  beds?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  check_in_time?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  check_out_time?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  max_guests?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  minimum_nights?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
+  property_type?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+}>;
+
 export type LocationResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Location'] = ResolversParentTypes['Location']> = ResolversObject<{
   address?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   city?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -234,15 +288,23 @@ export type LocationResolvers<ContextType = ApolloContext, ParentType extends Re
 }>;
 
 export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
-  guestBookings?: Resolver<Maybe<Array<Maybe<ResolversTypes['GuestBooking']>>>, ParentType, ContextType>;
+  booking?: Resolver<Maybe<ResolversTypes['Booking']>, ParentType, ContextType, RequireFields<QueryBookingArgs, 'id'>>;
+  guestBookings?: Resolver<Maybe<Array<Maybe<ResolversTypes['Booking']>>>, ParentType, ContextType>;
   listing?: Resolver<Maybe<ResolversTypes['Listing']>, ParentType, ContextType, RequireFields<QueryListingArgs, 'listing_id'>>;
   listings?: Resolver<Maybe<Array<ResolversTypes['Listing']>>, ParentType, ContextType, Partial<QueryListingsArgs>>;
 }>;
 
+export type UserSummaryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UserSummary'] = ResolversParentTypes['UserSummary']> = ResolversObject<{
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+}>;
+
 export type Resolvers<ContextType = ApolloContext> = ResolversObject<{
-  GuestBooking?: GuestBookingResolvers<ContextType>;
+  Booking?: BookingResolvers<ContextType>;
   Listing?: ListingResolvers<ContextType>;
+  ListingAttributes?: ListingAttributesResolvers<ContextType>;
   Location?: LocationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  UserSummary?: UserSummaryResolvers<ContextType>;
 }>;
 

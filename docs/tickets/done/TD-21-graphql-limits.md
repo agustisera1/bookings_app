@@ -17,15 +17,20 @@
 ### Lo que NO es el problema — diagnóstico corregido
 
 El reflejo ante un GraphQL público es limitar la **profundidad** de las queries. Verificado contra
-`lib/apollo/schema.graphql`: **acá no aplica.** El schema es plano —`Listing` referencia `Location`,
-que es todo escalares; `GuestBooking` no referencia ningún objeto— y **no hay un solo ciclo**. La
-profundidad máxima alcanzable es 3.
+`lib/apollo/schema.graphql`: **acá no aplica.** El grafo de objetos es un árbol y **no hay un solo
+ciclo** — `Booking → Listing → {Location, ListingAttributes}` y `Booking → UserSummary`, con todas
+las hojas escalares. La profundidad máxima alcanzable es 4.
 
-No hay `Listing.host: User` ni `Booking.listing: Listing`, que es lo que haría posible un anidamiento
-recursivo. Poner un límite de profundidad acá sería defenderse de un ataque que el schema no permite.
+Ningún tipo referencia hacia atrás al que lo contiene (no hay `Listing.bookings` ni
+`UserSummary.listings`), que es lo que haría posible un anidamiento recursivo. Poner un límite de
+profundidad acá sería defenderse de un ataque que el schema no permite.
 
-> Que el schema sea plano es lo que **desplaza** el vector, no lo que lo elimina. Los dos que siguen
-> existen justamente porque es plano.
+> Que el grafo sea acíclico es lo que **desplaza** el vector, no lo que lo elimina. Los dos que
+> siguen existen justamente por eso.
+>
+> **Lo que sí reabriría esto:** una arista de vuelta (p. ej. `Listing.bookings: [Booking]`). Ahí el
+> anidamiento pasa a ser ilimitado y el límite de profundidad deja de ser defensa de un ataque
+> imposible.
 
 ### 1. `limit` no tiene techo — `lib/services/listings.ts:93`
 

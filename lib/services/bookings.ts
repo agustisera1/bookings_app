@@ -4,10 +4,9 @@ import type { ServiceResult } from "../types";
 import * as db from "../postgres";
 import * as bookingsRepo from "../repositories/bookings.pg";
 import * as listingsRepo from "../repositories/listings.mongo";
-import * as usersRepo from "../repositories/users.pg";
 import { revalidatePath } from "next/cache";
 import type { CurrentUser } from "../types/user";
-import type { Booking, CancelActor } from "../types/booking";
+import type { Booking, BookingParty, CancelActor } from "../types/booking";
 import { canCancel, toCancellableBooking } from "../bookings/policy";
 
 export type {
@@ -97,19 +96,64 @@ export async function createBooking(
 }
 
 /**
- * An account can be both guest and host (RF-02), so what someone may do to a
- * booking follows from their relationship to *this* booking, not their roles.
- * Returns null when they have no standing to cancel it at all.
+ * An account can be both guest and host (RF-02), so someone's standing on a
+ * booking follows from their relationship to *this* one, not from their roles.
+ * Returns null when they're party to it in neither direction.
  */
+async function resolveBookingParty(
+  booking: Booking,
+  user: CurrentUser,
+): Promise<BookingParty | null> {
+  if (booking.guest_id === user.id) return "guest";
+
+  const listing = await listingsRepo.findListingById(booking.listing_id);
+  return listing?.host_id === user.id ? "host" : null;
+}
+
+/** Being party to a booking is what lets you see it; cancelling it as the host also takes the permission. */
 async function resolveCancelActor(
   booking: Booking,
   user: CurrentUser,
 ): Promise<CancelActor | null> {
-  if (booking.guest_id === user.id) return "guest";
-  if (!user.permissions.includes("bookings:manage")) return null;
+  if (booking.guest_id !== user.id && !user.permissions.includes("bookings:manage"))
+    return null;
 
-  const listing = await listingsRepo.findListingById(booking.listing_id);
-  return listing?.host_id === user.id ? "host" : null;
+  return resolveBookingParty(booking, user);
+}
+
+/**
+ * One booking, for either party to it. A booking the caller has no standing on
+ * collapses into the same NOT_FOUND as one that doesn't exist, so this never
+ * confirms someone else's reservation is real.
+ */
+export async function getBooking(
+  bookingId: string,
+): Promise<ServiceResult<{ booking: Booking; party: BookingParty }>> {
+  const auth = await authorize("bookings:view-own-listings");
+  if (!auth.ok) return auth;
+
+  const notFound = {
+    ok: false,
+    error: "Booking not found",
+    code: "NOT_FOUND",
+  } as const;
+
+  try {
+    const booking = await bookingsRepo.getBookingById(bookingId);
+    if (!booking) return notFound;
+
+    const party = await resolveBookingParty(booking, auth.data);
+    if (!party) return notFound;
+
+    return { ok: true, data: { booking, party } };
+  } catch (error) {
+    console.error("[getBooking]", error);
+    return {
+      ok: false,
+      error: "Could not retrieve the booking",
+      code: "UNEXPECTED",
+    };
+  }
 }
 
 /**

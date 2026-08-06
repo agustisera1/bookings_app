@@ -1,8 +1,12 @@
 import { FREE_CANCELLATION_WINDOW_HOURS } from "@/lib/bookings/policy";
 import { formatDate, formatTime } from "@/lib/dates";
 import { formatPrice } from "@/lib/utils";
-import { guestCancellation, refundDeadline } from "./booking-detail-model";
-import type { BookingRow } from "./bookings-model";
+import {
+  cancellationRecord,
+  guestCancellation,
+  refundDeadline,
+} from "./booking-detail-model";
+import type { BookingDetailRow } from "./bookings-model";
 
 function Amount({ value }: { value: number }) {
   return (
@@ -16,9 +20,28 @@ export function BookingCancellationPolicy({
   booking,
   now,
 }: {
-  booking: BookingRow;
+  booking: BookingDetailRow;
   now: Date;
 }) {
+  // A booking that was already cancelled has a settlement, not a policy.
+  const settled = cancellationRecord(booking);
+  if (settled)
+    return (
+      <p className="text-sm text-muted-foreground">
+        {settled.actor === "guest"
+          ? "You cancelled this booking"
+          : "The host cancelled this booking"}
+        {settled.at && ` on ${formatDate(settled.at)}`}.{" "}
+        {settled.refundAmount > 0 ? (
+          <>
+            <Amount value={settled.refundAmount} /> will be refunded.
+          </>
+        ) : (
+          "No refund applied, per the cancellation policy."
+        )}
+      </p>
+    );
+
   const check = guestCancellation(booking, now);
 
   if (!check.allowed)

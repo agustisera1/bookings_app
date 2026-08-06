@@ -17,7 +17,7 @@ const reviewSchema = z.object({
 
 export type ReviewFormValues = z.infer<typeof reviewSchema>;
 
-export function ReviewForm({ listingId }: { listingId: string }) {
+export function ReviewForm({ bookingId }: { bookingId: string }) {
   const {
     reset,
     control,
@@ -30,7 +30,7 @@ export function ReviewForm({ listingId }: { listingId: string }) {
   });
 
   async function onSubmit(data: ReviewFormValues) {
-    const result = await createReview({ ...data, listing_id: listingId });
+    const result = await createReview({ ...data, bookingId });
     if (!result.ok) {
       toast.error(result.error ?? "Could not submit your review");
       throw new Error(result.error);

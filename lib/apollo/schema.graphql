@@ -5,6 +5,17 @@ type Location {
   address: String
 }
 
+type ListingAttributes {
+  beds: Int
+  bathrooms: Int
+  max_guests: Int
+  check_in_time: String
+  check_out_time: String
+  amenities: [String]
+  minimum_nights: Int
+  property_type: String
+}
+
 type Listing {
   _id: String!
   type: String!
@@ -13,6 +24,7 @@ type Listing {
   description: String!
   price: Int!
   location: Location
+  attributes: ListingAttributes
   photos: [String]
   rating_avg: Float
   rating: Float
@@ -28,17 +40,36 @@ enum BookingStatus {
   cancelled
 }
 
-type GuestBooking {
-  type: String
-  title: String
-  photos: [String]
+# Mirrors BookingParty in lib/types/booking.ts: someone's side of *this*
+# booking, not their roles — an account can be both guest and host (RF-02).
+enum BookingParty {
+  guest
+  host
+}
+
+# A user as their counterparty may see them. Deliberately no email — mirrors
+# UserSummary in lib/types/user.ts, not the wider PublicUser next to it.
+type UserSummary {
+  id: ID!
+  name: String
+}
+
+type Booking {
+  id: ID!
   created_at: String
   start_date: String
   end_date: String
-  status: BookingStatus
-  total_price: Float
-  id: ID
   guests: Int
+  status: BookingStatus
+  status_reason: String
+  total_price: Float
+  refund_amount: Float
+  cancelled_by: BookingParty
+  cancelled_at: String
+  # Which side of this booking the caller is on.
+  party: BookingParty
+  listing: Listing
+  host: UserSummary
 }
 
 input LocationInput {
@@ -68,5 +99,8 @@ input FiltersInput {
 type Query {
   listings(filters: FiltersInput): [Listing!]
   listing(listing_id: String!): Listing
-  guestBookings: [GuestBooking]
+  # Bookings the caller made as a guest — their trips.
+  guestBookings: [Booking]
+  # A single booking, resolvable by either party to it.
+  booking(id: ID!): Booking
 }

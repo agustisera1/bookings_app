@@ -1,0 +1,35 @@
+query GetBooking($id: ID!) {
+  booking(id: $id) {
+    id
+    created_at
+    start_date
+    end_date
+    guests
+    status
+    status_reason
+    total_price
+    refund_amount
+    cancelled_by
+    cancelled_at
+    party
+    host {
+      id
+      name
+    }
+    listing {
+      _id
+      type
+      title
+      price
+      photos
+      location {
+        city
+        country
+      }
+      attributes {
+        check_in_time
+        check_out_time
+      }
+    }
+  }
+}

@@ -50,8 +50,31 @@ export function toCancellableBooking(booking: Booking): CancellableBooking {
   };
 }
 
+export function toCompletableBooking(booking: Booking): CompletableBooking {
+  return { status: booking.status, endDate: booking.end_date };
+}
+
 export function isTerminal(status: BookingStatus): boolean {
   return TERMINAL_STATUSES.includes(status);
+}
+
+/** The fields the completion rule reads. Same reasoning as `CancellableBooking`. */
+export type CompletableBooking = {
+  status: BookingStatus;
+  endDate: string;
+};
+
+/**
+ * A stay that actually happened: the host accepted it and its end date has
+ * passed. There is no `completed` status to read (see `BookingStatus`) — this
+ * predicate *is* the definition, which is why reviewing gates on it rather than
+ * on merely having booked.
+ */
+export function isCompleted(booking: CompletableBooking, now: Date): boolean {
+  return (
+    booking.status === "accepted" &&
+    new Date(booking.endDate).getTime() < now.getTime()
+  );
 }
 
 export function hasStarted(booking: CancellableBooking, now: Date): boolean {

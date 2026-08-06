@@ -68,9 +68,7 @@ export function ListingReviews({
 
   if (reviews.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground">
-        No reviews yet. Be the first to leave one!
-      </p>
+      <p className="text-sm text-muted-foreground">No reviews yet.</p>
     );
   }
 
