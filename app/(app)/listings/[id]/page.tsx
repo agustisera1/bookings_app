@@ -8,6 +8,7 @@ import { DeleteListingButton } from "@/components/listings/delete-listing-button
 import { MapPin, Star } from "lucide-react";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/common/back-link";
+import { PageLayout } from "@/components/common/page-layout";
 import { query } from "@/lib/apollo/client";
 import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
 import { getListingReviews } from "@/lib/services/reviews";
@@ -44,25 +45,17 @@ export default async function ListingDetailPage({
   const bookingsPromise = isHostMode ? getListingBookings(id) : undefined;
 
   return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-6xl px-6 py-10">
-        <BackLink
-          href={isHostMode ? "/listings/mine" : "/listings"}
-          className="mb-6"
-        >
-          Back to listings
-        </BackLink>
-
-        <header className="flex flex-col gap-2 border-b pb-8">
-          <div className="flex items-start justify-start gap-4">
-            <Badge
-              variant="outline"
-              className="w-fit uppercase tracking-widest text-2xs"
-            >
-              {listing.type}
-            </Badge>
-            {isHostMode && (
-              <div className="flex items-center gap-2">
+    <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row">
+      <div className="min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
+        <PageLayout
+          back={
+            <BackLink href={isHostMode ? "/listings/mine" : "/listings"}>
+              Back to listings
+            </BackLink>
+          }
+          actions={
+            isHostMode && (
+              <>
                 <DeleteListingButton
                   listingId={listing._id}
                   listingTitle={listing.title}
@@ -82,103 +75,104 @@ export default async function ListingDetailPage({
                     },
                   }}
                 />
-              </div>
-            )}
-          </div>
-          <div className="flex items-center justify-start gap-2">
-            <h1 className="font-heading text-3xl font-semibold leading-tight text-balance md:text-4xl">
+              </>
+            )
+          }
+          title={
+            <span className="flex flex-wrap items-center gap-x-3 gap-y-2">
               {listing.title}
-            </h1>
-            <div className="flex shrink-0 items-center gap-1.5">
-              <Star className="size-5 fill-rating text-rating" />
-              <span className="text-base font-semibold">
-                {listing.rating_avg}
+              <span className="flex shrink-0 items-center gap-1.5">
+                <Star className="size-5 fill-rating text-rating" />
+                <span className="text-base font-semibold">
+                  {listing.rating_avg}
+                </span>
               </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-            <MapPin className="size-3.5" />
-            <span>
+              <Badge
+                variant="outline"
+                className="uppercase tracking-widest text-2xs"
+              >
+                {listing.type}
+              </Badge>
+            </span>
+          }
+          subtitle={
+            <span className="flex items-center gap-1.5">
+              <MapPin className="size-3.5" />
               {listing.location?.city || "Location not specified"},{" "}
               {listing.location?.country || "Country not specified"}
             </span>
-          </div>
-        </header>
+          }
+          contentClassName="flex flex-col gap-4"
+        >
+          <p className="leading-relaxed text-muted-foreground">
+            {listing.description}
+          </p>
 
-        <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-3 lg:gap-0">
-          <div className="flex flex-col gap-4 lg:col-span-2 lg:border-r lg:pr-10 pt-8">
-            <p className="leading-relaxed text-muted-foreground">
-              {listing.description}
-            </p>
+          <Section title="Photos">
+            <ListingPhotos
+              photos={(listing.photos ?? []).filter((p): p is string => !!p)}
+              title={listing.title}
+              listingId={listing._id}
+              isHostMode={isHostMode}
+            />
+          </Section>
 
-            <Section title="Photos">
-              <ListingPhotos
-                photos={(listing.photos ?? []).filter((p): p is string => !!p)}
-                title={listing.title}
-                listingId={listing._id}
-                isHostMode={isHostMode}
-              />
-            </Section>
+          {/* Reviews are written from the booking they belong to
+              (`bookings/[id]`), so this page only shows them. */}
+          <Section
+            title="Reviews"
+            subtitle={
+              isHostMode
+                ? "What guests are saying about this listing"
+                : "What guests who stayed here are saying"
+            }
+            card
+            cardSize="sm"
+          >
+            <ListingReviews
+              reviewsPromise={reviewsPromise}
+              isHostMode={isHostMode}
+            />
+          </Section>
+        </PageLayout>
+      </div>
 
-            {/* Reviews are written from the booking they belong to
-                (`bookings/[id]`), so this page only shows them. */}
-            <Section
-              title="Reviews"
-              subtitle={
-                isHostMode
-                  ? "What guests are saying about this listing"
-                  : "What guests who stayed here are saying"
-              }
-              card
-              cardSize="sm"
-            >
-              <ListingReviews
-                reviewsPromise={reviewsPromise}
-                isHostMode={isHostMode}
-              />
-            </Section>
-          </div>
-
-          <aside className="flex flex-col gap-4 lg:sticky lg:top-6 lg:pl-10">
-            {isHostMode ? (
-              <>
-                {bookingsPromise && (
-                  <Section
-                    title="Upcoming Bookings"
-                    subtitle="Reservations guests have made for this listing"
-                    className="pt-4"
-                  >
-                    <ListingBookings bookingsPromise={bookingsPromise} />
-                  </Section>
-                )}
-
-                <Section
-                  title="Metrics"
-                  subtitle="Performance insights for this listing"
-                  card
-                >
-                  <p className="text-sm text-muted-foreground">
-                    Listing metrics are coming soon.
-                  </p>
-                </Section>
-              </>
-            ) : (
+      <aside className="flex shrink-0 flex-col gap-6 border-t px-6 py-5 md:px-10 md:py-6 lg:min-h-0 lg:w-96 lg:overflow-y-auto lg:border-l lg:border-t-0 lg:px-8">
+        {isHostMode ? (
+          <>
+            {bookingsPromise && (
               <Section
-                className="pt-8"
-                title="Book this listing"
-                subtitle={<PriceLabel price={listing.price} />}
-                card
+                title="Upcoming Bookings"
+                subtitle="Reservations guests have made for this listing"
               >
-                <BookingForm
-                  listingId={listing._id}
-                  pricePerNight={listing.price}
-                  availabilityPromise={availabilityPromise}
-                />
+                <ListingBookings bookingsPromise={bookingsPromise} />
               </Section>
             )}
-          </aside>
-        </div>
-      </div>
+
+            <Section
+              title="Metrics"
+              subtitle="Performance insights for this listing"
+              card
+            >
+              <p className="text-sm text-muted-foreground">
+                Listing metrics are coming soon.
+              </p>
+            </Section>
+          </>
+        ) : (
+          <Section
+            title="Book this listing"
+            subtitle={<PriceLabel price={listing.price} />}
+            card
+          >
+            <BookingForm
+              listingId={listing._id}
+              pricePerNight={listing.price}
+              availabilityPromise={availabilityPromise}
+            />
+          </Section>
+        )}
+      </aside>
     </div>
   );
 }

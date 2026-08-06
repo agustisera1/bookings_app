@@ -357,7 +357,7 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 | `PriceLabel` | Precio "por noche" formateado con `formatPrice` | ✓ |
 | `DatePicker` | Campo de fecha única: trigger (ícono + fecha formateada) + `Calendar` en `Popover`. `open`/`onOpenChange` opcionales para coordinar pickers hermanos | Client |
 | `BackLink` | Salida de una ruta de detalle hacia su lista (chevron + label) | ✓ |
-| `PageLayout` | Shell de página: heading grande sticky + contenido scrollable, con slots `back`/`actions`/`toolbar`. `maxWidth` acota header y contenido a la misma columna. Es el borde de la ruta | ✓ |
+| `PageLayout` | Shell de página: heading grande sticky + contenido scrollable, con slots `back`/`actions`/`toolbar`. Llena el ancho de su columna. Es el borde de la ruta | ✓ |
 | `Section` | Encabezado (título + subtítulo) sobre un bloque **dentro** de una página, con `Card` opcional | ✓ |
 | `RouteError` | Cuerpo de un `error.tsx`: `EmptyState` + botón "Try again" (`reset`) + escape hatch (`homeAction`) | Client |
 
@@ -365,10 +365,13 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 
 | Situación | Solución |
 |-----------|----------|
-| Encabezado + estructura de una página (ruta) | `PageLayout` con `title` (y `subtitle`/`actions`/`toolbar` opcionales) — nunca rearmar el `<div className="p-10 flex flex-col …">` con un `<h1>` a mano |
+| Encabezado + estructura de una página (ruta) | `PageLayout` con `title` (y `subtitle`/`actions`/`toolbar` opcionales) — nunca rearmar el `<div className="p-10 flex flex-col …">` con un `<h1>` a mano, ni copiar sus clases de header para replicar el blur |
+| Página con un panel que no scrollea junto al contenido | `PageLayout` va **dentro** de la columna scrollable, no envolviendo la ruta: su header es `sticky`, así que se pinnea contra el contenedor de scroll que lo encierre. El panel queda afuera, hermano de esa columna, y arranca desde el borde superior. Ref: `listings/[id]/page.tsx` |
+| Acciones sobre el recurso de una página de detalle | Slot `actions` de `PageLayout`, alineadas al pie del heading. Refs: `bookings/[id]`, `listings/[id]` |
+| Nodo que no es texto dentro de `title`/`subtitle` | Debe ser contenido de frase (`span`, `Badge`, `PriceLabel`): `title` es un `<h1>`. Un bloque dentro de un `<p>` corta el párrafo en el parser y desincroniza el DOM de server y cliente — por eso el subtítulo de `PageLayout` es un `div` |
 | Bloque titulado **dentro** de una página | `Section` (h2). Regla de altitud: `PageLayout` en el borde de la ruta, `Section` para los bloques que viven adentro |
 | Volver desde una ruta de detalle (`[id]/page.tsx`) | `BackLink` con `href` explícito — nunca `router.back()` ni el `<Link>` + `ChevronLeft` a mano. Toda ruta `[id]` lo debe ofrecer, salvo que su layout ya deje la lista en pantalla (ref: `messages/`, cuyo rail no se va). Dentro de `PageLayout` va por el slot `back` |
-| Ancho de una página de detalle | `maxWidth="max-w-6xl"` en `PageLayout` — la medida de `listings/[id]`; las de detalle van todas iguales. Nunca un `mx-auto max-w-*` solo en el contenido: deja el título y las acciones en una columna distinta a la del cuerpo |
+| Ancho de una página | Llena la columna que le toca; el aire lo da el padding de `PageLayout`, no un `max-w-*`. Un ancho máximo sobre el shell lo centra con `mx-auto` y deja márgenes muertos a los costados que ninguna otra página tiene. El único `max-w-*` que sobrevive es el del subtítulo, que acota una línea de texto, no el layout |
 | Fila de formulario (label + control + error) | `FormField` — nunca reconstruir el `<div className="flex flex-col gap-1.5">` a mano |
 | Mensaje de error de un campo suelto | `FieldError` (o el prop `error` de `FormField`) — nunca `<p className="text-xs text-destructive">` |
 | Área de texto | `Textarea` de `ui/` — nunca un `<textarea>` con clases crudas |

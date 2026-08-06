@@ -46,7 +46,6 @@ export default async function BookingDetailPage({
     <PageLayout
       title={title}
       subtitle={subtitle}
-      maxWidth="max-w-6xl"
       back={<BackLink href="/bookings">Back to bookings</BackLink>}
       actions={
         <>
