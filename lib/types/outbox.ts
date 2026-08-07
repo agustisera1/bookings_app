@@ -6,8 +6,9 @@
  * publicar. Meter acá lo que el mail renderiza congelaría el contrato de la cola
  * dentro de Postgres. Ver `docs/insights/OUTBOX_AND_SAGA.md`.
  *
- * Agregar un miembro a `OutboxEventType` obliga a enseñárselo al `toJobs` del
- * worker: un tipo que no conoce se descarta con un log.
+ * Agregar un miembro a `OutboxEventType` obliga a enseñárselo al resolver de su
+ * agregado en el worker (`getUserJob` / `getBookingJob`, `src/outbox/fan-out.ts`):
+ * un tipo que no conoce se descarta con un log.
  */
 export type OutboxEventType =
   | "booking.created"
