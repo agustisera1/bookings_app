@@ -7,7 +7,11 @@ import {
 } from "lucide-react";
 import { describe, expect, it } from "vitest";
 import type { NotificationDocument } from "@/lib/types/notification";
-import { notificationVisual, partitionByRead } from "./notifications-model";
+import {
+  isUnreadNudge,
+  notificationVisual,
+  partitionByRead,
+} from "./notifications-model";
 
 describe("notificationVisual", () => {
   it("keys the icon and accent off keywords in the title", () => {
@@ -46,6 +50,26 @@ function notification(overrides: Partial<NotificationDocument>): NotificationDoc
     ...overrides,
   };
 }
+
+describe("isUnreadNudge", () => {
+  it("recognises the worker's bodiless message frame", () => {
+    expect(isUnreadNudge(JSON.stringify({ kind: "message" }))).toBe(true);
+  });
+
+  it("treats a notification document as a notification", () => {
+    // The real shape published for bookings: a whole document, no `kind`.
+    const frame = JSON.stringify({ title: "Booking confirmed", is_read: false });
+    expect(isUnreadNudge(frame)).toBe(false);
+  });
+
+  // A frame that can't be parsed still means something happened, so it counts
+  // as a notification rather than being dropped.
+  it("falls back to a notification on anything unparseable", () => {
+    expect(isUnreadNudge("not json")).toBe(false);
+    expect(isUnreadNudge("")).toBe(false);
+    expect(isUnreadNudge("null")).toBe(false);
+  });
+});
 
 describe("partitionByRead", () => {
   it("overlays the optimistic read-set on top of the server flag", () => {

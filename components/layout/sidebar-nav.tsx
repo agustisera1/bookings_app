@@ -17,22 +17,31 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
-import { useNotificationsCount } from "@/components/notifications/provider";
+import {
+  useNotificationsCount,
+  useUnreadMessagesCount,
+} from "@/components/notifications/provider";
 
 export function SidebarNav({ isHost }: { isHost: boolean }) {
   const pathname = usePathname();
   const notifications = useNotificationsCount();
+  const unreadMessages = useUnreadMessagesCount();
   const navItems = [
     isHost
       ? { title: "My listings", href: "/listings/mine", icon: LayoutGrid }
       : { title: "My bookings", href: "/bookings", icon: CalendarDays },
     { title: "Explore", href: "/listings", icon: Compass },
-    { title: "Messages", href: "/messages", icon: MessageSquare },
+    {
+      title: "Messages",
+      href: "/messages",
+      icon: MessageSquare,
+      badge: unreadMessages,
+    },
     {
       title: "Notifications",
       href: "/notifications",
       icon: Bell,
-      notifications,
+      badge: notifications,
     },
   ];
 
@@ -55,12 +64,12 @@ export function SidebarNav({ isHost }: { isHost: boolean }) {
       <SidebarMenu>
         {navItems.map((item) => (
           <SidebarMenuItem key={item.href} className="relative">
-            {item.notifications ? (
+            {item.badge ? (
               <Badge
                 variant="accent"
                 className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2"
               >
-                {item.notifications}
+                {item.badge}
               </Badge>
             ) : null}
             <SidebarMenuButton
