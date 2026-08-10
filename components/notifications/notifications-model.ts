@@ -50,6 +50,25 @@ export function notificationVisual(title: string): {
   return { icon: Bell, accent: info };
 }
 
+/**
+ * Whether an SSE frame is an unread-messages nudge rather than a notification.
+ *
+ * The worker publishes `{ kind: "message" }` with no body when a message lands
+ * for someone outside its room; notification frames publish their whole document
+ * and carry no `kind`. Ref: `UnreadNudge` in the worker's `src/redis/client.ts`.
+ *
+ * Anything unparseable counts as a notification: the frame already told us
+ * *something* happened, and the worst case is a badge off by one until the next
+ * load recomputes both from the DB.
+ */
+export function isUnreadNudge(data: string): boolean {
+  try {
+    return JSON.parse(data)?.kind === "message";
+  } catch {
+    return false;
+  }
+}
+
 // Overlays the optimistic read-set on top of the server flag, so a just-read
 // notification moves from "new" to "older" without waiting for a refetch.
 export function partitionByRead(

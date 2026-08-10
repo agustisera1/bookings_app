@@ -21,9 +21,6 @@ type RailListing = Partial<Pick<ListingDocumentValues, "title" | "photos">>;
  * Derives conversations from bookings rather than the chats collection, so a
  * booking is a conversation whether or not anyone wrote in it — which is why
  * rows carry no last message, no unread state and no ordering by activity.
- * That tradeoff and its costs are written up in
- * `docs/tech_debt/CHAT_FEATURE_NEXT_STEPS.md`; the query costs are items 6–7 of
- * `docs/tech_debt/PERFORMANCE.md`.
  */
 export async function getUserConversations(): Promise<
   ServiceResult<Conversation[]>
@@ -99,6 +96,60 @@ export async function getUserConversations(): Promise<
     return {
       ok: false,
       error: "Could not load your conversations",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
+/**
+ * Cuántos mensajes le llegaron al usuario desde la última vez que abrió la
+ * bandeja. No hay flag de leído por mensaje: el conteo se deriva del cursor,
+ * así que sobrevive al logout sin persistir nada por mensaje.
+ *
+ * Sin cursor (nunca abrió la bandeja) cuentan todos los que no mandó él.
+ */
+export async function getUnreadMessagesCount(): Promise<ServiceResult<number>> {
+  const auth = await authorize("chat:view-own");
+  if (!auth.ok) return auth;
+  const { data: user } = auth;
+
+  try {
+    // Los chats nacen con el primer mensaje, así que un usuario sin chats no
+    // tiene mensajes que contar y se evita el `$in` con una lista vacía.
+    const chatIds = await chatsRepo.findChatIdsByUserId(user.id);
+    if (chatIds.length === 0) return { ok: true, data: 0 };
+
+    const since = await messagesRepo.findReadCursor(user.id);
+    const count = await messagesRepo.countMessagesSince(
+      chatIds,
+      user.id,
+      since,
+    );
+
+    return { ok: true, data: count };
+  } catch (error) {
+    console.error("[getUnreadMessagesCount]", error);
+    return {
+      ok: false,
+      error: "Could not load your unread messages",
+      code: "UNEXPECTED",
+    };
+  }
+}
+
+/** Corre el cursor hasta ahora: todo lo anterior queda dado por visto. */
+export async function markMessagesAsSeen(): Promise<ServiceResult<null>> {
+  const auth = await authorize("chat:view-own");
+  if (!auth.ok) return auth;
+
+  try {
+    await messagesRepo.upsertReadCursor(auth.data.id, new Date().toISOString());
+    return { ok: true, data: null };
+  } catch (error) {
+    console.error("[markMessagesAsSeen]", error);
+    return {
+      ok: false,
+      error: "Could not update your messages",
       code: "UNEXPECTED",
     };
   }

@@ -179,6 +179,15 @@ crudo, otra cosa.)
 - **Routing: rooms por conversación.** En el join, el ticket nombra su propio `chat_id` y el socket
   entra a esa room; la entrega usa `socket.to(room)`, que excluye al emisor (por eso el emisor
   reconcilia con el ack). La reconexión y el re-join están cubiertos por TD-09.
+- **Fuera de la room: un aviso sin contenido.** `socket.to(room)` sólo alcanza a quien hizo join, así
+  que el destinatario en otra pantalla no se enteraría. Tras persistir, el borde consulta la room
+  (`io.in(chat_id).fetchSockets()`) y, si el destinatario **no** está, publica al canal del usuario un
+  frame `{ kind: "message" }` **sin cuerpo**: lo único que hace es subir el badge de no leídos. Es el
+  punto donde los dos transportes se tocan — el aviso nace en socket.io y sale por SSE.
+- **No leídos: un cursor, no un flag por mensaje.** El badge no se sostiene con documentos: se
+  recomputa como "mensajes en mis chats, que no mandé yo, posteriores a mi marca de lectura". Por eso
+  el frame puede perderse sin consecuencia — el próximo load lo recalcula de Mongo. El patrón y sus
+  límites están en [`READ_CURSORS.md`](../insights/READ_CURSORS.md).
 
 **Transversal**
 - **Seguridad de Redis.** pub/sub no firma ni cifra los mensajes → Redis no debe quedar expuesto a
@@ -188,5 +197,12 @@ crudo, otra cosa.)
 - Una conexión Redis extra (el suscriptor del borde) y el proceso de sockets del worker para operar.
 - **Conviven dos transportes** (SSE para notificaciones + socket.io para el chat): no se unificó, y es
   la deuda aceptada de haber elegido el borde por feature.
+- **El cursor de lectura es uno por usuario, no uno por conversación** — la simplificación deliberada
+  del contador de no leídos. Entrar a `/messages` da por vistos **todos** los hilos a la vez, aunque
+  no se haya abierto ninguno. Se asume que el usuario los mira juntos, que es razonable con el
+  volumen de esta app y no lo es en una mensajería real. El costo concreto: no se puede mostrar un
+  contador por conversación en el rail, porque no hay marca por hilo de donde derivarlo. El upgrade
+  es cambiar la clave del cursor a (usuario, chat) — no agregar estado por mensaje; ver
+  [`READ_CURSORS.md`](../insights/READ_CURSORS.md).
 - Sin durabilidad en la entrega en vivo (pub/sub es at-most-once) — asumido a propósito: la DB es la
   fuente de verdad. Ver [Sobre el at-most-once del fan-out](#sobre-el-at-most-once-del-fan-out-por-qué-lo-aceptamos).
