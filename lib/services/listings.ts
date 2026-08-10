@@ -185,6 +185,7 @@ export async function createListing(
   try {
     const data = formatListingValues(listingData, user.data.id);
     const result = await listingsRepo.createListing(data);
+    revalidatePath("/listings/mine");
     return {
       ok: true,
       data: result.insertedId.toString(),

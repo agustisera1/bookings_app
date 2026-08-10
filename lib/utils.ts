@@ -16,6 +16,16 @@ export function formatPrice(
   );
 }
 
+/** Initials for an avatar: `Ada Lovelace` → `AL`. */
+export function initialsFrom(name: string) {
+  return name
+    .split(" ")
+    .map((word) => word[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
 /** Turns a snake_case slug into a human label: `aire_acondicionado` → `Aire Acondicionado`. */
 export function humanize(value: string) {
   return value

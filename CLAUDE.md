@@ -179,7 +179,7 @@ Antes de escribir cualquier utilidad, formatter o constante en un componente, **
 
 | Archivo | Qué contiene |
 |---------|-------------|
-| `lib/utils.ts` | `cn` (classnames), `formatPrice`, `bookingStatusVariant`, `listingTypeGradient` |
+| `lib/utils.ts` | `cn` (classnames), `formatPrice`, `humanize`, `initialsFrom`, `bookingStatusVariant`, `listingTypeGradient` |
 | `lib/dates.ts` | `parseTs`, `formatDate`, `calcNights`, `datePickerTriggerClass` |
 | `lib/types/index.ts` | Tipos compartidos (`ServiceResult`, etc.) |
 | `lib/services/*` | Lógica de negocio server-side (siempre retornan `ServiceResult`) |
@@ -351,6 +351,9 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 | Primitivo | Qué resuelve | Server-safe |
 |-----------|--------------|-------------|
 | `Field`, `FieldError`, `FormField` | Fila de formulario: label + control + error. `FormField` es la forma canónica | ✓ |
+| `Fact` | Dato etiquetado de un bloque de detalle: label chico + valor + nota. Renderiza `dt`/`dd`, así que va dentro de un `dl` | ✓ |
+| `CopyButton` | Copia un valor al portapapeles: solo ícono, con tooltip y check de confirmación | Client |
+| `WideDialogContent` | `DialogContent` a un ancho que la escala `size` de `ui/` no ofrece, para un diálogo que carga un form entero | ✓ |
 | `StarRating` / `StarRatingInput` | Rating de estrellas: display de solo lectura vs. picker interactivo | Client |
 | `ConfirmDialog` | Confirmación de acción destructiva (encapsula open + pending + retry) | Client |
 | `EmptyState` | Estado vacío centrado (icono + título + descripción + acción) | ✓ |

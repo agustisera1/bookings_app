@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { LogIn, LogOut, MapPin, Moon, Users } from "lucide-react";
+import { Fact } from "@/components/common/fact";
 import { Section } from "@/components/common/section";
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "@/lib/dates";
@@ -13,29 +14,6 @@ import {
   stayStage,
 } from "./booking-detail-model";
 import type { BookingDetailRow } from "./bookings-model";
-
-function Fact({
-  icon,
-  label,
-  value,
-  note,
-}: {
-  icon: ReactNode;
-  label: string;
-  value: ReactNode;
-  note?: ReactNode;
-}) {
-  return (
-    <div className="flex flex-col gap-1">
-      <dt className="flex items-center gap-1.5 text-2xs font-semibold uppercase tracking-wider text-muted-foreground [&_svg]:size-3.5">
-        {icon}
-        {label}
-      </dt>
-      <dd className="text-base font-medium">{value}</dd>
-      {note && <p className="text-xs text-muted-foreground">{note}</p>}
-    </div>
-  );
-}
 
 function PriceRow({
   label,

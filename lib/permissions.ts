@@ -132,6 +132,11 @@ export const ROLE_LABELS: Record<Role, string> = {
   host: "Host",
 };
 
+export const ROLE_DESCRIPTIONS: Record<Role, string> = {
+  guest: "Search listings, book stays and review them afterwards.",
+  host: "Publish listings and manage the bookings they receive.",
+};
+
 /**
  * Guest is the baseline for every account (RF-02: host stacks on top of it
  * rather than replacing it), so it's always included.

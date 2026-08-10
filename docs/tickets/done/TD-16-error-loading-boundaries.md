@@ -12,12 +12,12 @@
 
 ## Problema
 
-**13 rutas, cero boundaries.** Verificado: no existe ningún `error.tsx`, `loading.tsx`,
+**12 rutas, cero boundaries.** Verificado: no existe ningún `error.tsx`, `loading.tsx`,
 `not-found.tsx` ni `global-error.tsx` en todo `app/`.
 
 ```
 app/(app)/          page · bookings · bookings/[id] · listings · listings/[id]
-                    listings/mine · listings/new · messages · messages/[bookingId]
+                    listings/mine · messages · messages/[bookingId]
                     notifications · profile
 app/auth/           sign-in · sign-up
 ```
@@ -27,7 +27,7 @@ Las consecuencias son tres, y ninguna se ve en desarrollo:
 **1. Cualquier `throw` no capturado en un RSC es la pantalla de error de Next.** En desarrollo eso es
 un stack trace útil. En producción es una pantalla gris genérica, sin navegación, sin forma de
 volver, y sin ninguna pista de qué pasó. Es el peor estado posible de una aplicación desplegada, y
-hoy es el estado por defecto de las 13 rutas.
+hoy es el estado por defecto de las 12 rutas.
 
 **2. Un `[id]` inexistente no tiene respuesta.** `bookings/[id]`, `listings/[id]` y
 `messages/[bookingId]` reciben un id de la URL. Un id que no existe —link viejo, URL editada a mano,
@@ -60,7 +60,7 @@ Tiene además el contenido de aprendizaje que TD-07 tiene a nivel componente, pe
 
 ### 1. `error.tsx` — dónde y con qué granularidad
 
-No hacen falta 13. La granularidad correcta sigue a **qué puede fallar distinto**:
+No hacen falta 12. La granularidad correcta sigue a **qué puede fallar distinto**:
 
 | Archivo | Cubre | Por qué ahí |
 |---|---|---|
