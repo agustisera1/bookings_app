@@ -354,6 +354,7 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 | `Fact` | Dato etiquetado de un bloque de detalle: label chico + valor + nota. Renderiza `dt`/`dd`, así que va dentro de un `dl` | ✓ |
 | `CopyButton` | Copia un valor al portapapeles: solo ícono, con tooltip y check de confirmación | Client |
 | `WideDialogContent` | `DialogContent` a un ancho que la escala `size` de `ui/` no ofrece, para un diálogo que carga un form entero | ✓ |
+| `DetailColumns` | Cuerpo de dos columnas de una página de detalle: contenido + `aside` sticky. Refs: `bookings/[id]`, `profile` | ✓ |
 | `StarRating` / `StarRatingInput` | Rating de estrellas: display de solo lectura vs. picker interactivo | Client |
 | `ConfirmDialog` | Confirmación de acción destructiva (encapsula open + pending + retry) | Client |
 | `EmptyState` | Estado vacío centrado (icono + título + descripción + acción) | ✓ |

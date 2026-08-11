@@ -19,7 +19,9 @@ export function formatPrice(
 /** Initials for an avatar: `Ada Lovelace` → `AL`. */
 export function initialsFrom(name: string) {
   return name
-    .split(" ")
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean)
     .map((word) => word[0])
     .slice(0, 2)
     .join("")

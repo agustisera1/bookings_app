@@ -26,7 +26,9 @@ export function StepIndicator({
                 "flex size-6 shrink-0 items-center justify-center rounded-4xl text-2xs font-semibold ring-1 transition-colors",
                 done && "bg-success text-success-foreground ring-transparent",
                 active && "bg-primary text-primary-foreground ring-transparent",
-                !done && !active && "bg-muted text-muted-foreground ring-border",
+                !done &&
+                  !active &&
+                  "bg-muted text-muted-foreground ring-border",
               )}
             >
               {done ? <Check className="size-3.5" /> : index + 1}

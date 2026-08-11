@@ -6,7 +6,7 @@ import { query } from "@/lib/apollo/client";
 import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
 import { parseListingFilters, type ListingSearchParams } from "@/lib/listings";
 import { Listings } from "@/components/listings/listings";
-import { CreateListingButton } from "@/components/listings/create-listing/create-listing-button";
+import CreateListing from "@/components/listings/create-listing/create-listing";
 import { Search } from "@/components/search/search";
 import { PageLayout } from "@/components/common/page-layout";
 import { EmptyState } from "@/components/common/empty-state";
@@ -33,6 +33,7 @@ export default async function MyListingsPage({
     <PageLayout
       title="My listings"
       subtitle="Manage the places, experiences, and gear you host."
+      actions={<CreateListing />}
       inlineToolbar
       toolbar={
         <Suspense>
@@ -59,7 +60,7 @@ export default async function MyListingsPage({
           icon={<Plus />}
           title="No listings yet"
           description="Publish your first listing to start hosting."
-          action={<CreateListingButton className="mt-2" />}
+          action={<CreateListing className="mt-2" />}
         />
       )}
     </PageLayout>

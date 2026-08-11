@@ -185,6 +185,7 @@ export async function createListing(
   try {
     const data = formatListingValues(listingData, user.data.id);
     const result = await listingsRepo.createListing(data);
+    revalidatePath("/listings");
     revalidatePath("/listings/mine");
     return {
       ok: true,
@@ -208,6 +209,7 @@ export async function deleteListing(
 
   try {
     const deleteResult = await listingsRepo.deleteListing(id);
+    revalidatePath("/listings");
     revalidatePath("/listings/mine");
     return {
       ok: true,
@@ -232,6 +234,7 @@ export async function editListing(
 
   try {
     const result = await listingsRepo.editListing(id, values);
+    revalidatePath("/listings");
     revalidatePath("/listings/mine");
     revalidatePath(`/listings/${id}`);
     return {
@@ -323,6 +326,7 @@ export async function removeListingPhoto(
       console.error("[removeListingPhoto:s3]", error),
     );
 
+    revalidatePath("/listings");
     revalidatePath("/listings/mine");
     revalidatePath(`/listings/${id}`);
     return { ok: true, data: result };

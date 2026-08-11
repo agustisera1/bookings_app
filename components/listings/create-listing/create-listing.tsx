@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createListing } from "@/lib/services/listings";
 import { Button } from "@/components/ui/button";
@@ -25,11 +26,22 @@ import {
   DEFAULT_VALUES,
   STEPS,
   type CreateListingFormValues,
+  type StepFieldsProps,
+  type StepId,
 } from "./create-listing-model";
 
-export function CreateListingButton({ className }: { className?: string }) {
+// Keyed by `StepId` rather than indexed: a step added to `STEPS` widens the
+// union, and the missing key here is a type error instead of an empty pane.
+const STEP_BODIES: Record<StepId, (props: StepFieldsProps) => ReactNode> = {
+  basics: BasicsStep,
+  location: LocationStep,
+  details: DetailsStep,
+};
+
+export default function CreateListing({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+  const router = useRouter();
 
   const {
     control,
@@ -44,6 +56,7 @@ export function CreateListingButton({ className }: { className?: string }) {
   });
 
   const isLastStep = step === STEPS.length - 1;
+  const StepBody = STEP_BODIES[STEPS[step].id];
   const fieldProps = { register, control, errors, disabled: isSubmitting };
 
   function handleOpenChange(nextOpen: boolean) {
@@ -66,7 +79,14 @@ export function CreateListingButton({ className }: { className?: string }) {
       throw new Error(result.error); // evita que RHF marque isSubmitSuccessful = true
     }
     setOpen(false);
-    toast.success("Listing created!");
+    // El diálogo se abre desde varias rutas y ninguna muestra el listing nuevo:
+    // el toast es el único hilo que lleva hasta él.
+    toast.success("Listing created!", {
+      action: {
+        label: "View",
+        onClick: () => router.push(`/listings/${result.data}`),
+      },
+    });
   }
 
   // Mientras no sea el último paso el submit avanza en vez de crear, así Enter
@@ -96,9 +116,7 @@ export function CreateListingButton({ className }: { className?: string }) {
           className="flex min-h-0 flex-col gap-4"
         >
           <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-1 py-1">
-            {step === 0 && <BasicsStep {...fieldProps} />}
-            {step === 1 && <LocationStep {...fieldProps} />}
-            {step === 2 && <DetailsStep {...fieldProps} />}
+            <StepBody {...fieldProps} />
           </div>
 
           <DialogFooter className="sm:justify-between">

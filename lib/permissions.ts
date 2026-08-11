@@ -1,8 +1,12 @@
 /**
  * Permission catalog for RBAC, derived from the functional requirements in
- * docs/PROYECTO_B_MARKETPLACE.md. RBAC enforcement isn't implemented yet — this
- * is the source of truth both the UI and the future authorization layer
- * (RNF-05) should read from, so the two never drift apart.
+ * docs/PROYECTO_B_MARKETPLACE.md. It is the single source the enforcement path
+ * reads from (RNF-05): `getPermissionsForRoles` feeds the `permissions` claim
+ * of the access token, which is what `authorize()` checks.
+ *
+ * Only `key` takes part in that path. `label`, `description` and `phase` are
+ * the human-readable side of the catalog — no screen renders them today, so
+ * they document what each key grants rather than driving any behaviour.
  */
 export type Role = "guest" | "host";
 

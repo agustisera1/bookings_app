@@ -1,7 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/common/field";
-import type { StepFieldsProps } from "./create-listing-model";
+import { NUMBER_FIELD, type StepFieldsProps } from "./create-listing-model";
 
 export function BasicsStep({ register, errors, disabled }: StepFieldsProps) {
   return (
@@ -46,7 +46,7 @@ export function BasicsStep({ register, errors, disabled }: StepFieldsProps) {
           step="0.01"
           placeholder="120"
           disabled={disabled}
-          {...register("price", { valueAsNumber: true })}
+          {...register("price", NUMBER_FIELD)}
         />
       </FormField>
     </>

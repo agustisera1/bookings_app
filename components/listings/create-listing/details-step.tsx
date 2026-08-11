@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { humanize } from "@/lib/utils";
 import { AMENITIES, PROPERTY_TYPES } from "@/lib/listings";
-import type { StepFieldsProps } from "./create-listing-model";
+import { NUMBER_FIELD, type StepFieldsProps } from "./create-listing-model";
 
 export function DetailsStep({
   register,
@@ -20,23 +20,31 @@ export function DetailsStep({
 }: StepFieldsProps) {
   return (
     <>
-      <div className="grid grid-cols-3 gap-3">
-        <FormField label="Beds" htmlFor="create-listing-beds">
+      <div className="grid gap-3 sm:grid-cols-3">
+        <FormField
+          label="Beds"
+          htmlFor="create-listing-beds"
+          error={errors.attributes?.beds?.message}
+        >
           <Input
             id="create-listing-beds"
             type="number"
             min={0}
             disabled={disabled}
-            {...register("attributes.beds", { valueAsNumber: true })}
+            {...register("attributes.beds", NUMBER_FIELD)}
           />
         </FormField>
-        <FormField label="Bathrooms" htmlFor="create-listing-bathrooms">
+        <FormField
+          label="Bathrooms"
+          htmlFor="create-listing-bathrooms"
+          error={errors.attributes?.bathrooms?.message}
+        >
           <Input
             id="create-listing-bathrooms"
             type="number"
             min={0}
             disabled={disabled}
-            {...register("attributes.bathrooms", { valueAsNumber: true })}
+            {...register("attributes.bathrooms", NUMBER_FIELD)}
           />
         </FormField>
         <FormField
@@ -49,7 +57,7 @@ export function DetailsStep({
             type="number"
             min={1}
             disabled={disabled}
-            {...register("attributes.max_guests", { valueAsNumber: true })}
+            {...register("attributes.max_guests", NUMBER_FIELD)}
           />
         </FormField>
       </div>
@@ -79,19 +87,17 @@ export function DetailsStep({
         <FormField
           label="Minimum nights"
           htmlFor="create-listing-minimum-nights"
+          error={errors.attributes?.minimum_nights?.message}
         >
           <Input
             id="create-listing-minimum-nights"
             type="number"
             min={1}
             disabled={disabled}
-            {...register("attributes.minimum_nights", { valueAsNumber: true })}
+            {...register("attributes.minimum_nights", NUMBER_FIELD)}
           />
         </FormField>
-        <FormField
-          label="Property type"
-          htmlFor="create-listing-property-type"
-        >
+        <FormField label="Property type" htmlFor="create-listing-property-type">
           <Controller
             control={control}
             name="attributes.property_type"

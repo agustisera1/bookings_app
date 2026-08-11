@@ -18,18 +18,21 @@ const FEEDBACK_MS = 2000;
  * name, so it should name what gets copied.
  */
 export function CopyButton({ value, label }: { value: string; label: string }) {
-  const [copied, setCopied] = useState(false);
+  // A counter, not a boolean: copying again while the check is up has to rearm
+  // the timer, and `setCopied(true)` on an already-`true` state doesn't re-run.
+  const [copies, setCopies] = useState(0);
+  const copied = copies > 0;
 
   useEffect(() => {
-    if (!copied) return;
-    const timer = setTimeout(() => setCopied(false), FEEDBACK_MS);
+    if (!copies) return;
+    const timer = setTimeout(() => setCopies(0), FEEDBACK_MS);
     return () => clearTimeout(timer);
-  }, [copied]);
+  }, [copies]);
 
   async function handleCopy() {
     try {
       await navigator.clipboard.writeText(value);
-      setCopied(true);
+      setCopies((count) => count + 1);
     } catch {
       // `navigator.clipboard` doesn't exist outside a secure context, so on a
       // plain http:// origin every call throws and there is nothing to retry.

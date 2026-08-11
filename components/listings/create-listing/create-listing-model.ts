@@ -43,6 +43,15 @@ export const DEFAULT_VALUES: DefaultValues<CreateListingFormValues> = {
   attributes: { max_guests: 1, amenities: [] },
 };
 
+/**
+ * `register` options for every number input. An empty input has to read as
+ * `undefined`, not as the `NaN` that `valueAsNumber` produces: the optional
+ * fields would fail the schema, and their step has no error to render.
+ */
+export const NUMBER_FIELD = {
+  setValueAs: (value: string) => (value === "" ? undefined : Number(value)),
+};
+
 /** What every step body needs from the form it belongs to. */
 export type StepFieldsProps = {
   register: UseFormRegister<CreateListingFormValues>;
@@ -51,25 +60,34 @@ export type StepFieldsProps = {
   disabled: boolean;
 };
 
+export type StepId = "basics" | "location" | "details";
+
 export type CreateListingStep = {
+  id: StepId;
   label: string;
   description: string;
-  /** Validated before advancing, so a step never hides an error behind it. */
+  /**
+   * Validated by `goNext` before advancing, so a step never hides an error
+   * behind it. The last step's are covered by the full-schema pass on submit.
+   */
   fields: FieldPath<CreateListingFormValues>[];
 };
 
 export const STEPS: CreateListingStep[] = [
   {
+    id: "basics",
     label: "Basics",
     description: "Name your place and set what a night costs.",
     fields: ["title", "description", "price"],
   },
   {
+    id: "location",
     label: "Location",
     description: "Tell guests where they will be staying.",
     fields: ["location.address", "location.city", "location.country"],
   },
   {
+    id: "details",
     label: "Details",
     description: "Capacity, house rules and what the place offers.",
     fields: [
