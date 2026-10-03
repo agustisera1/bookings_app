@@ -9,7 +9,7 @@
 export type BookingStatus = "pending" | "accepted" | "rejected" | "cancelled";
 
 /**
- * The two parties to a booking. An account can be both guest and host (RF-02),
+ * The two parties to a booking. An account can be both guest and host,
  * so this expresses someone's relationship to *this* booking, not their roles.
  */
 export type BookingParty = "guest" | "host";

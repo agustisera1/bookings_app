@@ -10,7 +10,7 @@ import { getClientIp } from "@/lib/request";
 import { cookies } from "next/headers";
 import { JwtPayload } from "jsonwebtoken";
 
-// Ver docs/tickets/TD-20-rate-limiting.md.
+// Ver docs/architecture/RATE_LIMITING.md.
 const REFRESH_IP_POLICY: RateLimitPolicy = {
   limit: 30,
   windowMs: 60_000,

@@ -3,20 +3,17 @@
 Backlog de tuning de performance. Cada ítem tiene: dónde vive, por qué es un problema, cómo medirlo
 y una idea de fix.
 
-Cada ítem lleva su ticket en [`docs/tickets/`](../tickets/), o la fase del plan que lo
-resuelve.
+> Los números son identificadores estables: un ítem resuelto se borra y su número queda vacío — no se
+> renumera el resto.
 
-> Los números son identificadores estables: se referencian desde `docs/tickets/` como "punto N". Un
-> ítem resuelto se borra y su número queda vacío — no se renumera el resto.
-
-> Contexto del stack: MongoDB para listados, PostgreSQL para reservas. La búsqueda de
-> Fase 4 (Elasticsearch) todavía no existe, así que los filtros corren directo contra Mongo.
+> Contexto del stack: MongoDB para listados, PostgreSQL para reservas. Los filtros de búsqueda
+> corren directo contra Mongo.
 
 ---
 
 ## 🔴 Alto impacto — capa de datos
 
-### 4. COLLSCAN en Mongo: filtros de búsqueda sin índices — ⏸️ Fase 4 (Elasticsearch)
+### 4. COLLSCAN en Mongo: filtros de búsqueda sin índices
 
 - **Dónde:** `lib/services/listings.ts` (`getListings`) + `lib/repositories/listings.mongo.ts` (`findListings`)
 - **Qué pasa:** el filtro se arma sobre muchos campos —`type`, `host_id`, `rating_avg`,
@@ -31,10 +28,10 @@ resuelve.
   - No hay `sort` → orden "natural" (inserción), inconsistente entre páginas.
 - **Cómo medirlo:** `db.listings.find(<filtro>).explain("executionStats")` → mirar
   `totalDocsExamined` vs `nReturned` y `stage: COLLSCAN`.
-- **Idea de fix:** lo resuelve Elasticsearch. No invertir en índices compuestos sobre `attributes.*`
-  que se tiran cuando entre ES.
+- **Idea de fix:** índices dirigidos a los filtros de alta frecuencia (`type`, `price`), definidos en
+  un lugar canónico y no en el seed. No un índice por cada campo de `attributes.*`.
 
-### 5. `$nin` con array de ObjectIds sin cota — ⏸️ Fase 4 (Elasticsearch)
+### 5. `$nin` con array de ObjectIds sin cota
 
 - **Dónde:** `lib/services/listings.ts` (`getListings`, exclusión por disponibilidad)
   ```ts
@@ -45,6 +42,6 @@ resuelve.
   el punto 4 (COLLSCAN) amplifica el costo.
 - **Nota:** el flujo PG → Mongo es secuencial e inevitable (Mongo depende del resultado de PG),
   así que las dos latencias se suman.
-- **Idea de fix:** con ES la disponibilidad se resuelve como filtro en el índice de búsqueda, en vez
-  de un `$nin` post-hoc. Va en el mismo paquete que el punto 4.
+- **Idea de fix:** invertir el orden: buscar primero en Mongo con índice y límite, y chequear
+  disponibilidad en PG solo sobre esos ids. Va en el mismo paquete que el punto 4.
 

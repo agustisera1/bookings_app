@@ -1,6 +1,6 @@
 # BUILD_NEXT_STEPS.md — Deuda estructural del build
 
-## 1. Módulos que abren I/O en el import — [TD-11](../tickets/TD-11-ci-pipeline.md)
+## 1. Módulos que abren I/O en el import
 
 - **Dónde:** `lib/mongo.ts` (`client.connect()` en el top-level, sin `await` ni `.catch()`) y
   `lib/events.ts` (construye las `Queue` de BullMQ, que conectan a Redis).

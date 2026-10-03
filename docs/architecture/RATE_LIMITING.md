@@ -2,9 +2,7 @@
 
 - **Estado:** Decidido
 - **Fecha:** 2026-07-22
-- **Momento:** Pre-deploy (bloque Seguridad); se relaciona con Fase 6 (hardening)
-- **Ticket:** [`TD-20`](../tickets/TD-20-rate-limiting.md)
-- **Contexto conceptual:** [`SECURITY_LAYERS.md`](../insights/SECURITY_LAYERS.md) (capas de seguridad, mecanismo vs. decisión, la IP como clave) · [`RATE_LIMITING_ALGORITHMS.md`](../insights/RATE_LIMITING_ALGORITHMS.md) (los algoritmos de conteo y el glosario)
+- **Momento:** Pre-deploy (bloque Seguridad)
 
 ---
 
@@ -56,7 +54,7 @@ En concreto:
 2. **El contador vive en Redis** (`lib/redis.ts`, cliente de comandos singleton), no en memoria.
 3. **Se implementa a mano** sobre Redis (`lib/rate-limit.ts`): `rateLimit(key, policy)` con
    `INCR` + `PEXPIRE` + `PTTL` atómico vía un script **Lua** (código que Redis corre del lado del
-   servidor de una sola vez — ver el [glosario](../insights/RATE_LIMITING_ALGORITHMS.md#glosario)). Sin dependencia nueva.
+   servidor de una sola vez). Sin dependencia nueva.
 4. **Algoritmo fixed window**, ventana anclada al primer hit de cada key (el `PEXPIRE` se setea
    cuando el contador nace).
 5. **Claves diferenciadas por operación:** login lleva **dos contadores independientes** (`rl:login:ip:*`
@@ -78,7 +76,7 @@ En concreto:
 |---|---|
 | **Borde (CDN/WAF)** | Frena volumen por IP/ruta, pero **no entiende el dominio**: no sabe qué es un login ni de qué cuenta. Diferido para escala distribuida, no cubre este vector. |
 | **Gateway (Nginx)** | Mismo límite semántico. Además, en Next las **Server Actions no tienen URL propia** (todas hacen POST a la ruta de la página) → una regla por ruta no distingue *qué acción* se llama. Y no lo tenemos montado. |
-| **Aplicación** | **Elegida.** Es la única capa que puede keyear por cuenta ("N fallos contra *este* email"), que es justo el vector serio. Ver [`SECURITY_LAYERS.md`](../insights/SECURITY_LAYERS.md). |
+| **Aplicación** | **Elegida.** Es la única capa que puede keyear por cuenta ("N fallos contra *este* email"), que es justo el vector serio. |
 
 ### Eje 2 — Estado: Redis compartido
 
@@ -104,9 +102,6 @@ En concreto:
 | **Sliding window log** | Sorted set con el timestamp de cada hit | Preciso y sin burst, pero **O(n) en memoria por key** (guarda cada intento). Overkill para cotas de abuso. Descartado. |
 | **Sliding window counter** | Pondera la ventana actual + la previa | Buen punto medio: O(1) y **sin boundary burst**. No lo elegimos porque el burst no nos duele hoy; es un **upgrade barato** si algún día molesta. |
 | **Token / leaky bucket** | Balde de tokens con refill a tasa fija | Pensados para **shaping de throughput** (permitir ráfagas + tasa sostenida), no para "cortar fuerza bruta". Más estado sin beneficio acá. Descartado. |
-
-**Qué hace cada algoritmo** (fixed window / sliding window log / sliding window counter / token /
-leaky bucket) está explicado en [`RATE_LIMITING_ALGORITHMS.md`](../insights/RATE_LIMITING_ALGORITHMS.md).
 
 **El *boundary burst* y por qué lo aceptamos:** con fixed window, apenas expira la ventana el cliente
 recupera la cuota entera de golpe. Con límite 10/10min, un atacante puede meter 10 al final de una
@@ -216,10 +211,3 @@ caída (eje 6). No lo blindamos con HA todavía porque a esta escala el costo op
 - **Reset-on-success** en login: un login OK libera los contadores. Si un atacante adivina la
   contraseña, el reset le da una ventana nueva — irrelevante, porque a esa altura ya entró.
 
----
-
-## Glosario
-
-Los conceptos usados en este ADR (atómico, `INCR`/`PEXPIRE`/`PTTL`, Lua, round trip, boundary burst,
-SPOF, cold/warm start) están en [`RATE_LIMITING_ALGORITHMS.md`](../insights/RATE_LIMITING_ALGORITHMS.md#glosario).
-WAF, CAPTCHA y 2FA, en [`SECURITY_LAYERS.md`](../insights/SECURITY_LAYERS.md#glosario).

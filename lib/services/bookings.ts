@@ -55,9 +55,6 @@ export async function createBooking(
   if (!auth.ok) return auth;
 
   try {
-    // 1. Acquire lock (Phase 3 — Redis)
-
-    // 2. Write on DB
     const booking = await bookingsRepo.createBookingRecord(
       {
         listingId: params.listingId,
@@ -96,7 +93,7 @@ export async function createBooking(
 }
 
 /**
- * An account can be both guest and host (RF-02), so someone's standing on a
+ * An account can be both guest and host, so someone's standing on a
  * booking follows from their relationship to *this* one, not from their roles.
  * Returns null when they're party to it in neither direction.
  */
@@ -165,7 +162,7 @@ export async function cancelBooking(
   bookingId: string,
   reason?: string,
 ): Promise<ServiceResult<{ id: string; refundAmount: number }>> {
-  // Baseline permission — every account is a guest (RF-02), so this only proves
+  // Baseline permission — every account is a guest, so this only proves
   // the caller is authenticated. Ownership below is what actually gates this.
   const auth = await authorize("bookings:cancel-own");
   if (!auth.ok) return auth;

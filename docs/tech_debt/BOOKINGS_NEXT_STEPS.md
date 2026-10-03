@@ -1,6 +1,6 @@
 # BOOKINGS_NEXT_STEPS.md — Deuda estructural de reservas
 
-## 1. Un host no tiene vista propia de una reserva recibida — sin ticket
+## 1. Un host no tiene vista propia de una reserva recibida
 
 - **Dónde:** `app/(app)/bookings/[id]/page.tsx`.
 
@@ -9,7 +9,7 @@
   el guest —"Your stay", "Message host", el botón de cancelar con `actor="guest"`— así que hoy hace
   `notFound()` cuando `party === "host"` en vez de mostrarle copy equivocado.
 
-- **Por qué duele:** el rol host gestiona reservas recibidas (RF-02), pero su única vista sigue
+- **Por qué duele:** el rol host gestiona reservas recibidas, pero su única vista sigue
   siendo el bloque embebido en `listings/[id]`. No tiene página por reserva, ni el accept/reject
   desde ahí.
 
@@ -17,7 +17,7 @@
   (accept/reject vía `ManageBookingActions` en vez de cancelar) y el contraparte que se muestra
   (`guest` en lugar de `host`, que el schema todavía no expone). El acceso a datos no se toca.
 
-## 2. Una reseña no queda atada a la reserva que la originó — sin ticket
+## 2. Una reseña no queda atada a la reserva que la originó
 
 - **Dónde:** tabla `reviews` (`db/migrations/001_initial_schema.sql:35-43`), `reviews.pg.ts`.
 
@@ -35,5 +35,5 @@
   mismo criterio que el `no_overlap` de las reservas. Con eso el formulario se puede esconder cuando
   ya hay reseña, en vez de fallar al enviar.
 
-> **Nota:** el modelo de datos de `CLAUDE.md` describe `REVIEWS` con `booking_id` y `author_id`.
+> **Nota:** el modelo de datos de `.claude/rules/04-datos.md` describe `REVIEWS` con `booking_id` y `author_id`.
 > La tabla real nunca los tuvo. Corregir esa sección es parte de este ítem.

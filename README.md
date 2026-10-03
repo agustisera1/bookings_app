@@ -8,8 +8,7 @@ WebSocket) y una API GraphQL con autorización por rol y ownership.
 Dos roles: **guest** (busca, reserva, reseña) y **host** (publica y gestiona listados y reservas). Un
 usuario puede ser ambos.
 
-> Corre local. El deploy es deuda conocida y deliberada — el foco del proyecto está en la aplicación,
-> no en operar infraestructura (ver `docs/tickets/`).
+> Corre local. El foco del proyecto está en la aplicación, no en operar infraestructura.
 
 ---
 
@@ -20,9 +19,8 @@ MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (
 notificaciones por email asíncronas (worker + BullMQ); chat host↔guest en vivo (socket.io);
 notificaciones in-app (SSE); y rate limiting en el borde de autenticación.
 
-**Próximo:** búsqueda full-text con Elasticsearch (sincronizando Mongo → índice) y el deploy con su
-observabilidad. El backlog priorizado —qué falta y qué es deuda técnica, con su justificación— vive en
-`docs/tickets/`. El plan de fases completo está en `CLAUDE.md`.
+**Próximo:** auditoría del sistema y entorno reproducible con Docker + seed (`docs/audit/`). La deuda
+técnica conocida vive en `docs/tech_debt/`.
 
 ---
 
@@ -66,7 +64,7 @@ app/            Rutas de Next.js (App Router) + route handlers (graphql, auth, s
 components/     ui/ (shadcn) · common/ (primitivos propios) · <feature>/ (bookings, chat, search…)
 lib/            services/ (negocio) · repositories/ (datos) · types/ · apollo/ · dominio
 db/migrations/  Migraciones de PostgreSQL, versionadas (up/down)
-docs/           ADRs, insights, backlog y deuda técnica
+docs/           ADRs, deuda técnica y auditoría
 scripts/        Migraciones, seeds y utilidades
 ```
 
@@ -107,15 +105,14 @@ separado (ver su repo).
 
 ## 📚 Documentación
 
-El README solo orienta; el detalle vive en `/docs` y `CLAUDE.md`, organizado por **qué pregunta
+El README solo orienta; el detalle vive en `/docs` y `.claude/rules/`, organizado por **qué pregunta
 responde cada uno**:
 
 | Si querés…                                                | Andá a                                                                              |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | entender **por qué** se tomó una decisión de arquitectura | `docs/architecture/` — ADRs (realtime, colas, rate limiting)                        |
-| el **concepto** detrás de una API o técnica               | `docs/insights/` — índices de Postgres, `useSyncExternalStore`, capas de seguridad… |
-| las **convenciones** para extender el código              | `CLAUDE.md` — patrones de services, componentes, tipos y errores                    |
-| qué falta y **qué es deuda**                              | `docs/tickets/` (backlog priorizado) · `docs/tech_debt/`                            |
+| las **convenciones** para extender el código              | `.claude/rules/` — una regla por dimensión; índice en `CLAUDE.md`                   |
+| qué es **deuda conocida**                                  | `docs/tech_debt/`                                                                   |
 
 ---
 

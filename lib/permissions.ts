@@ -1,21 +1,11 @@
-/**
- * Permission catalog for RBAC, derived from the functional requirements in
- * docs/PROYECTO_B_MARKETPLACE.md. It is the single source the enforcement path
- * reads from (RNF-05): `getPermissionsForRoles` feeds the `permissions` claim
- * of the access token, which is what `authorize()` checks.
- *
- * Only `key` takes part in that path. `label`, `description` and `phase` are
- * the human-readable side of the catalog — no screen renders them today, so
- * they document what each key grants rather than driving any behaviour.
- */
+// Only `key` reaches `authorize()` (via the token's `permissions` claim);
+// `label` and `description` document what each key grants.
 export type Role = "guest" | "host";
 
 export type Permission = {
   key: string;
   label: string;
   description: string;
-  /** Set when the permission only applies from a later project phase. */
-  phase?: string;
 };
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -69,7 +59,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
       label: "Leer la conversación de su reserva",
       description:
         "Acceder al historial de mensajes del chat asociado a una reserva en la que participa (como guest o host).",
-      phase: "Fase 3+",
     },
   ],
   host: [
@@ -113,7 +102,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
       label: "Leer la conversación de su reserva",
       description:
         "Acceder al historial de mensajes del chat asociado a una reserva en la que participa (como guest o host).",
-      phase: "Fase 3+",
     },
     {
       key: "reviews:reply",
@@ -126,7 +114,6 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
       label: "Crear listados de experiencia o equipamiento",
       description:
         "Publicar listados con atributos propios (duración, idioma, depósito, etc).",
-      phase: "Fase 2+",
     },
   ],
 };
@@ -142,7 +129,7 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
 };
 
 /**
- * Guest is the baseline for every account (RF-02: host stacks on top of it
+ * Guest is the baseline for every account (host stacks on top of it
  * rather than replacing it), so it's always included.
  */
 export function getUserRoles(user: { is_host: boolean }): Role[] {

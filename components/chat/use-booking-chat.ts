@@ -27,7 +27,7 @@ const SEND_TIMEOUT_MS = 10_000;
 // to be observed through useSyncExternalStore: `subscribe` wires React's
 // callback to the connection events; the snapshot is the boolean itself, read
 // without constructing the socket so it stays side-effect-free (the connection
-// opens here in `subscribe`). See docs/insights/USE_SYNC_EXTERNAL_STORE.md.
+// opens here in `subscribe`).
 function subscribe(onStoreChange: () => void) {
   const socket = getSocketConnection();
   socket.on("connect", onStoreChange);

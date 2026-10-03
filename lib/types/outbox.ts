@@ -4,7 +4,7 @@
  *
  * El `payload` es *thin* — sólo ids: el relay rehidrata contra la DB al
  * publicar. Meter acá lo que el mail renderiza congelaría el contrato de la cola
- * dentro de Postgres. Ver `docs/insights/OUTBOX_AND_SAGA.md`.
+ * dentro de Postgres.
  *
  * Agregar un miembro a `OutboxEventType` obliga a enseñárselo al resolver de su
  * agregado en el worker (`getUserJob` / `getBookingJob`, `src/outbox/fan-out.ts`):

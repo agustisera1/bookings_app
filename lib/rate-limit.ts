@@ -1,7 +1,7 @@
 import { getRedisClient } from "./redis";
 
 // `failMode` = qué hacer si Redis no responde. Es una decisión de negocio que
-// toma el caller, no el mecanismo. Ver docs/insights/SECURITY_LAYERS.md.
+// toma el caller, no el mecanismo.
 export type RateLimitPolicy = {
   limit: number;
   windowMs: number;
@@ -37,7 +37,7 @@ export async function rateLimit(
     })) as unknown as [number, number];
 
     const allowed = count <= policy.limit;
-    // Verificación TD-20 (solo dev): ver el contador subir en cada intento.
+    // Solo dev: ver el contador subir en cada intento.
     if (process.env.NODE_ENV !== "production")
       console.log(
         `[rateLimit] ${key} → ${count}/${policy.limit} ${allowed ? "OK" : "BLOCKED"}`,

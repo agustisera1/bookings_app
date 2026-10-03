@@ -46,3 +46,6 @@ next-env.d.ts
 # claude code: config personal (permisos, paths de esta máquina)
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# notas personales de estudio
+docs/insights/

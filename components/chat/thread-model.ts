@@ -10,7 +10,7 @@ import type { Status, ThreadMessage } from "./types";
  * messages from the same sender, and the day divider label when the day changes.
  *
  * Pure, framework-free logic kept out of the rendering components so it can be
- * tested on its own (cohesion/coupling rule in CLAUDE.md).
+ * tested on its own.
  */
 export type ThreadItem = {
   message: ThreadMessage;

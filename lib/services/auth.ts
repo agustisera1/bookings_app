@@ -32,7 +32,7 @@ import { rateLimit, resetRateLimit, type RateLimitPolicy } from "../rate-limit";
 
 const SALT_ROUNDS = 10;
 
-// Cotas de abuso. Ver docs/tickets/TD-20-rate-limiting.md (límites y fail-open/closed).
+// Cotas de abuso. Ver docs/architecture/RATE_LIMITING.md.
 const LOGIN_IP_POLICY: RateLimitPolicy = {
   limit: 10,
   windowMs: 10 * 60_000,
