@@ -22,6 +22,8 @@ Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo d
 Un usuario puede tener rol guest y host simultáneamente. El rol admin se quitó del sistema
 (migración `006` dropea `users.is_admin`).
 
+El lado guest/host de una reserva se deriva del **recurso** (`resolveBookingParty` compara `guest_id` / `host_id`), nunca de un switch de rol global: un switch sería una segunda fuente de verdad. Si existe, es solo navegación.
+
 ## Modelo de datos
 
 ### PostgreSQL (transaccional)
@@ -148,30 +150,10 @@ por uno. Un bloque de deuda enterrado en un comentario es deuda que nadie va a e
 
 ### Regla de comentarios — el default es no comentar
 
-**El código se explica solo; un comentario es la excepción, no el acompañamiento.** Antes de
-escribir uno, la pregunta no es "¿esto se entiende mejor con un comentario?" sino **"¿esto es
-deducible leyendo el código?"**. Si la respuesta es sí, no va.
+**El código se explica solo (casi siempre lo hace).** Se comenta solo lo que no es deducible leyendo el código: un edge case no obvio, un valor de config elegido a propósito, o algo que parece un error y no lo es.
 
-**Solo se comenta cuando:**
-
-| Caso | Ejemplo |
-|---|---|
-| **Edge case** — una condición no obvia que el código respeta pero no revela | `type` en la clave del `jobId`: sin él, tres mails legítimos colapsan en uno |
-| **Config exclusiva de un comportamiento** — un valor elegido para lograr algo puntual, donde el valor "natural" rompería | `removeOnComplete: 1000` en vez de `true`, porque `true` no deja ventana que inspeccionar |
-| **Contradicción aparente** — algo que parece un error y no lo es | Envolver en `Error` real porque BullMQ lee `failedReason` de `.message` |
-
-**No se comenta:** qué hace una función que el nombre ya dice; el rationale de arquitectura de una
-feature (va al markdown); la repetición en prosa de las tres líneas siguientes; el "por qué existe"
-de algo que ya está documentado en `docs/`.
-
-**No duplicar el markdown.** Si una feature tiene su doc en `docs/architecture/` o `docs/tech_debt/`,
-en el código va **a lo sumo un puntero de una línea** (`// Ver docs/architecture/X.md`), nunca el
-resumen del doc. Es la misma regla de deuda técnica de arriba, generalizada: la explicación larga
-vive en un solo lugar y ese lugar es el markdown, porque es donde se revisa en bloque.
-
-**Regla práctica:** si un archivo tiene más líneas de comentario que de código, está mal. El
-comentario largo casi siempre es señal de que el nombre o la estructura son los que fallan — primero
-arreglá eso, y recién si el hecho sigue sin ser deducible, comentá.
+- **Límite duro: máx. 2 líneas por bloque.** Lo aplica el hook `.claude/hooks/check-comments.mjs`, que rechaza el edit que lo viola.
+- **Comentario largo = nombre o estructura que falla:** arreglá eso primero. El rationale de una feature va a `docs/`; en el código, a lo sumo `// Ver docs/X.md`.
 
 ## Librería compartida — `/lib`
 
@@ -384,7 +366,9 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 | Campo de selección de fecha | `DatePicker` de `components/common/date-picker.tsx` — nunca rearmar `Popover` + `Calendar` + `datePickerTriggerClass` + trigger a mano. Refs: `bookings/booking-form.tsx`, `search/filters.tsx` |
 | Estado vacío con protagonismo | `EmptyState` centrado; para un status inline compacto dentro de una lista, un `<p className="text-sm text-muted-foreground">` es más liviano |
 | Acción destructiva fuera de un form | `ConfirmDialog` (ver "Patrón de acciones de confirmación") |
-| Icono como dato hacia un Client Component | Pasar el elemento renderizado (`icon={<X />}`), nunca la referencia al componente (rompe la serialización RSC) |
+| Prop de un Server Component a un Client Component | Solo datos serializables o un elemento ya renderizado (`icon={<X />}`); nunca la referencia a un componente o función (rompe la serialización RSC) |
+| Trigger `*Trigger render={<Button/>}` | Se arma **dentro** del Client Component que tiene el Dialog; si necesita varios looks, un prop `variant`. Nunca llega pre-armado desde un Server Component (hydration mismatch de `data-slot`) |
+| `Button` con `render={<Link/>}` | Siempre `nativeButton={false}`. Ref: `app/forbidden.tsx` |
 
 ### Diseño de estados
 

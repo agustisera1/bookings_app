@@ -42,3 +42,7 @@ next-env.d.ts
 
 # local notes (no se commitean)
 *.local.md
+
+# claude code: config personal (permisos, paths de esta máquina)
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
