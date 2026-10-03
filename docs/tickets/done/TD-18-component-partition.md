@@ -44,10 +44,9 @@ Partición sugerida, siguiendo `chat/`:
 | `filters-draft.ts` | **Ya existe.** El modelo puro del draft |
 | piezas (`min-count-field.tsx`, etc.) | `MinCountField` y los bloques presentacionales |
 
-**2. `components/listings/create-listing-form.tsx` — 326 líneas.** No es partición de feature sino
-adherencia al patrón de formularios: es largo y mete varios `Controller` y campos inline. Evaluar si
-se beneficia de extraer sub-secciones del form, o si con el patrón RHF ya alcanza. Menos urgente que
-filters.
+**2. `components/listings/create-listing/` — el alta de listing.** Ya está partido siguiendo `chat/`:
+orquestador (`create-listing-button.tsx`), modelo puro (`create-listing-model.ts`) y una pieza
+presentacional por paso del stepper. No queda trabajo acá.
 
 **3. `sign-in` / `sign-up` (`app/auth/*`)** — no es partición: **no usan el patrón RHF + Zod** que
 `CLAUDE.md` marca como obligatorio. Manejan `useState` + `safeParse` + `fieldErrors` a mano.
@@ -74,8 +73,7 @@ No entra por deploy: los componentes funcionan. Por eso es 🟡 y post-deploy.
 el `filters-draft.ts` que ya existe + piezas presentacionales. Regla de `"use client"`: solo el
 orquestador y el hook la llevan; las piezas sin hooks no.
 
-**2. Evaluar `create-listing-form.tsx`** y partir sus sub-secciones solo si aporta. Documentar la
-decisión si se decide dejarlo como está.
+**2. `create-listing/`** ya quedó partido: orquestador + modelo puro + una pieza por paso.
 
 **3. Migrar `sign-in`/`sign-up` al patrón RHF + Zod**, con `FormField`.
 

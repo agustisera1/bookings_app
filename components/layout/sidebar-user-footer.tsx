@@ -1,6 +1,7 @@
 "use client";
 
 import { logoutUser } from "@/lib/services/auth";
+import { initialsFrom } from "@/lib/utils";
 import { SidebarFooter } from "@/components/ui/sidebar";
 import {
   DropdownMenu,
@@ -16,12 +17,7 @@ import { redirect } from "next/navigation";
 type Props = { name: string; email: string };
 
 export function SidebarUserFooter({ name, email }: Props) {
-  const initials = name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+  const initials = initialsFrom(name);
 
   async function handleLogout() {
     const { ok } = await logoutUser();
