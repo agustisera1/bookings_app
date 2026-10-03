@@ -109,6 +109,7 @@ estrella: `23P01` de solape → `CONFLICT` con copy de cara al usuario). Referen
 | `docs/tickets/` | **Backlog priorizado.** Un `TD-XX-*.md` por tarea = un branch; los cerrados se mueven a `done/`. El encabezado de cada ticket lleva bloque, prioridad, dependencias y origen |
 | `docs/insights/` | Notas de aprendizaje sobre APIs y conceptos |
 | `docs/guides/` | Setup de servicios externos |
+| `docs/audit/` | Auditoría del sistema: dimensiones (`DIMENSIONS.md`); cada una se trabaja en su branch `refactor/*` |
 
 **Relación entre los dos primeros:** `tech_debt/` responde *por qué esto es deuda*; `tickets/`
 responde *qué hago y cómo sé que terminé*. Se enlazan, no se duplican. Un ítem de deuda que se
