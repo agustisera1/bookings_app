@@ -227,3 +227,33 @@ export function MyActionButton({ id }: { id: string }) {
 | Texto del botón de confirmar durante el request | `pendingLabel` en gerundio ("Deleting…", "Cancelling…") |
 | Diálogo con contenido propio (p. ej. un form con textarea) | No usar `ConfirmDialog`; armar `AlertDialog` a mano con el mismo contrato de estados. Referencia: `components/bookings/manage-booking-actions.tsx` |
 | Botón que dispara solo un mock (sin service real) | `alert("...")` directo en el `onClick`, sin diálogo — reservar el diálogo para acciones con efecto real |
+
+---
+
+## Web Interface Guidelines
+
+Subconjunto aplicable de [vercel.com/design/guidelines](https://vercel.com/design/guidelines). Formato: `docs/audit/HOW_TO_ADD_RULE.md`. Todas las verificaciones excluyen `components/ui/`.
+
+### Accesibilidad y semántica
+
+- **Todo botón solo-ícono tiene nombre accesible (`<span className="sr-only">` o `aria-label`).** Verificación: cada `size="icon*"` lleva uno de los dos. Ref: `components/bookings/cancel-booking-button.tsx`.
+- **Nada de `div`/`span`/`li` clickeable: lo interactivo es un `button` o un link.** Verificación: grep de `<(div|span|li)[^>]*onClick` → 0.
+- **Navegar es un `<Link>`; `router.push` solo después de una acción (submit, delete).** Verificación: ningún `onClick` cuyo único efecto es `router.push`. Ref: `components/listings/create-listing/create-listing.tsx`.
+- **Cada página define su título.** Verificación: cada `page.tsx` exporta `metadata` o `generateMetadata`. Ref: `app/layout.tsx`.
+
+### Animación
+
+- **Nunca `transition-all`: se transiciona solo la propiedad que cambia.** Verificación: grep de `transition-all` → 0.
+- **Toda animación respeta `prefers-reduced-motion`.** Verificación: cada `animate-*` va con prefijo `motion-safe:` (p. ej. `motion-safe:animate-pulse`).
+
+### Contenido
+
+- **Los textos de carga y de "sigue algo" usan el carácter `…`, nunca `...`.** Verificación: grep de `...` dentro de strings y JSX de `.tsx` → 0. Ref: `pendingLabel` de `ConfirmDialog`.
+- **Imágenes con `next/image`, nunca `<img>`.** Verificación: grep de `<img` → 0. Ref: `components/bookings/booking-card.tsx`.
+- **Precios y conteos que se comparan llevan `tabular-nums`.** Verificación: `PriceLabel` y los contadores numéricos incluyen la clase. Ref: el badge de `components/ui/sidebar.tsx`.
+
+### Formularios y estado
+
+- **Los inputs de auth declaran `type` y `autoComplete`: `email`, `current-password` (sign-in), `new-password` (sign-up).** Verificación: los `<Input>` de `app/auth/**`.
+- **Nunca deshabilitar el submit por validez: se valida al enviar.** Verificación: grep de `disabled={` con `isValid` o `isDirty` → 0. Ref: `components/bookings/booking-form.tsx`.
+- **Filtros y estado navegable viven en la URL, no en `useState`.** Verificación: el estado aplicado de la búsqueda se lee y escribe con `nuqs`; `useState` solo para el draft o lo visual. Ref: `components/search/use-filters.ts`.
