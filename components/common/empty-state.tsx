@@ -1,18 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Centered placeholder for the "nothing here yet" state of a section or list.
- * Every slot is optional so it scales from a bare message to an illustrated
- * call-to-action.
- *
- * Pass `icon` as a rendered node (`icon={<ImageOff />}`), not a component
- * reference, so it stays serializable across the RSC boundary.
- *
- * For a compact status line inside a dense list, a plain
- * `<p className="text-sm text-muted-foreground">` is lighter — reach for
- * `EmptyState` when the empty state deserves its own centered block.
- */
+// `icon` is a rendered node, not a component reference, so it serializes across the RSC boundary.
 export function EmptyState({
   icon,
   title,

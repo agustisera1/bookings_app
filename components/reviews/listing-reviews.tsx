@@ -4,6 +4,7 @@ import { ServiceResult } from "@/lib/types";
 import { Review } from "@/lib/services/reviews";
 import { ReviewReplyForm } from "@/components/reviews/review-reply-form";
 import { StarRating } from "@/components/common/star-rating";
+import { formatDate } from "@/lib/dates";
 
 function ReviewCard({
   review,
@@ -12,16 +13,13 @@ function ReviewCard({
   review: Review;
   isHostMode: boolean;
 }) {
-  const date = new Date(review.created_at).toLocaleDateString("en-US", {
-    month: "short",
-    year: "numeric",
-  });
-
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-start gap-2">
         <span className="text-sm font-medium">{review.author_name}</span>
-        <span className="text-xs text-muted-foreground">{date}</span>
+        <span className="text-xs text-muted-foreground">
+          {formatDate(review.created_at)}
+        </span>
         <StarRating rating={review.rating} />
       </div>
 
@@ -59,7 +57,7 @@ export function ListingReviews({
   if (!reviewsResponse.ok) {
     return (
       <p className="text-sm text-muted-foreground">
-        Could not load the reviews, please try reloading the page.
+        Could not load the reviews. Try reloading the page.
       </p>
     );
   }

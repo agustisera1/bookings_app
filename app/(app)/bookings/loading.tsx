@@ -1,4 +1,5 @@
 import { PageLayout } from "@/components/common/page-layout";
+import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export default function BookingsLoading() {
@@ -10,7 +11,7 @@ export default function BookingsLoading() {
       <div className="flex flex-col gap-4">
         <div className="flex items-center gap-3">
           <Skeleton className="h-4 w-20" />
-          <div className="h-px flex-1 bg-border" />
+          <Separator className="flex-1" />
         </div>
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -25,7 +26,7 @@ export default function BookingsLoading() {
                 <Skeleton className="h-4 w-1/3" />
                 <div className="mt-auto flex items-center justify-between gap-2 border-t pt-3">
                   <Skeleton className="h-5 w-24" />
-                  <Skeleton className="h-8 w-8 rounded-md" />
+                  <Skeleton className="h-8 w-8 rounded-lg" />
                 </div>
               </div>
             </li>

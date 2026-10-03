@@ -3,17 +3,8 @@ import { ConversationRail } from "@/components/chat/conversation-rail";
 import { ConversationListSkeleton } from "@/components/chat/conversation-list-skeleton";
 import { MarkMessagesSeen } from "@/components/chat/mark-messages-seen";
 
-/**
- * Two-pane messages shell: the conversation rail on the left, the selected
- * thread on the right. It lives in a layout (not in each page) so the rail
- * keeps its scroll position and isn't refetched when you switch threads.
- *
- * The rail is suspended rather than awaited here: the thread — the pane the
- * user came for — must not wait on the rail query behind it.
- *
- * Deliberately not `PageLayout`: this view owns the full height and gives each
- * pane its own scroll, instead of one heading over one scrolling column.
- */
+// A layout, so the rail keeps its scroll and isn't refetched between threads.
+// Not `PageLayout`: each pane owns its own scroll.
 export default function MessagesLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
@@ -24,7 +15,7 @@ export default function MessagesLayout({ children }: { children: ReactNode }) {
             Messages
           </h1>
         </header>
-        <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
           <Suspense fallback={<ConversationListSkeleton />}>
             <ConversationRail />
           </Suspense>

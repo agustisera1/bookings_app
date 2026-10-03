@@ -5,7 +5,7 @@ import { Fact } from "@/components/common/fact";
 import { Section } from "@/components/common/section";
 import { Separator } from "@/components/ui/separator";
 import { formatDate } from "@/lib/dates";
-import { formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/utils";
 import { BookingCancellationPolicy } from "./booking-detail-cancellation";
 import { BookingDetailHero } from "./booking-detail-hero";
 import {
@@ -27,23 +27,20 @@ function PriceRow({
 }) {
   return (
     <div
-      className={`flex items-baseline justify-between gap-4 ${
-        strong ? "text-base font-semibold" : "text-sm text-muted-foreground"
-      }`}
+      className={cn(
+        "flex items-baseline justify-between gap-4",
+        strong ? "text-base font-semibold" : "text-sm text-muted-foreground",
+      )}
     >
       <span>{label}</span>
-      <span className={strong ? undefined : "text-foreground"}>
+      <span className={cn("tabular-nums", !strong && "text-foreground")}>
         {formatPrice(amount)}
       </span>
     </div>
   );
 }
 
-/**
- * `review` is a slot rather than an import: the review form belongs to another
- * feature, and features don't reach across to each other — the route composes
- * them. Absent when there's no finished stay to review.
- */
+// `review` is a slot: the form belongs to another feature, so the route composes them.
 export function BookingDetail({
   booking,
   now,
@@ -128,11 +125,11 @@ export function BookingDetail({
                 `Until ${attributes.check_out_time}`
               }
             />
-            <Fact icon={<Moon />} label="Nights" value={price.nights || "—"} />
+            <Fact icon={<Moon />} label="Nights" value={price.nights || "-"} />
             <Fact
               icon={<Users />}
               label="Guests"
-              value={booking.guests ?? "—"}
+              value={booking.guests ?? "-"}
             />
           </dl>
 

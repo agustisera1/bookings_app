@@ -9,9 +9,7 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Seed the live counters with the server's current unread state. The provider
-  // owns them from here on, bumping them as SSE frames arrive. In parallel: the
-  // two are independent, and the shell waits on the slower one either way.
+  // Seeds the live counters; the provider owns them afterwards as SSE frames arrive.
   const [count, messages] = await Promise.all([
     getNotificationsCount(),
     getUnreadMessagesCount(),
@@ -24,7 +22,7 @@ export default async function AppLayout({
     >
       <SidebarProvider>
         <AppSidebar />
-        <SidebarInset className="h-screen overflow-y-auto">
+        <SidebarInset className="h-dvh overflow-y-auto">
           {children}
         </SidebarInset>
       </SidebarProvider>

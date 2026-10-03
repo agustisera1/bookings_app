@@ -1,3 +1,4 @@
+import { GroupHeader } from "@/components/common/group-header";
 import { BookingCard } from "./booking-card";
 import type { BookingRow } from "./bookings-model";
 
@@ -12,15 +13,7 @@ export function BookingSection({
 }) {
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {title}
-        </h2>
-        <span className="text-xs text-muted-foreground/70">
-          {bookings.length}
-        </span>
-        <div className="h-px flex-1 bg-border" />
-      </div>
+      <GroupHeader title={title} count={bookings.length} />
       <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {bookings.map((booking) => (
           <BookingCard key={booking.id} booking={booking} muted={muted} />

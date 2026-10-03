@@ -103,10 +103,7 @@ export function refundDeadline(booking: BookingDetailRow): Date {
   return freeCancellationDeadline(toCancellableRow(booking));
 }
 
-/**
- * Whether there's a stay to review yet. Same predicate `createReview` gates on,
- * so the form is never offered for something the server will refuse.
- */
+// Same predicate `createReview` gates on, so the form is never offered for a refused review.
 export function isReviewable(booking: BookingDetailRow, now: Date): boolean {
   return isCompleted(toCompletableRow(booking), now);
 }
@@ -117,11 +114,8 @@ export type CancellationRecord = {
   refundAmount: number;
 };
 
-/**
- * What a cancellation actually settled, once there is one. Distinct from
- * `guestCancellation`, which answers what *would* happen: this reads the row
- * the service wrote, so the page stops quoting a policy for a closed booking.
- */
+// What a cancellation settled, read from the row the service wrote.
+// `guestCancellation` answers what *would* happen instead.
 export function cancellationRecord(
   booking: BookingDetailRow,
 ): CancellationRecord | null {

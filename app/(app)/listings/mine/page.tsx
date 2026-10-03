@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { getCurrentUser } from "@/lib/services/auth";
 import { forbidden } from "next/navigation";
 import { Plus, SearchX } from "lucide-react";
@@ -10,6 +11,8 @@ import CreateListing from "@/components/listings/create-listing/create-listing";
 import { Search } from "@/components/search/search";
 import { PageLayout } from "@/components/common/page-layout";
 import { EmptyState } from "@/components/common/empty-state";
+
+export const metadata: Metadata = { title: "My listings" };
 
 export default async function MyListingsPage({
   searchParams,
@@ -33,7 +36,7 @@ export default async function MyListingsPage({
     <PageLayout
       title="My listings"
       subtitle="Manage the places, experiences, and gear you host."
-      actions={<CreateListing />}
+      actions={<CreateListing className="h-12 px-4" />}
       inlineToolbar
       toolbar={
         <Suspense>
@@ -43,7 +46,7 @@ export default async function MyListingsPage({
     >
       {error ? (
         <p className="text-sm text-muted-foreground">
-          Could not load your listings. Please try again.
+          Could not load your listings. Try reloading the page.
         </p>
       ) : listings && listings.length > 0 ? (
         <Listings listings={listings} />

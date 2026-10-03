@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/common/section";
 import { PriceLabel } from "@/components/common/price-label";
@@ -5,7 +6,8 @@ import { BookingForm } from "@/components/bookings/booking-form";
 import { ListingPhotos } from "@/components/listings/listing-photos";
 import { EditListingButton } from "@/components/listings/edit-listing-button";
 import { DeleteListingButton } from "@/components/listings/delete-listing-button";
-import { MapPin, Star } from "lucide-react";
+import { ChartNoAxesColumn, MapPin, Star } from "lucide-react";
+import { EmptyState } from "@/components/common/empty-state";
 import { notFound } from "next/navigation";
 import { BackLink } from "@/components/common/back-link";
 import { PageLayout } from "@/components/common/page-layout";
@@ -19,6 +21,8 @@ import {
   getListingBookings,
 } from "@/lib/services/listings";
 import { ListingBookings } from "@/components/bookings/listing-bookings";
+
+export const metadata: Metadata = { title: "Listing" };
 
 export default async function ListingDetailPage({
   params,
@@ -63,7 +67,6 @@ export default async function ListingDetailPage({
                 />
                 <EditListingButton
                   listingId={listing._id}
-                  variant="manage"
                   defaultValues={{
                     title: listing.title,
                     description: listing.description,
@@ -83,8 +86,8 @@ export default async function ListingDetailPage({
               {listing.title}
               <span className="flex shrink-0 items-center gap-1.5">
                 <Star className="size-5 fill-rating text-rating" />
-                <span className="text-base font-semibold">
-                  {listing.rating_avg}
+                <span className="text-base font-semibold tabular-nums">
+                  {listing.rating_avg ?? "New"}
                 </span>
               </span>
               <Badge
@@ -102,19 +105,19 @@ export default async function ListingDetailPage({
               {listing.location?.country || "Country not specified"}
             </span>
           }
-          contentClassName="flex flex-col gap-4"
+          contentClassName="flex flex-col gap-8"
         >
-          <p className="leading-relaxed text-muted-foreground">
-            {listing.description}
-          </p>
+          <ListingPhotos
+            photos={(listing.photos ?? []).filter((p): p is string => !!p)}
+            title={listing.title}
+            listingId={listing._id}
+            isHostMode={isHostMode}
+          />
 
-          <Section title="Photos">
-            <ListingPhotos
-              photos={(listing.photos ?? []).filter((p): p is string => !!p)}
-              title={listing.title}
-              listingId={listing._id}
-              isHostMode={isHostMode}
-            />
+          <Section title="About this place">
+            <p className="max-w-prose leading-relaxed text-muted-foreground">
+              {listing.description}
+            </p>
           </Section>
 
           {/* Reviews are written from the booking they belong to
@@ -142,8 +145,8 @@ export default async function ListingDetailPage({
           <>
             {bookingsPromise && (
               <Section
-                title="Upcoming Bookings"
-                subtitle="Reservations guests have made for this listing"
+                title="Bookings"
+                subtitle="Reservations guests made for this listing"
               >
                 <ListingBookings bookingsPromise={bookingsPromise} />
               </Section>
@@ -154,9 +157,12 @@ export default async function ListingDetailPage({
               subtitle="Performance insights for this listing"
               card
             >
-              <p className="text-sm text-muted-foreground">
-                Listing metrics are coming soon.
-              </p>
+              <EmptyState
+                className="py-10"
+                icon={<ChartNoAxesColumn />}
+                title="Coming soon"
+                description="Views, bookings and rating trends will show up here."
+              />
             </Section>
           </>
         ) : (

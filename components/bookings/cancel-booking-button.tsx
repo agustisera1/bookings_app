@@ -40,10 +40,10 @@ export function CancelBookingButton({
       return false; // keep the dialog open to retry
     }
     // "will be refunded", not "refunded": the cancellation records what's owed,
-    // it doesn't move money — there's no payment gateway behind this yet.
+    // it doesn't move money: there's no payment gateway behind this yet.
     toast.success(
       result.data.refundAmount > 0
-        ? `Booking cancelled — ${formatPrice(result.data.refundAmount)} will be refunded`
+        ? `Booking cancelled. ${formatPrice(result.data.refundAmount)} will be refunded`
         : "Booking cancelled",
     );
   }

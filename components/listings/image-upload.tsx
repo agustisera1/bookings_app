@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
 import { ImagePlus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   ACCEPTED_PHOTO_TYPES,
   MAX_PHOTO_BYTES,
@@ -59,16 +60,16 @@ export function ImageUpload({
           addFiles(e.dataTransfer.files);
         }}
         disabled={atLimit}
-        className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-input px-4 py-8 text-center transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
+        className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-input px-4 py-8 text-center transition-colors hover:bg-muted disabled:pointer-events-none disabled:opacity-50"
       >
         <ImagePlus className="size-6 text-muted-foreground" />
-        <p className="text-sm">
+        <span className="text-sm">
           <span className="font-medium text-foreground">Click to upload</span>{" "}
           <span className="text-muted-foreground">or drag and drop</span>
-        </p>
-        <p className="text-xs text-muted-foreground">
+        </span>
+        <span className="text-xs text-muted-foreground">
           PNG, JPEG or WebP · up to {MAX_PHOTO_MB} MB each · {maxFiles} photos
-        </p>
+        </span>
       </button>
 
       <input
@@ -110,7 +111,7 @@ function ImagePreview({
   const [url] = useState(() => URL.createObjectURL(file));
 
   return (
-    <div className="group relative aspect-square overflow-hidden rounded-lg ring-1 ring-foreground/10">
+    <div className="group relative aspect-square overflow-hidden rounded-xl ring-1 ring-foreground/10">
       {/* The optimizer runs server-side and cannot fetch a `blob:` URL that
           only exists in this tab, so this one preview stays unoptimized. */}
       <Image
@@ -121,14 +122,16 @@ function ImagePreview({
         sizes="(min-width: 640px) 25vw, 33vw"
         className="object-cover"
       />
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="icon-xs"
         onClick={onRemove}
         aria-label={`Remove ${file.name}`}
-        className="absolute right-1 top-1 flex size-6 items-center justify-center rounded-full bg-background/90 text-foreground shadow-sm transition-colors hover:bg-destructive hover:text-destructive-foreground"
+        className="absolute right-1 top-1 bg-background/90 text-foreground shadow-sm hover:bg-destructive hover:text-destructive-foreground"
       >
-        <X className="size-3.5" />
-      </button>
+        <X />
+      </Button>
     </div>
   );
 }

@@ -3,11 +3,7 @@ import type { ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/empty-state";
 
-/**
- * Shared body for a route `error.tsx` boundary: a centered `EmptyState` with a
- * "Try again" button wired to Next's `reset` and a caller-supplied escape hatch
- * (`homeAction`), since where "home" points depends on which segment failed.
- */
+// `homeAction` is the caller's: where "home" points depends on which segment failed.
 export function RouteError({
   icon,
   title,

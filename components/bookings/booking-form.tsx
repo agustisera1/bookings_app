@@ -5,12 +5,14 @@ import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Users } from "lucide-react";
+import { CalendarCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/field";
 import { DatePicker } from "@/components/common/date-picker";
+import { EmptyState } from "@/components/common/empty-state";
 import { calcNights } from "@/lib/dates";
+import { formatPrice } from "@/lib/utils";
 import { createBooking } from "@/lib/services/bookings";
 import { ServiceResult } from "@/lib/types";
 import { Matcher } from "react-day-picker";
@@ -43,7 +45,7 @@ export function BookingForm({
 }) {
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [checkOutOpen, setCheckOutOpen] = useState(false);
-  const [success, setSuccess] = useState(false);
+  const [today] = useState(() => new Date());
   const availability = use(availabilityPromise);
 
   const {
@@ -51,7 +53,7 @@ export function BookingForm({
     register,
     handleSubmit,
     setValue,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isSubmitSuccessful },
   } = useForm<BookingFormValues>({
     resolver: zodResolver(bookingSchema),
     defaultValues: { guests: 1 },
@@ -75,18 +77,16 @@ export function BookingForm({
       toast.error(result.error ?? "Could not complete your booking");
       throw new Error(result.error);
     }
-    setSuccess(true);
   }
 
-  if (success) {
+  if (isSubmitSuccessful) {
     return (
-      <div className="flex flex-col items-center gap-2 py-8 text-center">
-        <span className="text-3xl">🎉</span>
-        <p className="font-medium">Booking requested!</p>
-        <p className="text-sm text-muted-foreground">
-          You will receive a confirmation shortly.
-        </p>
-      </div>
+      <EmptyState
+        className="py-8"
+        icon={<CalendarCheck />}
+        title="Booking requested"
+        description="You will receive a confirmation shortly."
+      />
     );
   }
 
@@ -111,11 +111,9 @@ export function BookingForm({
                   setCheckInOpen(false);
                   if (date) setCheckOutOpen(true);
                 }}
-                // availability.data are inclusive DateRange matchers (from/to):
-                // they block each booking's start_date and end_date. See
-                // getAvailabilityFromBookings in lib/dates.ts.
+                // Inclusive DateRange matchers: each booking blocks its start and end date.
                 disabled={[
-                  { before: new Date() },
+                  { before: today },
                   ...(availability.ok ? availability.data : []),
                 ]}
               />
@@ -136,7 +134,7 @@ export function BookingForm({
                   field.onChange(date);
                   setCheckOutOpen(false);
                 }}
-                disabled={{ before: checkIn ?? new Date() }}
+                disabled={{ before: checkIn ?? today }}
               />
             )}
           />
@@ -151,24 +149,25 @@ export function BookingForm({
             type="number"
             min={1}
             max={16}
-            className="pl-9 h-10"
+            className="pl-9"
             {...register("guests", { valueAsNumber: true })}
           />
         </div>
       </FormField>
 
-      <div className="flex flex-col gap-1 text-sm">
+      <div className="flex flex-col gap-1 text-sm tabular-nums">
         <div className="flex justify-between text-muted-foreground">
           <span>Price per night</span>
-          <span>${pricePerNight}</span>
+          <span>{formatPrice(pricePerNight)}</span>
         </div>
 
         {nights > 0 && (
           <div className="flex justify-between text-muted-foreground">
             <span>
-              ${pricePerNight} × {nights} night{nights !== 1 ? "s" : ""}
+              {formatPrice(pricePerNight)} × {nights} night
+              {nights !== 1 ? "s" : ""}
             </span>
-            <span>${nights * pricePerNight}</span>
+            <span>{formatPrice(nights * pricePerNight)}</span>
           </div>
         )}
 
@@ -177,17 +176,15 @@ export function BookingForm({
             <span>
               × {guests} guest{guests !== 1 ? "s" : ""}
             </span>
-            <span>${total}</span>
+            <span>{formatPrice(total)}</span>
           </div>
         )}
 
         {nights > 0 && (
-          <>
-            <div className="flex justify-between font-semibold text-base">
-              <span>Total</span>
-              <span>${total}</span>
-            </div>
-          </>
+          <div className="flex justify-between text-base font-semibold">
+            <span>Total</span>
+            <span>{formatPrice(total)}</span>
+          </div>
         )}
       </div>
 
@@ -196,7 +193,6 @@ export function BookingForm({
         size="lg"
         disabled={isSubmitting}
         className="w-full"
-        variant="primary"
       >
         {isSubmitting ? "Requesting…" : "Book now"}
       </Button>

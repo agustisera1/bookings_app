@@ -41,7 +41,7 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 
 | Primitivo | Qué resuelve | Server-safe |
 |-----------|--------------|-------------|
-| `Field`, `FieldError`, `FormField` | Fila de formulario: label + control + error. `FormField` es la forma canónica | ✓ |
+| `Field`, `FieldError`, `FormField` | Fila de formulario: label + control + error (o texto de ayuda con `description`). `FormField` es la forma canónica | ✓ |
 | `Fact` | Dato etiquetado de un bloque de detalle: label chico + valor + nota. Renderiza `dt`/`dd`, así que va dentro de un `dl` | ✓ |
 | `CopyButton` | Copia un valor al portapapeles: solo ícono, con tooltip y check de confirmación | Client |
 | `WideDialogContent` | `DialogContent` a un ancho que la escala `size` de `ui/` no ofrece, para un diálogo que carga un form entero | ✓ |
@@ -54,6 +54,9 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 | `BackLink` | Salida de una ruta de detalle hacia su lista (chevron + label) | ✓ |
 | `PageLayout` | Shell de página: heading grande sticky + contenido scrollable, con slots `back`/`actions`/`toolbar`. Llena el ancho de su columna. Es el borde de la ruta | ✓ |
 | `Section` | Encabezado (título + subtítulo) sobre un bloque **dentro** de una página, con `Card` opcional | ✓ |
+| `InitialsAvatar` | Avatar redondo de iniciales en `primary`, tamaños `sm`/`md`/`lg` | ✓ |
+| `CoverImage`, `OverlayBadge` | Portada con foto o gradiente de respaldo + badge legible sobre la imagen | ✓ |
+| `GroupHeader` | Encabezado de un grupo de items: título + conteo + separador | ✓ |
 | `RouteError` | Cuerpo de un `error.tsx`: `EmptyState` + botón "Try again" (`reset`) + escape hatch (`homeAction`) | Client |
 
 ### Reglas de consistencia
@@ -227,3 +230,78 @@ export function MyActionButton({ id }: { id: string }) {
 | Texto del botón de confirmar durante el request | `pendingLabel` en gerundio ("Deleting…", "Cancelling…") |
 | Diálogo con contenido propio (p. ej. un form con textarea) | No usar `ConfirmDialog`; armar `AlertDialog` a mano con el mismo contrato de estados. Referencia: `components/bookings/manage-booking-actions.tsx` |
 | Botón que dispara solo un mock (sin service real) | `alert("...")` directo en el `onClick`, sin diálogo — reservar el diálogo para acciones con efecto real |
+
+---
+
+## Web Interface Guidelines
+
+Subconjunto aplicable de [vercel.com/design/guidelines](https://vercel.com/design/guidelines). Formato: `docs/audit/HOW_TO_ADD_RULE.md`. Todas las verificaciones excluyen `components/ui/`.
+
+### Accesibilidad y semántica
+
+- **Todo botón solo-ícono tiene nombre accesible (`<span className="sr-only">` o `aria-label`).** Verificación: cada `size="icon*"` lleva uno de los dos. Ref: `components/bookings/cancel-booking-button.tsx`.
+- **Nada de `div`/`span`/`li` clickeable: lo interactivo es un `button` o un link.** Verificación: grep de `<(div|span|li)[^>]*onClick` → 0.
+- **Navegar es un `<Link>`; `router.push` solo después de una acción (submit, delete).** Verificación: ningún `onClick` cuyo único efecto es `router.push`. Ref: `components/listings/create-listing/create-listing.tsx`.
+- **Cada página define su título.** Verificación: cada `page.tsx` exporta `metadata` o `generateMetadata`. Ref: `app/layout.tsx`.
+
+### Animación
+
+- **Nunca `transition-all`: se transiciona solo la propiedad que cambia.** Verificación: grep de `transition-all` → 0.
+- **Toda animación respeta `prefers-reduced-motion`.** Verificación: cada `animate-*` va con prefijo `motion-safe:` (p. ej. `motion-safe:animate-pulse`).
+
+### Contenido
+
+- **Los textos de carga y de "sigue algo" usan el carácter `…`, nunca `...`.** Verificación: grep de `...` dentro de strings y JSX de `.tsx` → 0. Ref: `pendingLabel` de `ConfirmDialog`.
+- **Imágenes con `next/image`, nunca `<img>`.** Verificación: grep de `<img` → 0. Ref: `components/bookings/booking-card.tsx`.
+- **Precios y conteos que se comparan llevan `tabular-nums`.** Verificación: `PriceLabel` y los contadores numéricos incluyen la clase. Ref: el badge de `components/ui/sidebar.tsx`.
+
+### Formularios y estado
+
+- **Los inputs de auth declaran `type` y `autoComplete`: `email`, `current-password` (sign-in), `new-password` (sign-up).** Verificación: los `<Input>` de `app/auth/**`.
+- **Nunca deshabilitar el submit por validez: se valida al enviar.** Verificación: grep de `disabled={` con `isValid` o `isDirty` → 0. Ref: `components/bookings/booking-form.tsx`.
+- **Filtros y estado navegable viven en la URL, no en `useState`.** Verificación: el estado aplicado de la búsqueda se lee y escribe con `nuqs`; `useState` solo para el draft o lo visual. Ref: `components/search/use-filters.ts`.
+- **Los campos de texto se recortan en el schema (`z.string().trim()`; email: `z.string().trim().pipe(z.email())`).** Verificación: ningún `z.string()` de texto libre sin `.trim()`.
+- **Los inputs de email llevan `autoCapitalize="none"` y `spellCheck={false}`.** Ref: `components/auth/sign-in-form.tsx`.
+- **Toda zona con scroll dentro de un diálogo o panel lleva `overscroll-contain`.** Ref: `components/search/filters-panel.tsx`.
+- **Comillas tipográficas (“ ”) en el texto de la UI, nunca rectas.**
+- **`themeColor` del `viewport` es el `--background` oscuro.** Ref: `app/layout.tsx`.
+
+---
+
+## Consistencia visual
+
+Reglas que salieron de `docs/audit/07-frontend-audit.md`. Mismo formato que la sección anterior.
+
+### Color, tema y tipografía
+
+- **El color de marca y del CTA es `primary` (lima del preset); `accent` es el gris neutro de hover de shadcn; `success` es solo para estados.** Verificación: `bg-accent` no aparece como color de marca; `bg-success`/`text-success` solo en badges, alertas y pasos completados. Ref: `components/layout/app-sidebar.tsx`.
+- **Los tokens de color vienen del preset de shadcn (`b6rtAc4G2`, base `olive`); un token que se agrega o ajusta tiene que pasar 4.5:1 para texto y 3:1 para bordes de controles.** Verificación: contraste medido en el navegador.
+- **Tipografía: Outfit para todo (títulos y texto), Space Mono solo para IDs y referencias.** Escala: `text-2xs` meta y badges, `text-xs` notas, `text-sm` texto, `text-base` énfasis, `text-lg` títulos de card, `text-2xl` `Section`, `text-3xl md:text-4xl` `PageLayout`. Pesos: 600 títulos, 500 labels, 400 texto.
+- **Forma: controles (`Button`, `Input`, `Select`, `DatePicker`) y miniaturas de hasta 48px en `rounded-lg`; superficies (cards, paneles, diálogos, fotos, filas de lista) en `rounded-xl`; badges, avatares y contadores redondos; burbujas de chat en `rounded-2xl`.** Verificación: grep de `rounded-(sm|md)` fuera de `ui/` → 0.
+- **Los gradientes de portada salen de tokens (`primary`, `rating`, `success`, `muted` sobre `card`), nunca de la paleta de Tailwind.** Verificación: `listingTypeGradient` en `lib/utils.ts` solo usa tokens.
+- **Tema oscuro único: `color-scheme` se declara una vez en `globals.css`.** Verificación: ningún componente usa `[color-scheme:…]`.
+- **Sin guiones largos (`—`, `–`) ni emojis en texto visible; los rangos de fecha salen de `formatDateRange`.** Verificación: grep de `—`/`–` en strings y JSX → 0. Ref: `lib/dates.ts`.
+- **Títulos y botones con mayúscula solo inicial ("Sign in", "Upcoming bookings").** Verificación: lectura de headings y labels.
+
+### Primitivos compartidos
+
+- **Avatar de iniciales con `InitialsAvatar`.** Verificación: ningún `rounded-full` con iniciales armado a mano. Ref: `components/common/initials-avatar.tsx`.
+- **Portada con gradiente de respaldo y badge de tipo con `CoverImage` + `OverlayBadge`.** Verificación: ningún `bg-gradient-to-br ${gradient}` fuera de `CoverImage`. Ref: `components/common/cover-image.tsx`.
+- **Encabezado de un grupo de items (título + conteo + línea) con `GroupHeader`.** Ref: `components/common/group-header.tsx`.
+- **Separadores con `Separator`, carga con `Skeleton`.** Verificación: grep de `h-px` y `animate-pulse` fuera de `ui/` → 0.
+
+### Tamaños y estados
+
+- **Botones en tamaño `default` en acciones de página y pies de diálogo; `sm` solo dentro de listas o cards.** Verificación: `size="sm"` no aparece en el slot `actions` de `PageLayout` ni en un `DialogFooter`.
+- **El submit principal de un form es `variant="primary"` (el default).** Verificación: ningún `type="submit"` con `variant="outline"`.
+- **Inputs y triggers con la altura del componente; sin `h-*` encima.** Excepción: la barra de búsqueda (`Search` + `Filters`), que es más alta a propósito. Ref: `components/ui/input.tsx`.
+- **Radios de la escala del componente; sin `rounded-*` encima de un `Button`.**
+- **Solo lo clickeable tiene hover de elevación, y es `hover:shadow-lg`.** Verificación: cards sin link ni botón no llevan `hover:`.
+- **Títulos de card en `text-lg`.**
+- **El error de carga dice "Could not load <cosa>. Try reloading the page."** Verificación: grep de `Could not load`.
+- **Alto de viewport con `dvh`, nunca `h-screen`/`min-h-screen`.**
+
+### Accesibilidad
+
+- **Todo campo tiene label: `FormField`, o `aria-label` si el diseño no muestra uno.** Verificación: cada `Input`/`Textarea`/grupo de rating tiene `id` + label o `aria-label`.
+- **Las acciones no dependen del hover: lo que aparece en hover también es visible con foco y en pantallas táctiles.**

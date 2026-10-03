@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Listings } from "@/components/listings/listings";
 import { Search } from "@/components/search/search";
 import { PageLayout } from "@/components/common/page-layout";
@@ -8,12 +9,15 @@ import { SearchX } from "lucide-react";
 import { Suspense } from "react";
 import { parseListingFilters, type ListingSearchParams } from "@/lib/listings";
 
+export const metadata: Metadata = { title: "Explore listings" };
+
 export default async function ListingsPage({
   searchParams,
 }: {
   searchParams: Promise<ListingSearchParams>;
 }) {
   const params = await searchParams;
+  const hasFilters = Object.keys(params).length > 0;
   const filters = parseListingFilters(params);
 
   const {
@@ -39,7 +43,7 @@ export default async function ListingsPage({
     >
       {error ? (
         <p className="text-sm text-muted-foreground">
-          Could not load listings. Please try again.
+          Could not load listings. Try reloading the page.
         </p>
       ) : listings && listings.length > 0 ? (
         <Listings listings={listings} />
@@ -47,8 +51,12 @@ export default async function ListingsPage({
         <EmptyState
           className="py-16"
           icon={<SearchX />}
-          title="No listings found"
-          description="There are no listings to show yet."
+          title={hasFilters ? "No listings match your filters" : "No listings yet"}
+          description={
+            hasFilters
+              ? "Try adjusting or clearing the filters to see more listings."
+              : "There are no listings to show yet."
+          }
         />
       )}
     </PageLayout>

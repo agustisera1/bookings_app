@@ -32,8 +32,8 @@ export function DeleteListingButton({
 
   const trigger =
     variant === "button" ? (
-      <Button variant="destructive" size="sm">
-        <Trash2 className="size-4" />
+      <Button variant="destructive">
+        <Trash2 />
         Delete
       </Button>
     ) : (
@@ -52,7 +52,7 @@ export function DeleteListingButton({
       trigger={trigger}
       tooltip={variant === "icon" ? "Delete" : undefined}
       title="Delete this listing?"
-      description={`This will permanently delete "${listingTitle}". This action cannot be undone.`}
+      description={`This will permanently delete “${listingTitle}”. This action cannot be undone.`}
       confirmLabel="Yes, delete"
       pendingLabel="Deleting…"
       onConfirm={handleDelete}

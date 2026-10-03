@@ -1,12 +1,6 @@
 import type { ReactNode } from "react";
 
-/**
- * Two-column body of a detail page: the content column scrolls, the `aside`
- * pins once there is room for it. Collapses to a single column below `lg`.
- *
- * The aside's `top` clears the `PageLayout` sticky header — which is why the
- * offset lives here and not copied into each page that wants this shape.
- */
+// The aside's `top` clears the `PageLayout` sticky header.
 export function DetailColumns({
   aside,
   children,

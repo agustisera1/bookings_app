@@ -52,12 +52,19 @@ export function parsePgTimestamp(
 
 export function formatDate(date: Date | string | null | undefined) {
   const d = date instanceof Date ? date : parseTs(date as string | null);
-  if (!d) return "—";
+  if (!d) return "-";
   return d.toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
   });
+}
+
+export function formatDateRange(
+  start: Date | string | null | undefined,
+  end: Date | string | null | undefined,
+) {
+  return `${formatDate(start)} - ${formatDate(end)}`;
 }
 
 export function calcNights(
@@ -134,6 +141,6 @@ export function fromISODate(value: string): Date {
 
 export const datePickerTriggerClass = (hasValue: boolean) =>
   cn(
-    "h-10 w-full justify-start rounded-lg border border-input bg-transparent px-3 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
+    "flex h-8 w-full items-center justify-start rounded-lg border border-input bg-transparent px-3 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50",
     !hasValue && "text-muted-foreground",
   );

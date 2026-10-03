@@ -1,14 +1,13 @@
-import type { Metadata } from "next";
-import { Space_Grotesk, Space_Mono, Barlow_Condensed } from "next/font/google";
+import type { Metadata, Viewport } from "next";
+import { Outfit, Space_Mono } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  variable: "--font-space-grotesk",
+const outfit = Outfit({
+  variable: "--font-sans",
   subsets: ["latin"],
-  weight: ["400", "500", "700"],
   display: "swap",
 });
 
@@ -19,17 +18,12 @@ const spaceMono = Space_Mono({
   display: "swap",
 });
 
-const barlowCondensed = Barlow_Condensed({
-  variable: "--font-barlow",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
-  display: "swap",
-});
-
 export const metadata: Metadata = {
-  title: "Bookings App",
-  description: "Marketplace de reservas de alojamientos",
+  title: { template: "%s · Bookings App", default: "Bookings App" },
+  description: "Book stays, experiences and gear from hosts.",
 };
+
+export const viewport: Viewport = { themeColor: "#0c0c09" };
 
 export default function RootLayout({
   children,
@@ -39,7 +33,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${spaceGrotesk.variable} ${spaceMono.variable} ${barlowCondensed.variable} dark h-full antialiased`}
+      className={`${outfit.variable} ${spaceMono.variable} dark h-full font-sans antialiased`}
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col">

@@ -4,16 +4,11 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/common/empty-state";
 import "./globals.css";
 
-/**
- * Last-resort boundary: catches a throw in the root layout itself, which is the
- * only failure that leaves the app without an `<html>`. It replaces the document
- * (fonts and providers included), so it renders a self-contained screen and
- * links out with a plain anchor rather than the router.
- */
+// Replaces the whole document, so it renders standalone and links out with a plain anchor.
 export default function GlobalError({ reset }: { reset: () => void }) {
   return (
     <html lang="en" className="dark antialiased">
-      <body className="flex min-h-screen items-center justify-center bg-background p-10 text-foreground">
+      <body className="flex min-h-dvh items-center justify-center bg-background p-10 text-foreground">
         <EmptyState
           icon={<TriangleAlert />}
           title="The app ran into a problem"

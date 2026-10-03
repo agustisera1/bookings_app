@@ -30,10 +30,10 @@ export function DeleteListingPhotoButton({
       trigger={
         <Button
           variant="ghost"
-          size="icon-sm"
-          className="absolute right-1 top-1 z-10 size-6 rounded-full bg-background/90 text-foreground shadow-sm hover:bg-destructive hover:text-destructive-foreground"
+          size="icon-xs"
+          className="absolute right-1 top-1 z-10 bg-background/90 text-foreground shadow-sm hover:bg-destructive hover:text-destructive-foreground"
         >
-          <X className="size-3.5" />
+          <X />
           <span className="sr-only">Remove photo</span>
         </Button>
       }

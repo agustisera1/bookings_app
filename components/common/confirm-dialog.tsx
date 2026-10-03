@@ -19,20 +19,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-/**
- * Confirmation dialog for a destructive or irreversible action fired outside a
- * form. Owns the open + pending state so callers only supply the trigger, the
- * copy, and what to do on confirm.
- *
- * `onConfirm` does the work (usually a service call + toast). Return `false` to
- * keep the dialog open so the user can retry (e.g. after a failed request);
- * return nothing/true to close it.
- *
- * This is the reusable form of the "AlertDialog + pending + error" pattern.
- * Because the `<Button>` trigger is composed with `AlertDialogTrigger` here (a
- * Client Component), callers pass a plain `<Button>` — never a pre-wrapped
- * trigger from a Server Component, which would hydrate inconsistently.
- */
+// Return `false` from `onConfirm` to keep the dialog open for a retry.
+// Callers pass a plain `<Button>`: a trigger pre-wrapped in a Server Component hydrates inconsistently.
 export function ConfirmDialog({
   trigger,
   tooltip,

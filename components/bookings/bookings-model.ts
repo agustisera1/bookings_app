@@ -16,18 +16,13 @@ export type BookingRow = NonNullable<
 /** The same booking with everything the detail route asks for. */
 export type BookingDetailRow = NonNullable<GetBookingQuery["booking"]>;
 
-/**
- * Typed against the fields the rules read rather than a whole row, so the list
- * row and the detail row both satisfy it without either one owning the shape.
- */
+// Typed against the fields the rules read, so list and detail rows both satisfy it.
 type CancellableFields = Pick<
   BookingRow,
   "status" | "start_date" | "total_price"
 >;
 
-// The dates arrive as epoch-millis strings (GraphQL `String` serializes a PG
-// `Date` through `valueOf()`), which `new Date(string)` reads as `Invalid
-// Date`. `parseTs` is what keeps the rules answerable.
+// Dates arrive as epoch-millis strings, which `new Date(string)` reads as Invalid Date.
 export function toCancellableRow(
   booking: CancellableFields,
 ): CancellableBooking {

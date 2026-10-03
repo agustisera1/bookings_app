@@ -6,12 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { Counterpart } from "./types";
 
-/**
- * The composer owns its draft and nothing else: sending goes through `onSend`,
- * so every socket call for the thread lives in `useBookingChat` next to the
- * state it updates. Splitting them is what left the sender's own message
- * unrendered — the emit had no way to reach the history.
- */
+// Owns only the draft; sending goes through `onSend` so socket calls live in `useBookingChat`.
 export function ChatComposer({
   counterpart,
   connected,
@@ -39,10 +34,7 @@ export function ChatComposer({
   }
 
   return (
-    // The bar inherits the surface it sits on and is anchored by the hairline;
-    // previously it painted itself `card` over a darker pane, which is what made
-    // it read as a floating slab. The field keeps `border-input`, the one token
-    // with enough contrast to stay visible on both `card` and `background`.
+    // Inherits its surface; `border-input` is the one token visible on both `card` and `background`.
     <div className="border-t border-foreground/10 px-4 py-3 sm:px-6">
       {!connected && (
         <p className="px-1 pb-2 text-2xs text-muted-foreground">Reconnecting…</p>
@@ -54,12 +46,13 @@ export function ChatComposer({
           onChange={(event) => setBody(event.target.value)}
           onKeyDown={handleKeyDown}
           disabled={!connected}
+          aria-label={`Message your ${counterpart.toLowerCase()}`}
           placeholder={`Message your ${counterpart.toLowerCase()}…`}
           className="min-h-0 flex-1 resize-none border-0 bg-transparent px-2.5 py-2 text-sm shadow-none focus-visible:ring-0 disabled:bg-transparent disabled:opacity-100"
         />
         <Button
-          size="icon"
-          className="size-9 shrink-0 rounded-xl"
+          size="icon-lg"
+          className="shrink-0"
           aria-label="Send message"
           onClick={sendMessage}
           disabled={!connected || !body.trim()}

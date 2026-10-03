@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ChartNoAxesColumn, Hash, Mail, User } from "lucide-react";
 import { getCurrentUser } from "@/lib/services/auth";
@@ -9,9 +10,12 @@ import { Section } from "@/components/common/section";
 import { EmptyState } from "@/components/common/empty-state";
 import { Fact } from "@/components/common/fact";
 import { CopyButton } from "@/components/common/copy-button";
+import { InitialsAvatar } from "@/components/common/initials-avatar";
 import CreateListing from "@/components/listings/create-listing/create-listing";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+
+export const metadata: Metadata = { title: "Profile" };
 
 const ROLE_BADGE_VARIANTS: Record<Role, "primary" | "secondary"> = {
   guest: "secondary",
@@ -32,9 +36,7 @@ export default async function ProfilePage() {
       <div className="flex flex-col gap-8">
         <Card>
           <CardContent className="flex items-center gap-4">
-            <div className="flex size-16 shrink-0 items-center justify-center rounded-full bg-success text-xl font-semibold text-success-foreground">
-              {initialsFrom(user.name)}
-            </div>
+            <InitialsAvatar initials={initialsFrom(user.name)} size="lg" />
             <div className="flex min-w-0 flex-col gap-1">
               <p className="font-heading text-xl font-semibold">{user.name}</p>
               <p className="truncate text-sm text-muted-foreground">

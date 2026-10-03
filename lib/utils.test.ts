@@ -9,8 +9,8 @@ import {
 
 describe("formatPrice", () => {
   it("returns an em dash for nullish amounts", () => {
-    expect(formatPrice(null)).toBe("—");
-    expect(formatPrice(undefined)).toBe("—");
+    expect(formatPrice(null)).toBe("-");
+    expect(formatPrice(undefined)).toBe("-");
   });
 
   it("formats a number as USD currency", () => {
@@ -29,12 +29,12 @@ describe("humanize", () => {
 
 describe("listingTypeGradient", () => {
   it("maps a known type to its gradient", () => {
-    expect(listingTypeGradient("accommodation")).toBe("from-violet-500 to-indigo-600");
+    expect(listingTypeGradient("accommodation")).toBe("from-primary/40 to-card");
   });
 
-  it("falls back to slate for unknown or missing types", () => {
-    expect(listingTypeGradient("unknown")).toBe("from-slate-400 to-slate-600");
-    expect(listingTypeGradient(null)).toBe("from-slate-400 to-slate-600");
+  it("falls back to the muted surface for unknown or missing types", () => {
+    expect(listingTypeGradient("unknown")).toBe("from-muted to-card");
+    expect(listingTypeGradient(null)).toBe("from-muted to-card");
   });
 });
 

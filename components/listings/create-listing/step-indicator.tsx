@@ -1,5 +1,6 @@
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 import type { CreateListingStep } from "./create-listing-model";
 
 export function StepIndicator({
@@ -42,9 +43,7 @@ export function StepIndicator({
               {step.label}
             </span>
             {!last && (
-              <span
-                className={cn("h-px flex-1 bg-border", done && "bg-success")}
-              />
+              <Separator className={cn("flex-1", done && "bg-success")} />
             )}
           </li>
         );

@@ -12,6 +12,10 @@ import { humanize } from "@/lib/utils";
 import { AMENITIES, PROPERTY_TYPES } from "@/lib/listings";
 import { NUMBER_FIELD, type StepFieldsProps } from "./create-listing-model";
 
+const PROPERTY_TYPE_ITEMS = Object.fromEntries(
+  PROPERTY_TYPES.map((type) => [type, humanize(type)]),
+);
+
 export function DetailsStep({
   register,
   control,
@@ -67,7 +71,6 @@ export function DetailsStep({
           <Input
             id="create-listing-check-in"
             type="time"
-            className="h-10 dark:[color-scheme:dark]"
             disabled={disabled}
             {...register("attributes.check_in_time")}
           />
@@ -76,7 +79,6 @@ export function DetailsStep({
           <Input
             id="create-listing-check-out"
             type="time"
-            className="h-10 dark:[color-scheme:dark]"
             disabled={disabled}
             {...register("attributes.check_out_time")}
           />
@@ -103,6 +105,7 @@ export function DetailsStep({
             name="attributes.property_type"
             render={({ field }) => (
               <Select
+                items={PROPERTY_TYPE_ITEMS}
                 value={field.value ?? null}
                 onValueChange={field.onChange}
                 disabled={disabled}

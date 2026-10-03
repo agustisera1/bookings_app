@@ -3,14 +3,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-/**
- * Way out of a detail route, back to the list it came from. Every `[id]` page
- * owes the user one, except where the layout already keeps the list on screen
- * (`app/(app)/messages`, whose rail never leaves).
- *
- * Takes an explicit `href` rather than `router.back()`: the destination has to
- * be the same whether the user arrived by click, by deep link or by reload.
- */
+// Explicit `href`, not `router.back()`: the destination must not depend on how the user arrived.
 export function BackLink({
   href,
   children,

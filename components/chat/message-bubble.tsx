@@ -1,15 +1,16 @@
 import { cn } from "@/lib/utils";
+import { Separator } from "@/components/ui/separator";
 import { ChatAvatar } from "./chat-avatar";
 import type { Counterpart } from "./types";
 
 export function DayDivider({ label }: { label: string }) {
   return (
     <div className="my-4 flex items-center gap-3">
-      <div className="h-px flex-1 bg-border" />
-      <span className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+      <Separator className="flex-1" />
+      <span className="text-2xs font-medium tracking-wider text-muted-foreground uppercase">
         {label}
       </span>
-      <div className="h-px flex-1 bg-border" />
+      <Separator className="flex-1" />
     </div>
   );
 }
@@ -44,13 +45,13 @@ export function MessageBubble({
       {!isMine && (
         <div className="w-8 shrink-0 self-end">
           {isRunStart && (
-            <ChatAvatar counterpart={counterpart} className="size-8" />
+            <ChatAvatar counterpart={counterpart} size="sm" />
           )}
         </div>
       )}
       <div
         className={cn(
-          "flex max-w-[78%] flex-col",
+          "flex max-w-4/5 flex-col",
           isMine ? "items-end" : "items-start",
         )}
       >
@@ -73,7 +74,7 @@ export function MessageBubble({
           </span>
         ) : (
           time && (
-            <span className="mt-1 px-1 text-[11px] text-muted-foreground">
+            <span className="mt-1 px-1 text-2xs text-muted-foreground">
               {time}
             </span>
           )

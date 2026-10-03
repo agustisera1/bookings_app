@@ -10,27 +10,27 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { InitialsAvatar } from "@/components/common/initials-avatar";
 import { ChevronsUpDownIcon, LogOutIcon, UserIcon } from "lucide-react";
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 type Props = { name: string; email: string };
 
 export function SidebarUserFooter({ name, email }: Props) {
+  const router = useRouter();
   const initials = initialsFrom(name);
 
   async function handleLogout() {
     const { ok } = await logoutUser();
-    if (ok) redirect("/auth/sign-in");
+    if (ok) router.push("/auth/sign-in");
   }
 
   return (
     <SidebarFooter className="border-t border-sidebar-border">
       <DropdownMenu>
-        <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-md px-2 py-2 text-left outline-hidden hover:bg-success/10 data-popup-open:bg-success/10 dark:hover:bg-success/20 dark:data-popup-open:bg-success/20">
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-success text-xs font-semibold text-success-foreground">
-            {initials}
-          </div>
+        <DropdownMenuTrigger className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left outline-hidden hover:bg-sidebar-accent data-popup-open:bg-sidebar-accent">
+          <InitialsAvatar initials={initials} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">{name}</p>
             <p className="truncate text-xs text-sidebar-foreground/60">
@@ -41,9 +41,7 @@ export function SidebarUserFooter({ name, email }: Props) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" side="top" sideOffset={8} className="p-1">
           <div className="flex items-center gap-2.5 px-1.5 py-1.5">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-success text-xs font-semibold text-success-foreground">
-              {initials}
-            </div>
+            <InitialsAvatar initials={initials} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium">{name}</p>
               <p className="truncate text-xs text-muted-foreground">{email}</p>
