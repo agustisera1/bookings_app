@@ -321,7 +321,7 @@ export async function rejectBooking(
         ok: false,
         error:
           booking.status === "accepted"
-            ? "This booking was already accepted. Cancel it instead — the guest will be refunded in full."
+            ? "This booking was already accepted. Cancel it instead: the guest will be refunded in full."
             : `This booking is already ${booking.status}`,
         code: "VALIDATION",
       };

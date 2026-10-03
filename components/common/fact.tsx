@@ -1,10 +1,6 @@
 import type { ReactNode } from "react";
 
-/**
- * A single labelled datum inside a detail block: small uppercase label over the
- * value, with an optional clarifying note beneath. Renders `dt`/`dd`, so it
- * must live inside a `dl` — group several in a grid to lay out a fact row.
- */
+// Renders `dt`/`dd`, so it must live inside a `dl`.
 export function Fact({
   icon,
   label,

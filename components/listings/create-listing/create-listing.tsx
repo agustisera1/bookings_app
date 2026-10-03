@@ -5,6 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import { createListing } from "@/lib/services/listings";
 import { Button } from "@/components/ui/button";
 import {
@@ -76,12 +77,11 @@ export default function CreateListing({ className }: { className?: string }) {
     const result = await createListing({ ...data, type: "accommodation" });
     if (!result.ok) {
       toast.error(result.error);
-      throw new Error(result.error); // evita que RHF marque isSubmitSuccessful = true
+      throw new Error(result.error); // keeps RHF from marking the form as submitted
     }
     setOpen(false);
-    // El diálogo se abre desde varias rutas y ninguna muestra el listing nuevo:
-    // el toast es el único hilo que lleva hasta él.
-    toast.success("Listing created!", {
+    // No route that opens this dialog shows the new listing; the toast is the way to it.
+    toast.success("Listing created", {
       action: {
         label: "View",
         onClick: () => router.push(`/listings/${result.data}`),
@@ -89,8 +89,8 @@ export default function CreateListing({ className }: { className?: string }) {
     });
   }
 
-  // Mientras no sea el último paso el submit avanza en vez de crear, así Enter
-  // en un campo hace lo mismo que el botón y no manda el alta a medio completar.
+  // Before the last step, submit advances instead of creating, so Enter in a
+  // field matches the button and never sends a half-filled listing.
   function handleFormSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (isLastStep) void handleSubmit(onSubmit)();
@@ -100,10 +100,15 @@ export default function CreateListing({ className }: { className?: string }) {
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger
-        render={<Button className={className}>Add new listing</Button>}
+        render={
+          <Button className={className}>
+            <Plus />
+            Add
+          </Button>
+        }
       />
 
-      <WideDialogContent className="grid-rows-[auto_auto_minmax(0,1fr)] max-h-[85vh]">
+      <WideDialogContent className="grid-rows-[auto_auto_minmax(0,1fr)]">
         <DialogHeader>
           <DialogTitle>Create a new listing</DialogTitle>
           <DialogDescription>{STEPS[step].description}</DialogDescription>
@@ -115,7 +120,7 @@ export default function CreateListing({ className }: { className?: string }) {
           onSubmit={handleFormSubmit}
           className="flex min-h-0 flex-col gap-4"
         >
-          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto px-1 py-1">
+          <div className="flex min-h-0 flex-col gap-4 overflow-y-auto overscroll-contain px-1 py-1">
             <StepBody {...fieldProps} />
           </div>
 

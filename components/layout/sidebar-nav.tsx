@@ -66,8 +66,8 @@ export function SidebarNav({ isHost }: { isHost: boolean }) {
           <SidebarMenuItem key={item.href} className="relative">
             {item.badge ? (
               <Badge
-                variant="accent"
-                className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2"
+                variant="primary"
+                className="pointer-events-none absolute right-2 top-1/2 z-10 -translate-y-1/2 tabular-nums"
               >
                 {item.badge}
               </Badge>
@@ -75,7 +75,7 @@ export function SidebarNav({ isHost }: { isHost: boolean }) {
             <SidebarMenuButton
               isActive={isActive(item.href)}
               render={<Link href={item.href} />}
-              className="data-active:hover:bg-success/10 data-active:hover:text-success dark:data-active:hover:bg-success/20"
+              className="data-active:bg-sidebar-accent data-active:text-primary data-active:hover:text-primary dark:data-active:bg-sidebar-accent"
             >
               <item.icon />
               <span>{item.title}</span>

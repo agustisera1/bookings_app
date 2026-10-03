@@ -5,13 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
-  DialogContent,
   DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { WideDialogContent } from "@/components/common/wide-dialog-content";
 import { FiltersPanel } from "./filters-panel";
 import { useFilters } from "./use-filters";
 
@@ -47,14 +47,14 @@ export function Filters() {
             <SlidersHorizontal />
             Filters
             {activeCount > 0 && (
-              <Badge variant="primary" className="ml-0.5">
+              <Badge variant="primary" className="ml-0.5 tabular-nums">
                 {activeCount}
               </Badge>
             )}
           </Button>
         }
       />
-      <DialogContent size="lg">
+      <WideDialogContent className="grid-rows-[auto_minmax(0,1fr)_auto]">
         <DialogHeader>
           <DialogTitle>Filters</DialogTitle>
           <DialogDescription>
@@ -79,17 +79,16 @@ export function Filters() {
         <DialogFooter className="sm:justify-between">
           <Button
             variant="outline"
-            size="sm"
             onClick={clearAll}
             disabled={draftCount === 0}
           >
             Reset
           </Button>
-          <Button size="sm" onClick={applyFilters}>
+          <Button onClick={applyFilters}>
             Show results
           </Button>
         </DialogFooter>
-      </DialogContent>
+      </WideDialogContent>
     </Dialog>
   );
 }

@@ -10,7 +10,7 @@ export function formatPrice(
   amount: number | null | undefined,
   currency = "USD",
 ) {
-  if (amount == null) return "—";
+  if (amount == null) return "-";
   return new Intl.NumberFormat("en-US", { style: "currency", currency }).format(
     amount,
   );
@@ -37,14 +37,14 @@ export function humanize(value: string) {
 }
 
 const TYPE_GRADIENTS: Record<string, string> = {
-  accommodation: "from-violet-500 to-indigo-600",
-  experience: "from-orange-400 to-pink-500",
-  equipment: "from-teal-400 to-cyan-600",
+  accommodation: "from-primary/40 to-card",
+  experience: "from-rating/40 to-card",
+  equipment: "from-success/40 to-card",
 };
 
 /** Tailwind gradient stops for a listing/booking `type` banner. */
 export function listingTypeGradient(type: string | null | undefined) {
-  return TYPE_GRADIENTS[type ?? ""] ?? "from-slate-400 to-slate-600";
+  return TYPE_GRADIENTS[type ?? ""] ?? "from-muted to-card";
 }
 
 export const bookingStatusVariant: Record<

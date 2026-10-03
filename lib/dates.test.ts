@@ -138,7 +138,7 @@ describe("formatDate / formatTime", () => {
   });
 
   it("returns an em dash for an unparseable date", () => {
-    expect(formatDate(null)).toBe("—");
+    expect(formatDate(null)).toBe("-");
   });
 
   it("formats a time as 'H:MM AM/PM'", () => {

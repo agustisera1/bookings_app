@@ -6,7 +6,7 @@ export default function ListingDetailLoading() {
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row">
       <div className="min-w-0 lg:min-h-0 lg:flex-1 lg:overflow-y-auto">
         <PageLayout
-          back={<Skeleton className="h-5 w-32 rounded-md" />}
+          back={<Skeleton className="h-5 w-32 rounded-lg" />}
           title={<Skeleton className="h-9 w-2/3 max-w-full" />}
           subtitle={<Skeleton className="h-4 w-48" />}
           actions={<Skeleton className="h-8 w-40 rounded-lg" />}
@@ -17,7 +17,7 @@ export default function ListingDetailLoading() {
           <Skeleton className="h-4 w-4/5" />
           <div className="grid grid-cols-2 gap-3 pt-4 sm:grid-cols-3">
             {Array.from({ length: 3 }).map((_, i) => (
-              <Skeleton key={i} className="aspect-square w-full rounded-lg" />
+              <Skeleton key={i} className="aspect-square w-full rounded-xl" />
             ))}
           </div>
         </PageLayout>

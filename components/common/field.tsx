@@ -8,11 +8,6 @@ import {
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
-/**
- * Vertical stack for a single form control (label + input + error).
- * Use directly when you need custom composition; prefer `FormField` for the
- * common label/control/error shape.
- */
 export function Field({ className, ...props }: ComponentProps<"div">) {
   return (
     <div
@@ -23,10 +18,6 @@ export function Field({ className, ...props }: ComponentProps<"div">) {
   );
 }
 
-/**
- * Standard inline validation message. Renders nothing when there's no error,
- * so callers can pass `errors.x?.message` unconditionally.
- */
 export function FieldError({ children }: { children?: ReactNode }) {
   if (!children) return null;
   return (
@@ -36,29 +27,18 @@ export function FieldError({ children }: { children?: ReactNode }) {
   );
 }
 
-/**
- * The canonical form-row: an optional label bound to a control via `htmlFor`,
- * the control itself (children), and an optional error message underneath.
- *
- * When `error` is set, the control is cloned with `aria-invalid`, which lights
- * up the error styling already baked into the `ui/` inputs (Input, Textarea…)
- * — no per-field wiring needed.
- *
- * ```tsx
- * <FormField label="Title" htmlFor="title" error={errors.title?.message}>
- *   <Input id="title" {...register("title")} />
- * </FormField>
- * ```
- */
+// With `error`, the control is cloned with `aria-invalid`, which lights up the `ui/` error styles.
 export function FormField({
   label,
   htmlFor,
+  description,
   error,
   className,
   children,
 }: {
   label?: ReactNode;
   htmlFor?: string;
+  description?: ReactNode;
   error?: ReactNode;
   className?: string;
   children: ReactNode;
@@ -75,7 +55,13 @@ export function FormField({
     <Field data-slot="form-field" className={className}>
       {label && <Label htmlFor={htmlFor}>{label}</Label>}
       {control}
-      <FieldError>{error}</FieldError>
+      {error ? (
+        <FieldError>{error}</FieldError>
+      ) : (
+        description && (
+          <p className="text-xs text-muted-foreground">{description}</p>
+        )
+      )}
     </Field>
   );
 }

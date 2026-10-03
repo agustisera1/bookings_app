@@ -9,15 +9,15 @@ import type {
 import { PROPERTY_TYPES } from "@/lib/listings";
 
 export const createListingSchema = z.object({
-  title: z.string().min(1, "Title is required").max(120, "Title is too long"),
-  description: z.string().min(1, "Description is required"),
+  title: z.string().trim().min(1, "Title is required").max(120, "Title is too long"),
+  description: z.string().trim().min(1, "Description is required"),
   price: z
     .number({ error: "Enter a price" })
     .positive("Price must be greater than 0"),
   location: z.object({
-    address: z.string().min(1, "Address is required"),
-    city: z.string().min(1, "City is required"),
-    country: z.string().min(1, "Country is required"),
+    address: z.string().trim().min(1, "Address is required"),
+    city: z.string().trim().min(1, "City is required"),
+    country: z.string().trim().min(1, "Country is required"),
   }),
   attributes: z.object({
     beds: z.number().int().min(0).optional(),
@@ -43,11 +43,7 @@ export const DEFAULT_VALUES: DefaultValues<CreateListingFormValues> = {
   attributes: { max_guests: 1, amenities: [] },
 };
 
-/**
- * `register` options for every number input. An empty input has to read as
- * `undefined`, not as the `NaN` that `valueAsNumber` produces: the optional
- * fields would fail the schema, and their step has no error to render.
- */
+// An empty number input must read as `undefined`, not the `NaN` of `valueAsNumber`.
 export const NUMBER_FIELD = {
   setValueAs: (value: string) => (value === "" ? undefined : Number(value)),
 };
@@ -66,10 +62,7 @@ export type CreateListingStep = {
   id: StepId;
   label: string;
   description: string;
-  /**
-   * Validated by `goNext` before advancing, so a step never hides an error
-   * behind it. The last step's are covered by the full-schema pass on submit.
-   */
+  // Validated by `goNext` before advancing; the last step's are covered on submit.
   fields: FieldPath<CreateListingFormValues>[];
 };
 

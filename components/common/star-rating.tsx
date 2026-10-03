@@ -6,9 +6,6 @@ import { cn } from "@/lib/utils";
 
 const STARS = [1, 2, 3, 4, 5];
 
-/**
- * Read-only star rating for displaying a score. Purely presentational.
- */
 export function StarRating({
   rating,
   className,
@@ -38,25 +35,14 @@ export function StarRating({
   );
 }
 
-/**
- * Interactive star picker. Controlled: owns only the ephemeral hover state,
- * the selected value lives with the caller (e.g. an RHF `Controller`).
- *
- * ```tsx
- * <Controller
- *   control={control}
- *   name="rating"
- *   render={({ field }) => (
- *     <StarRatingInput value={field.value} onChange={field.onChange} />
- *   )}
- * />
- * ```
- */
+// Controlled: owns only the hover state; the value lives with the caller (an RHF `Controller`).
 export function StarRatingInput({
+  label,
   value,
   onChange,
   className,
 }: {
+  label: string;
   value: number;
   onChange: (value: number) => void;
   className?: string;
@@ -67,6 +53,8 @@ export function StarRatingInput({
   return (
     <div
       data-slot="star-rating-input"
+      role="radiogroup"
+      aria-label={label}
       className={cn("flex gap-1", className)}
       onMouseLeave={() => setHovered(0)}
     >
@@ -74,10 +62,12 @@ export function StarRatingInput({
         <button
           key={star}
           type="button"
+          role="radio"
+          aria-checked={value === star}
           onClick={() => onChange(star)}
           onMouseEnter={() => setHovered(star)}
           aria-label={`${star} star${star !== 1 ? "s" : ""}`}
-          className="rounded transition-transform hover:scale-110 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          className="rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 motion-safe:transition-transform motion-safe:hover:scale-110"
         >
           <Star
             className={cn(

@@ -1,10 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-/**
- * Placeholder for the rail while it streams in. Mirrors `ConversationItem`'s
- * geometry — `size-12` avatar and three text lines under the same `p-2`/`gap-1`
- * as `ConversationList` — so the real list drops in without shifting the layout.
- */
+// Mirrors `ConversationItem`'s geometry so the list drops in without shifting the layout.
 export function ConversationListSkeleton() {
   return (
     <div className="flex flex-col gap-1 p-2" aria-hidden>

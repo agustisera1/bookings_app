@@ -24,13 +24,9 @@ import {
 
 const urlOptions = { shallow: false } as const;
 
-// Wires the URL <-> draft round trip and the transient slider/picker state the
-// panel renders against. Every draft transition lives in `draftReducer` (pure,
-// in filters-draft); this hook only holds the state and dispatches intent.
 export function useFilters() {
-  // Applied filters live in the URL. We read them (for the trigger badge and to
-  // seed the draft) but only write them back on "Show results" — editing stays
-  // local, so no query fires until the user is done choosing.
+  // Applied filters live in the URL and are written back only on "Show results",
+  // so no query fires while the user is still choosing.
   const [type, setType] = useQueryState(
     "type",
     parseAsStringLiteral(LISTING_TYPES)

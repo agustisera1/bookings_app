@@ -24,9 +24,8 @@ export function NotificationRow({
   return (
     <li
       className={cn(
-        "group relative flex items-start gap-4 rounded-xl border border-border p-4 transition-colors",
-        "hover:bg-muted/50",
-        read ? "opacity-60" : "bg-primary/[0.03]",
+        "relative flex items-start gap-4 rounded-xl border border-border p-4",
+        !read && "bg-card",
       )}
     >
       <span
@@ -63,7 +62,7 @@ export function NotificationRow({
                 <Button
                   variant="ghost"
                   size="icon-sm"
-                  className="text-muted-foreground hover:cursor-pointer opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+                  className="text-muted-foreground"
                   onClick={onMarkAsRead}
                 >
                   <Check />

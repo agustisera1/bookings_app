@@ -19,10 +19,7 @@ type NotificationsContextValue = {
   clearMessages: () => void;
 };
 
-// Live unread counters — notifications and messages — over one SSE connection.
-// Both are seeded from the server on mount and bumped as frames arrive. They
-// live in context because the sidebar badges and the notifications list sit in
-// different subtrees than the EventSource, yet all of them read/write these.
+// In context because the sidebar badges and the list sit in other subtrees than the EventSource.
 const NotificationsContext = createContext<NotificationsContextValue | null>(
   null,
 );
@@ -83,7 +80,7 @@ export function NotificationsProvider({
       if (isUnreadNudge(event.data)) setMessages((m) => m + 1);
       else setCount((c) => c + 1);
     };
-    return () => es.close(); // baja del lado cliente al desmontar el shell
+    return () => es.close();
   }, []);
 
   const value = useMemo(

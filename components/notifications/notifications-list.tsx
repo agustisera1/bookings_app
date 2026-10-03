@@ -17,7 +17,7 @@ export function NotificationsList({
   if (!view.ok) {
     return (
       <p className="text-sm text-muted-foreground">
-        Could not load your notifications, please try reloading the page.
+        Could not load your notifications. Try reloading the page.
       </p>
     );
   }

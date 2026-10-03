@@ -1,34 +1,8 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-/**
- * Standard page shell: a large `h1` heading that stays pinned to the top while
- * the content scrolls beneath it. Lives inside the `SidebarInset` scroll
- * container (`app/(app)/layout.tsx`), so the header uses `sticky top-0` rather
- * than owning its own scroll.
- *
- * This is the page-level counterpart to `Section` (`h2` blocks *within* a
- * page). Reach for `PageLayout` at the route boundary; use `Section` for the
- * blocks inside it.
- *
- * `actions` renders inline with the title (e.g. a primary "New listing"
- * button); `toolbar` renders on its own row below the heading (e.g. a search
- * field or filters) and is included in the sticky region.
- *
- * `inlineToolbar` compacts the header: the toolbar shares the heading's row,
- * pinned to the right at half the header width, instead of taking a row of its
- * own, collapsing back to a stacked layout below `md`.
- *
- * `back` renders a way out above the heading (see `BackLink`).
- *
- * A page fills the width it is given: the breathing room is the shell's own
- * padding, not a `max-w-*` that would leave header and content floating in the
- * middle of their column.
- *
- * The header is `sticky`, not fixed: it pins against whichever scroll container
- * encloses it — the route's (`app/(app)/layout.tsx`) by default, or a column's
- * own when the page hands a panel its own scroll (see `listings/[id]`).
- */
+// `sticky`, not fixed: it pins against whichever scroll container encloses it.
+// No `max-w-*`: a page fills its column and the padding gives the breathing room.
 export function PageLayout({
   title,
   subtitle,
@@ -77,8 +51,12 @@ export function PageLayout({
           {inlineToolbar && toolbar ? (
             <div className="flex flex-col gap-4 md:flex-row md:items-end md:gap-6">
               <div className="md:shrink-0">{heading}</div>
-              {actions && <div className="flex shrink-0 gap-2">{actions}</div>}
-              <div className="md:ml-auto md:w-1/2 md:min-w-0">{toolbar}</div>
+              <div className="flex items-center gap-2 md:ml-auto md:w-1/2 md:min-w-0">
+                <div className="min-w-0 flex-1">{toolbar}</div>
+                {actions && (
+                  <div className="flex shrink-0 gap-2">{actions}</div>
+                )}
+              </div>
             </div>
           ) : (
             <>

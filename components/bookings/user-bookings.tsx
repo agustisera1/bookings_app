@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import { ApolloClient } from "@apollo/client";
+import { CalendarDays } from "lucide-react";
 import { GetUserBookingsQuery } from "@/lib/apollo/__generated__/operations";
 import { EmptyState } from "@/components/common/empty-state";
 import { BookingSection } from "./booking-section";
@@ -13,15 +14,24 @@ export function UserBookings({
 }: {
   userBookingsPromise: Promise<ApolloClient.QueryResult<GetUserBookingsQuery>>;
 }) {
-  const { data } = use(userBookingsPromise);
+  const { data, error } = use(userBookingsPromise);
   const bookings = (data?.guestBookings?.filter(Boolean) ?? []) as BookingRow[];
   // Captured once at mount: a stable "now" to split upcoming vs. past.
   const [now] = useState(() => Date.now());
+
+  if (error) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        Could not load your bookings. Try reloading the page.
+      </p>
+    );
+  }
 
   if (bookings.length === 0) {
     return (
       <EmptyState
         className="py-16"
+        icon={<CalendarDays />}
         title="No trips booked yet"
         description="When you book a stay, experience or rental, it will show up here."
       />

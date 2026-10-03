@@ -12,11 +12,7 @@ import {
 
 const FEEDBACK_MS = 2000;
 
-/**
- * Icon-only button that copies `value` to the clipboard and swaps to a check
- * for a moment. `label` ("Copy email") is both the tooltip and the accessible
- * name, so it should name what gets copied.
- */
+// `label` is both the tooltip and the accessible name: name what gets copied.
 export function CopyButton({ value, label }: { value: string; label: string }) {
   // A counter, not a boolean: copying again while the check is up has to rearm
   // the timer, and `setCopied(true)` on an already-`true` state doesn't re-run.

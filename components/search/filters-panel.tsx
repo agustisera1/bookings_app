@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { DatePicker } from "@/components/common/date-picker";
+import { FormField } from "@/components/common/field";
 import { cn, formatPrice, humanize } from "@/lib/utils";
 import { AMENITIES, PROPERTY_TYPES, type PropertyType } from "@/lib/listings";
 import { MinCountField } from "./min-count-field";
@@ -29,6 +30,17 @@ const TYPE_LABELS: Record<ListingType, string> = {
 };
 const RATING_OPTIONS = [3, 4, 4.5] as const;
 const LIMIT_OPTIONS = [12, 24, 48] as const;
+const PROPERTY_TYPE_ITEMS = {
+  any: "Any type",
+  ...Object.fromEntries(PROPERTY_TYPES.map((t) => [t, humanize(t)])),
+};
+const RATING_ITEMS = {
+  any: "Any rating",
+  ...Object.fromEntries(RATING_OPTIONS.map((r) => [String(r), `${r}+ stars`])),
+};
+const LIMIT_ITEMS = Object.fromEntries(
+  LIMIT_OPTIONS.map((n) => [String(n), `${n} results`]),
+);
 const PRICE_STEP = 10;
 
 type FiltersPanelProps = {
@@ -59,11 +71,11 @@ export function FiltersPanel({
   onSelectUntil,
 }: FiltersPanelProps) {
   return (
-    <div className="flex max-h-[60vh] flex-col gap-6 overflow-y-auto px-2">
+    <div className="flex min-h-0 flex-col gap-6 overflow-y-auto overscroll-contain px-2">
       <div className="grid grid-cols-2 gap-3">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="filter-type">Type</Label>
+        <FormField label="Type" htmlFor="filter-type">
           <Select
+            items={TYPE_LABELS}
             value={draft.type}
             onValueChange={(value) =>
               dispatch({
@@ -83,11 +95,11 @@ export function FiltersPanel({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </FormField>
 
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="filter-property-type">Property type</Label>
+        <FormField label="Property type" htmlFor="filter-property-type">
           <Select
+            items={PROPERTY_TYPE_ITEMS}
             value={draft.propertyType ?? "any"}
             onValueChange={(value) =>
               dispatch({
@@ -110,7 +122,7 @@ export function FiltersPanel({
               ))}
             </SelectContent>
           </Select>
-        </div>
+        </FormField>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -138,10 +150,9 @@ export function FiltersPanel({
         />
       </div>
 
-      <div className="flex flex-col gap-1.5">
+      <div className="flex flex-col gap-2">
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="filter-available-from">Available from</Label>
+          <FormField label="Available from" htmlFor="filter-available-from">
             <DatePicker
               id="filter-available-from"
               value={draft.availableFrom}
@@ -151,10 +162,9 @@ export function FiltersPanel({
               disabled={{ before: today }}
               defaultMonth={draft.availableFrom ?? today}
             />
-          </div>
+          </FormField>
 
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="filter-available-until">Available until</Label>
+          <FormField label="Available until" htmlFor="filter-available-until">
             <DatePicker
               id="filter-available-until"
               value={draft.availableUntil}
@@ -164,7 +174,7 @@ export function FiltersPanel({
               disabled={{ before: draft.availableFrom ?? today }}
               defaultMonth={draft.availableUntil ?? draft.availableFrom ?? today}
             />
-          </div>
+          </FormField>
         </div>
         {(draft.availableFrom || draft.availableUntil) && (
           <button
@@ -177,9 +187,9 @@ export function FiltersPanel({
         )}
       </div>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="filter-rating">Minimum rating</Label>
+      <FormField label="Minimum rating" htmlFor="filter-rating">
         <Select
+          items={RATING_ITEMS}
           value={draft.rating == null ? "any" : String(draft.rating)}
           onValueChange={(value) =>
             dispatch({
@@ -200,13 +210,13 @@ export function FiltersPanel({
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </FormField>
 
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <Label>Price range</Label>
-          <span className="text-xs text-muted-foreground">
-            {formatPrice(range[0])} –{" "}
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {formatPrice(range[0])} -{" "}
             {range[1] >= PRICE_MAX
               ? `${formatPrice(PRICE_MAX)}+`
               : formatPrice(range[1])}
@@ -228,8 +238,7 @@ export function FiltersPanel({
         />
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Label>Amenities</Label>
+      <FormField label="Amenities">
         <div className="flex flex-wrap gap-2">
           {AMENITIES.map((a) => {
             const active = draft.amenities.includes(a);
@@ -248,11 +257,11 @@ export function FiltersPanel({
             );
           })}
         </div>
-      </div>
+      </FormField>
 
-      <div className="flex flex-col gap-1.5">
-        <Label htmlFor="filter-limit">Results per page</Label>
+      <FormField label="Results per page" htmlFor="filter-limit">
         <Select
+          items={LIMIT_ITEMS}
           value={String(draft.limit)}
           onValueChange={(value) =>
             dispatch({ type: "set", patch: { limit: Number(value) } })
@@ -269,7 +278,7 @@ export function FiltersPanel({
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </FormField>
     </div>
   );
 }

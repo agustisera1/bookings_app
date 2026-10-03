@@ -11,11 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/common/field";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   Dialog,
   DialogClose,
   DialogContent,
@@ -28,15 +23,15 @@ import {
 import { editListing } from "@/lib/services/listings";
 
 const editListingSchema = z.object({
-  title: z.string().min(1, "Title is required").max(120, "Title is too long"),
-  description: z.string().min(1, "Description is required"),
+  title: z.string().trim().min(1, "Title is required").max(120, "Title is too long"),
+  description: z.string().trim().min(1, "Description is required"),
   price: z
     .number({ error: "Enter a price" })
     .positive("Price must be greater than 0"),
   location: z.object({
-    address: z.string().min(1, "Address is required"),
-    city: z.string().min(1, "City is required"),
-    country: z.string().min(1, "Country is required"),
+    address: z.string().trim().min(1, "Address is required"),
+    city: z.string().trim().min(1, "City is required"),
+    country: z.string().trim().min(1, "Country is required"),
   }),
 });
 
@@ -45,11 +40,9 @@ type EditListingFormValues = z.infer<typeof editListingSchema>;
 export function EditListingButton({
   listingId,
   defaultValues,
-  variant = "icon",
 }: {
   listingId: string;
   defaultValues: EditListingFormValues;
-  variant?: "icon" | "manage";
 }) {
   const [open, setOpen] = useState(false);
 
@@ -73,7 +66,7 @@ export function EditListingButton({
     const result = await editListing(listingId, data);
     if (!result.ok) {
       toast.error(result.error);
-      throw new Error(result.error); // evita que RHF marque isSubmitSuccessful = true
+      throw new Error(result.error); // keeps RHF from marking the form as submitted
     }
     setOpen(false);
     toast.success("Listing updated");
@@ -81,31 +74,14 @@ export function EditListingButton({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      {variant === "manage" ? (
-        <DialogTrigger
-          render={
-            <Button variant="outline" size="sm">
-              <Pencil className="size-4" />
-              Edit
-            </Button>
-          }
-        />
-      ) : (
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <DialogTrigger
-                render={
-                  <Button variant="ghost" size="icon-sm">
-                    <Pencil />
-                  </Button>
-                }
-              />
-            }
-          />
-          <TooltipContent variant="dark">Edit</TooltipContent>
-        </Tooltip>
-      )}
+      <DialogTrigger
+        render={
+          <Button variant="outline">
+            <Pencil />
+            Edit
+          </Button>
+        }
+      />
 
       <DialogContent>
         <DialogHeader>

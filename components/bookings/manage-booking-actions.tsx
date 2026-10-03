@@ -22,7 +22,7 @@ import {
 import { acceptBooking, rejectBooking } from "@/lib/services/bookings";
 
 const hostMessageSchema = z.object({
-  hostMessage: z.string().optional(),
+  hostMessage: z.string().trim().optional(),
 });
 type HostMessageValues = z.infer<typeof hostMessageSchema>;
 
@@ -65,10 +65,7 @@ function BookingActionDialog({
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger
         render={
-          <Button
-            className="rounded-md"
-            variant={isAccept ? "primary" : "destructive"}
-          />
+          <Button variant={isAccept ? "primary" : "destructive"} />
         }
       >
         {isAccept ? (

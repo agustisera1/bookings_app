@@ -1,5 +1,9 @@
+import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import Chat from "@/components/chat/chat";
 import { getCurrentUser } from "@/lib/services/auth";
+
+export const metadata: Metadata = { title: "Conversation" };
 
 export default async function MessageThreadPage({
   params,
@@ -8,9 +12,7 @@ export default async function MessageThreadPage({
 }) {
   const { bookingId } = await params;
   const user = await getCurrentUser();
-  if (!user) return "Unauthenticated";
+  if (!user) redirect("/auth/sign-in");
 
-  // `fill` lets the thread own the pane's height; the standalone card sizing
-  // Chat defaults to belongs to the booking-detail placement, not here.
-  return <Chat bookingId={bookingId} currentUserId={user.id} fill />;
+  return <Chat bookingId={bookingId} currentUserId={user.id} />;
 }

@@ -7,21 +7,13 @@ import { EmptyThread, ErrorState, ThreadSkeleton } from "./chat-states";
 import { MessageThread } from "./message-thread";
 import { counterpartOf } from "./types";
 import { useBookingChat } from "./use-booking-chat";
-import { cn } from "@/lib/utils";
 
 export default function Chat({
   bookingId,
   currentUserId,
-  fill = false,
 }: {
   bookingId: string;
   currentUserId: string;
-  /**
-   * Fill the parent instead of sizing itself as a standalone card. Set by the
-   * messages view, where the pane owns the height; left off wherever the chat
-   * is embedded in a normal page flow.
-   */
-  fill?: boolean;
 }) {
   const { status, error, history, chatMeta, viewerParty, connected, sendMessage } =
     useBookingChat(bookingId, currentUserId);
@@ -29,10 +21,7 @@ export default function Chat({
   const [now] = useState(() => new Date());
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // The side comes from the server, which resolved it against the booking's
-  // guest and the listing's owner. Deriving it here from `chatMeta` used to
-  // fall back to "guest" whenever the chat document didn't exist yet, so a host
-  // opening a fresh thread was told they were talking to their host.
+  // The side comes from the server; deriving it from `chatMeta` mislabels a host on a fresh thread.
   const counterpart = counterpartOf(viewerParty);
 
   // Pin to the latest message whenever the thread settles.
@@ -42,17 +31,9 @@ export default function Chat({
   }, [status, history.length]);
 
   return (
-    <div
-      className={cn(
-        "flex flex-col overflow-hidden",
-        fill
-          ? // Inherit the pane's `background`, which is a step darker than
-            // `card`. That contrast is what sets the thread apart from the
-            // rail, so painting it `card` here would flatten the two together.
-            "h-full min-h-0 flex-1"
-          : "mx-auto h-[70vh] max-h-[720px] min-h-[440px] w-full max-w-2xl rounded-2xl border bg-card shadow-sm",
-      )}
-    >
+    // Inherits the pane's `background`, a step darker than the rail: that
+    // contrast is what sets the thread apart, so it never paints `card`.
+    <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       <ChatHeader
         counterpart={counterpart}
         startedAt={chatMeta?.started_at}
@@ -61,7 +42,7 @@ export default function Chat({
 
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto px-4 py-6 sm:px-6"
+        className="flex-1 overflow-y-auto overscroll-contain px-4 py-6 sm:px-6"
         aria-live="polite"
       >
         {status === "loading" && <ThreadSkeleton />}

@@ -6,11 +6,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { ConversationItem } from "./conversation-item";
 import type { Conversation } from "@/lib/types/chat";
 
-/**
- * The messages rail. Client-side only for the active-row highlight, which it
- * reads off the route rather than holding as state — the URL is what selects a
- * conversation, so nothing here needs to be lifted or synced.
- */
+// Client only for the active row, read off the route: the URL selects the conversation.
 export function ConversationList({
   conversations,
 }: {
@@ -24,7 +20,7 @@ export function ConversationList({
         className="py-16"
         icon={<MessagesSquare />}
         title="No conversations yet"
-        description="Every booking opens a thread with the other party. Once you book a stay — or receive a request — it shows up here."
+        description="Every booking opens a thread with the other party. Once you book a stay or receive a request, it shows up here."
       />
     );
   }

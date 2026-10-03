@@ -9,7 +9,7 @@ export default function AppError({ reset }: { reset: () => void }) {
     <RouteError
       icon={<TriangleAlert />}
       title="This page didn't load"
-      description="An unexpected error interrupted it. Try again — if it keeps happening, head home and come back later."
+      description="An unexpected error interrupted it. Try again, and if it keeps happening, head home and come back later."
       reset={reset}
       homeAction={
         <Button nativeButton={false} render={<Link href="/" />}>

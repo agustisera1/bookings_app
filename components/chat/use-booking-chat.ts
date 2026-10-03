@@ -18,16 +18,11 @@ import {
 } from "@/lib/socket";
 import { initialThreadState, threadReducer } from "./thread-model";
 
-// A message whose ack never arrives (worker down mid-flight) would sit
-// "pending" forever. socket.io's `timeout` fires the ack with an error once
-// this elapses, so the bubble can be marked failed instead.
+// Without a timeout, a message whose ack never arrives would stay "pending" forever.
 const SEND_TIMEOUT_MS = 10_000;
 
-// Reactive connection state. The socket lives outside React, so `connected` has
-// to be observed through useSyncExternalStore: `subscribe` wires React's
-// callback to the connection events; the snapshot is the boolean itself, read
-// without constructing the socket so it stays side-effect-free (the connection
-// opens here in `subscribe`).
+// The socket lives outside React, so `connected` is read via useSyncExternalStore;
+// the snapshot reads the boolean without constructing the socket.
 function subscribe(onStoreChange: () => void) {
   const socket = getSocketConnection();
   socket.on("connect", onStoreChange);
@@ -44,24 +39,13 @@ export function useSocketStatus() {
   return useSyncExternalStore(subscribe, isSocketConnected, () => false);
 }
 
-/**
- * Loads a booking's thread, keeps it in step with the socket, and sends.
- *
- * Every transition lives in `threadReducer` (pure, in thread-model); this hook
- * only wires I/O to it — fetch, socket events, sending — and dispatches intent.
- * Sending is optimistic: the bubble is appended at once under a temporary id and
- * swapped for the server's copy when the ack lands. It's plain reducer state,
- * not `useOptimistic`: that hook rolls its value back when the async transition
- * settles, but a sent message has to *stay* on screen, and the server never
- * echoes it back to its sender.
- */
+// Optimistic sends use reducer state, not `useOptimistic`: that rolls back on settle,
+// but a sent message must stay and the server never echoes it to its sender.
 export function useBookingChat(bookingId: string, currentUserId: string) {
   const [state, dispatch] = useReducer(threadReducer, initialThreadState);
   const connected = useSocketStatus();
 
-  // Join (and re-join) the room whenever a fresh ticket lands. A reconnect
-  // reloads the thread, which mints a new ticket, which re-fires this — so the
-  // brand-new socket, which joined no rooms on its own, gets put back in.
+  // A reconnect reloads the thread and mints a new ticket, which re-joins the room here.
   useEffect(() => {
     if (!state.ticket) return;
     const socket = getSocketConnection();
@@ -80,9 +64,7 @@ export function useBookingChat(bookingId: string, currentUserId: string) {
     const socket = getSocketConnection();
     let ignore = false;
 
-    // A fresh load recovers messages missed while offline and mints a new
-    // ticket — which re-fires the join effect above. So one reload covers
-    // reconnection end to end.
+    // A fresh load recovers missed messages and mints a ticket that re-fires the join.
     const load = async () => {
       const response = await getChatHistory(bookingId);
       if (ignore) return;

@@ -11,14 +11,7 @@ import {
 } from "@/components/ui/popover";
 import { datePickerTriggerClass, formatDate } from "@/lib/dates";
 
-/**
- * Single-date picker: a trigger (calendar icon + formatted date) that opens a
- * Calendar in a Popover. Built on ui/ primitives so the booking form and the
- * search filters share one date-field treatment instead of re-inlining it.
- *
- * `open`/`onOpenChange` are optional — pass them to coordinate sibling pickers
- * (e.g. open "until" right after "from"); omit them for self-contained use.
- */
+// `open`/`onOpenChange` are optional, to chain sibling pickers ("until" right after "from").
 export function DatePicker({
   value,
   onSelect,

@@ -1,5 +1,8 @@
+import type { Metadata } from "next";
 import { MessageSquare } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
+
+export const metadata: Metadata = { title: "Messages" };
 
 /** Right pane with nothing selected yet — the rail lives in the layout. */
 export default function MessagesIndexPage() {
@@ -8,7 +11,7 @@ export default function MessagesIndexPage() {
       <EmptyState
         icon={<MessageSquare />}
         title="Select a conversation"
-        description="Pick a booking on the left to open its thread."
+        description="Pick a conversation to open its thread."
       />
     </div>
   );

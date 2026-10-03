@@ -1,8 +1,5 @@
 import type { PropertyType } from "@/lib/listings";
 
-// Filter model for the search panel: the draft shape, its transitions and the
-// derived active-count. Pure (no React) so it stays cohesive and unit-testable,
-// and decoupled from the Filters component's rendering/URL wiring.
 
 export const LISTING_TYPES = [
   "accommodation",

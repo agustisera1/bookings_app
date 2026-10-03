@@ -17,9 +17,9 @@ export async function AppSidebar() {
       <SidebarHeader className="p-3">
         <Link
           href="/listings"
-          className="flex items-center gap-2.5 rounded-md px-1 py-1 transition-opacity hover:opacity-80"
+          className="flex items-center gap-2.5 rounded-lg px-1 py-1 transition-opacity hover:opacity-80"
         >
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-success text-success-foreground shadow-sm">
+          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <Tent className="size-4.5" />
           </div>
           <span className="text-sm font-semibold tracking-tight">

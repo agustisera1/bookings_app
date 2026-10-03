@@ -11,20 +11,10 @@ import {
 } from "lucide-react";
 import type { NotificationDocument } from "@/lib/types/notification";
 
-// Filter model for the notifications panel: the icon/accent mapping and the
-// read/unread split. Pure (no React, no I/O) so it stays cohesive and testable,
-// decoupled from the list's rendering and optimistic state.
 
 export type Notification = NotificationDocument;
 
-/**
- * Picks a leading icon + accent tint from the notification title. Purely
- * cosmetic: notifications have no `type` field, so we key off keywords to give
- * each row a recognizable glyph instead of a generic bell.
- *
- * The palette is intentionally limited to three semantic accents: `success`
- * (good news), `destructive` (bad news) and `primary` (everything else / info).
- */
+// Notifications have no `type` field, so the icon and tint are keyed off title keywords.
 export function notificationVisual(title: string): {
   icon: LucideIcon;
   accent: string;
@@ -50,17 +40,8 @@ export function notificationVisual(title: string): {
   return { icon: Bell, accent: info };
 }
 
-/**
- * Whether an SSE frame is an unread-messages nudge rather than a notification.
- *
- * The worker publishes `{ kind: "message" }` with no body when a message lands
- * for someone outside its room; notification frames publish their whole document
- * and carry no `kind`. Ref: `UnreadNudge` in the worker's `src/redis/client.ts`.
- *
- * Anything unparseable counts as a notification: the frame already told us
- * *something* happened, and the worst case is a badge off by one until the next
- * load recomputes both from the DB.
- */
+// The worker publishes `{ kind: "message" }` for an unread nudge (`UnreadNudge`, worker `src/redis/client.ts`).
+// Anything unparseable counts as a notification: worst case, a badge off by one until reload.
 export function isUnreadNudge(data: string): boolean {
   try {
     return JSON.parse(data)?.kind === "message";

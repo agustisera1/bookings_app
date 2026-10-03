@@ -1,4 +1,3 @@
-import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -6,8 +5,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { FormField } from "@/components/common/field";
 
 const COUNT_OPTIONS = [1, 2, 3, 4, 5] as const;
+const COUNT_ITEMS = {
+  any: "Any",
+  ...Object.fromEntries(COUNT_OPTIONS.map((n) => [String(n), `${n}+`])),
+};
 
 export function MinCountField({
   id,
@@ -21,9 +25,9 @@ export function MinCountField({
   onChange: (value: number | null) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
+    <FormField label={label} htmlFor={id}>
       <Select
+        items={COUNT_ITEMS}
         value={value == null ? "any" : String(value)}
         onValueChange={(v) => onChange(v === "any" ? null : Number(v))}
       >
@@ -39,6 +43,6 @@ export function MinCountField({
           ))}
         </SelectContent>
       </Select>
-    </div>
+    </FormField>
   );
 }

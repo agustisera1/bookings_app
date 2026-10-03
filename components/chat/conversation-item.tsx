@@ -2,16 +2,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatDate } from "@/lib/dates";
+import { formatDateRange } from "@/lib/dates";
 import { bookingStatusVariant, cn } from "@/lib/utils";
 import type { Conversation } from "@/lib/types/chat";
 import { counterpartOf } from "./types";
 
-/**
- * One row of the messages rail. Presentational: the whole row is the link to
- * its thread, so there is no click handler and no local state — and therefore
- * no `"use client"`; the list that imports it already pulls it client-side.
- */
 export function ConversationItem({
   conversation,
   active,
@@ -28,9 +23,7 @@ export function ConversationItem({
       href={`/messages/${id}`}
       aria-current={active ? "page" : undefined}
       className={cn(
-        // Tinted with the foreground rather than `muted`, so the row reads as a
-        // lift on the rail's `sidebar` surface in both themes — `muted` is
-        // darker than `sidebar` in dark mode and would recede instead.
+        // Foreground tint, not `muted`: `muted` is darker than `sidebar` in dark mode and would recede.
         "flex items-center gap-3 rounded-xl px-3 py-3 transition-colors",
         active ? "bg-foreground/10" : "hover:bg-foreground/5",
       )}
@@ -39,7 +32,7 @@ export function ConversationItem({
         {photo ? (
           <Image
             src={photo}
-            alt="message-photo"
+            alt=""
             fill
             sizes="48px"
             className="object-cover"
@@ -56,7 +49,7 @@ export function ConversationItem({
           <p className="truncate text-sm font-medium leading-tight">{title}</p>
           <Badge
             variant={bookingStatusVariant[status]}
-            className="ml-auto shrink-0"
+            className="ml-auto shrink-0 capitalize"
           >
             {status}
           </Badge>
@@ -65,7 +58,7 @@ export function ConversationItem({
           Your {counterpart.toLowerCase()}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {formatDate(start_date)} – {formatDate(end_date)}
+          {formatDateRange(start_date, end_date)}
         </p>
       </div>
     </Link>

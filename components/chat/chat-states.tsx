@@ -33,7 +33,7 @@ export function EmptyThread({ counterpart }: { counterpart: Counterpart }) {
       <EmptyState
         icon={<MessagesSquareIcon />}
         title={`Say hello to your ${other}`}
-        description={`No messages yet — send the first one and it'll show up here.`}
+        description="No messages yet. Send the first one and it'll show up here."
       />
     </div>
   );
@@ -43,9 +43,7 @@ export function ErrorState({ message }: { message: string | null }) {
   return (
     <div className="flex h-full items-center justify-center">
       <EmptyState
-        // Not a wifi glyph: this state covers any failure to load the thread,
-        // and the vast majority are server-side. Blaming the user's connection
-        // sends them to check their router for something we broke.
+        // Not a wifi glyph: most failures are server-side, not the user's connection.
         icon={<TriangleAlertIcon />}
         title="Couldn't load this conversation"
         description={message ?? "Please try again in a moment."}

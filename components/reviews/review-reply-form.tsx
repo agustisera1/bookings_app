@@ -10,7 +10,7 @@ import { FieldError } from "@/components/common/field";
 import { replyToReview } from "@/lib/services/reviews";
 
 const replySchema = z.object({
-  reply: z.string().min(1, "Reply is required"),
+  reply: z.string().trim().min(1, "Reply is required"),
 });
 
 export type ReviewReplyFormValues = z.infer<typeof replySchema>;
@@ -42,7 +42,7 @@ export function ReviewReplyForm({
 
   if (isSubmitSuccessful) {
     return (
-      <p className="border-l border-border text-sm text-muted-foreground">
+      <p className="border-l border-border pl-3 text-sm text-muted-foreground">
         Your reply has been submitted.
       </p>
     );
@@ -51,10 +51,11 @@ export function ReviewReplyForm({
   return (
     <form
       onSubmit={handleSubmit(onSubmit)}
-      className="border-l border-border flex flex-col gap-2"
+      className="flex flex-col gap-2 border-l border-border pl-3"
     >
       <Textarea
         rows={2}
+        aria-label="Reply to this review"
         placeholder="Write a reply to this review…"
         className="resize-none"
         {...register("reply")}

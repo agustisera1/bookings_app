@@ -4,14 +4,7 @@ import type { ChatHistory, SerializableChatDocument } from "@/lib/types/chat";
 import type { SerializableMessageDocument } from "@/lib/types/messages";
 import type { Status, ThreadMessage } from "./types";
 
-/**
- * A message enriched with the display flags a thread needs, computed from its
- * neighbours: whether it's mine, whether it opens/closes a run of consecutive
- * messages from the same sender, and the day divider label when the day changes.
- *
- * Pure, framework-free logic kept out of the rendering components so it can be
- * tested on its own.
- */
+// A message plus its display flags (mine, run start/end, day divider), computed from its neighbours.
 export type ThreadItem = {
   message: ThreadMessage;
   isMine: boolean;
@@ -50,13 +43,7 @@ export function buildThread(
   });
 }
 
-/**
- * The loadable state of one booking's thread and its transitions. Pure, so the
- * hook (`use-booking-chat.ts`) only wires I/O to it and dispatches intent.
- *
- * `connected` is deliberately not here: it comes from the socket via
- * useSyncExternalStore, on its own clock, not from these transitions.
- */
+// `connected` is not here on purpose: it comes from the socket via useSyncExternalStore.
 export type ThreadState = {
   status: Status;
   error: string | null;

@@ -12,7 +12,7 @@ import { createReview } from "@/lib/services/reviews";
 
 const reviewSchema = z.object({
   rating: z.number().int().min(1, "Select a rating").max(5),
-  comment: z.string().min(1, "Comment is required"),
+  comment: z.string().trim().min(1, "Comment is required"),
 });
 
 export type ReviewFormValues = z.infer<typeof reviewSchema>;
@@ -46,7 +46,11 @@ export function ReviewForm({ bookingId }: { bookingId: string }) {
           control={control}
           name="rating"
           render={({ field }) => (
-            <StarRatingInput value={field.value} onChange={field.onChange} />
+            <StarRatingInput
+              label="Rating"
+              value={field.value}
+              onChange={field.onChange}
+            />
           )}
         />
       </FormField>
@@ -62,7 +66,6 @@ export function ReviewForm({ bookingId }: { bookingId: string }) {
       </FormField>
 
       <Button
-        variant="outline"
         type="submit"
         disabled={isSubmitting}
         className="w-full"

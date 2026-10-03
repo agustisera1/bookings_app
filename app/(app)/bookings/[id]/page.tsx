@@ -1,5 +1,6 @@
+import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { House, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { BackLink } from "@/components/common/back-link";
@@ -11,8 +12,10 @@ import { toCancellableRow } from "@/components/bookings/bookings-model";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { GetBookingDocument } from "@/lib/apollo/__generated__/operations";
 import { query } from "@/lib/apollo/client";
-import { calcNights, formatDate } from "@/lib/dates";
+import { calcNights, formatDateRange } from "@/lib/dates";
 import { getCurrentUser } from "@/lib/services/auth";
+
+export const metadata: Metadata = { title: "Booking details" };
 
 export default async function BookingDetailPage({
   params,
@@ -21,7 +24,7 @@ export default async function BookingDetailPage({
 }) {
   const { id } = await params;
   const user = await getCurrentUser();
-  if (!user) return "Unauthenticated";
+  if (!user) redirect("/auth/sign-in");
 
   // `all` so a booking that isn't the viewer's own comes back as a NOT_FOUND
   // error to turn into a 404, instead of throwing into the error boundary.
@@ -40,7 +43,7 @@ export default async function BookingDetailPage({
   const nights = calcNights(booking.start_date, booking.end_date);
   const listingId = booking.listing?._id;
   const title = booking.listing?.title ?? "Booking details";
-  const subtitle = `${formatDate(booking.start_date)} – ${formatDate(booking.end_date)} · ${nights} night${nights === 1 ? "" : "s"}`;
+  const subtitle = `${formatDateRange(booking.start_date, booking.end_date)} · ${nights} night${nights === 1 ? "" : "s"}`;
 
   return (
     <PageLayout

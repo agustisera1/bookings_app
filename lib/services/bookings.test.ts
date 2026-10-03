@@ -326,7 +326,7 @@ describe("rejectBooking", () => {
     expect(res).toEqual({
       ok: false,
       error:
-        "This booking was already accepted. Cancel it instead — the guest will be refunded in full.",
+        "This booking was already accepted. Cancel it instead: the guest will be refunded in full.",
       code: "VALIDATION",
     });
     expect(bookingsRepo.updateBooking).not.toHaveBeenCalled();
