@@ -1,4 +1,4 @@
-# Bookings App — CLAUDE.md
+# Greenaway — CLAUDE.md
 
 Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo de aprendizaje: persistencia políglota, procesamiento asíncrono y APIs GraphQL.
 
@@ -8,7 +8,7 @@ Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo d
 - **Package manager**: pnpm
 - **API**: GraphQL (Apollo Server) para lecturas; Server Actions para escrituras
 - **DBs**: PostgreSQL (núcleo transaccional + outbox), MongoDB (listados, chat, notificaciones), Redis (colas, pub/sub, rate limiting)
-- **Colas**: BullMQ sobre Redis; el worker vive en el repo `bookings-app-worker`
+- **Colas**: BullMQ sobre Redis; el worker vive en el repo `greenaway-worker`
 - **Auth**: JWT (access + refresh)
 - **Infra local**: Docker Compose
 

@@ -1,4 +1,4 @@
-# 🏡 Bookings App
+# 🏡 Greenaway
 
 Marketplace de reservas de alojamientos (estilo Airbnb simplificado), construido como **proyecto de
 aprendizaje de arquitectura**. Demuestra de punta a punta: persistencia políglota (PostgreSQL +
@@ -30,8 +30,8 @@ Dos procesos que comparten los mismos datastores:
 
 ```mermaid
 flowchart LR
-  U[Cliente] --> APP["bookings_app<br/>Next.js · GraphQL · SSE"]
-  U --> WRK["bookings-worker<br/>socket.io · BullMQ"]
+  U[Cliente] --> APP["greenaway<br/>Next.js · GraphQL · SSE"]
+  U --> WRK["greenaway-worker<br/>socket.io · BullMQ"]
   APP -->|encola jobs| RD
   APP --> PG & MG
   WRK --> PG & MG & RD
@@ -42,9 +42,9 @@ flowchart LR
   end
 ```
 
-- **`bookings_app`** (este repo) — UI, API GraphQL, Server Actions y el borde SSE de notificaciones;
+- **`greenaway`** (este repo) — UI, API GraphQL, Server Actions y el borde SSE de notificaciones;
   encola el trabajo asíncrono.
-- **`bookings-worker`** (repo aparte) — consumers de BullMQ (emails, notificaciones) y el servidor
+- **`greenaway-worker`** (repo aparte) — consumers de BullMQ (emails, notificaciones) y el servidor
   socket.io del chat. Es un proceso persistente (no serverless): sostiene conexiones y loops de larga
   vida, y ese requisito es lo que justifica el split app/worker.
 - **PostgreSQL** — núcleo transaccional: usuarios, sesiones, reservas, reseñas.
@@ -74,7 +74,7 @@ scripts/        Migraciones, seeds y utilidades
 
 - **Node.js 20+** y **pnpm**
 - **PostgreSQL**, **MongoDB** y **Redis** accesibles (localmente o vía Docker)
-- Para emails y chat en vivo: el repo **`bookings-worker`** corriendo por separado
+- Para emails y chat en vivo: el repo **`greenaway-worker`** corriendo por separado
 
 ---
 
@@ -87,7 +87,7 @@ pnpm db:migrate                 # migraciones de PostgreSQL
 pnpm dev
 ```
 
-La app queda en `http://localhost:3000`. Para emails y chat en vivo, correr `bookings-worker` por
+La app queda en `http://localhost:3000`. Para emails y chat en vivo, correr `greenaway-worker` por
 separado (ver su repo).
 
 ---

@@ -12,9 +12,9 @@ red, sin montar componentes— y los **services** con mocks acotados al borde (v
 | | |
 |---|---|
 | **Ubicación** | Colocado: `foo.ts` → `foo.test.ts` en la misma carpeta |
-| **Alcance** | Lógica pura, viva donde viva. `bookings_app`: `lib/**` (dominio: `policy`, `permissions`, filtros, fechas) y los `components/**/*-model.ts` (feature-models puros: reducers, derivados). Worker: `src/**` |
-| **Config** | `vitest.config.ts` en la raíz de cada repo — `environment: "node"`; en `bookings_app` el alias `@` → raíz resuelve los imports `@/…` |
-| **Correr** | `bookings_app` (pnpm): `pnpm test` / `pnpm test:watch`. Worker (npm): `npm test` / `npm run test:watch` |
+| **Alcance** | Lógica pura, viva donde viva. `greenaway`: `lib/**` (dominio: `policy`, `permissions`, filtros, fechas) y los `components/**/*-model.ts` (feature-models puros: reducers, derivados). Worker: `src/**` |
+| **Config** | `vitest.config.ts` en la raíz de cada repo — `environment: "node"`; en `greenaway` el alias `@` → raíz resuelve los imports `@/…` |
+| **Correr** | `greenaway` (pnpm): `pnpm test` / `pnpm test:watch`. Worker (npm): `npm test` / `npm run test:watch` |
 
 **Qué entra a un test:** una función es testeable acá cuando es **pura** —determinística, sin
 DB/red/React—. Los bordes son el punto: un caso a cada lado de un `<`/`<=`, con el límite exacto
