@@ -6,25 +6,26 @@ import {
 import { getCurrentUser } from "@/lib/services/auth";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserFooter } from "./sidebar-user-footer";
+import Image from "next/image";
 import Link from "next/link";
-import { Tent } from "lucide-react";
+import logo from "@/public/logo.png";
 
 export async function AppSidebar() {
   const user = await getCurrentUser();
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-3">
+      <SidebarHeader className="items-center p-4 px-8">
         <Link
           href="/listings"
-          className="flex items-center gap-2.5 rounded-lg px-1 py-1 transition-opacity hover:opacity-80"
+          className="group block w-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
         >
-          <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
-            <Tent className="size-4.5" />
-          </div>
-          <span className="text-sm font-semibold tracking-tight">
-            Bookings App
-          </span>
+          <Image
+            src={logo}
+            alt="Greenaway"
+            priority
+            className="h-auto w-full transition-transform duration-300 ease-out motion-safe:group-hover:-rotate-1 motion-safe:group-hover:scale-[1.03]"
+          />
         </Link>
       </SidebarHeader>
       <SidebarContent>

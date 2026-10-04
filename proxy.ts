@@ -38,6 +38,6 @@ export const config = {
      * included (unlike before) so authenticated users can be redirected
      * away from sign-in/sign-up instead of just letting them through.
      */
-    "/((?!_next/static|_next/image|favicon\\.ico|api/).*)",
+    "/((?!_next/static|_next/image|api/|.*\\.(?:png|ico|svg|jpg|jpeg|webp)$).*)",
   ],
 };

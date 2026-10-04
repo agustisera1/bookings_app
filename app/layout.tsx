@@ -19,7 +19,7 @@ const spaceMono = Space_Mono({
 });
 
 export const metadata: Metadata = {
-  title: { template: "%s · Bookings App", default: "Bookings App" },
+  title: { template: "%s · Greenaway", default: "Greenaway" },
   description: "Book stays, experiences and gear from hosts.",
 };
 
