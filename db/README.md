@@ -12,8 +12,8 @@ pnpm db:reset         # wipe the data (asks first); `-- --dry-run` to preview
 
 All commands load `.env.local` automatically via `dotenv-cli`.
 
-`db:reset` is a **data** reset, not a schema one: vacía `bookings` / `reviews` / `sessions` /
-`outbox` en Postgres (los `users` **sobreviven**), las cuatro colecciones de Mongo y el bucket de S3.
+`db:reset` is a **data** reset, not a schema one: vacía `bookings` / `reviews` / `outbox`
+en Postgres (los `users` **sobreviven**), las cuatro colecciones de Mongo y el bucket de S3.
 Los índices de Mongo quedan intactos porque borra con `deleteMany({})`, nunca con `drop()`.
 
 ---

@@ -54,7 +54,6 @@ Una función por operación. El nombre del archivo indica la DB: `.pg.ts` para P
 | Archivo | Cubre |
 |---------|-------|
 | `users.pg.ts` | Usuarios: lookup por email, alta |
-| `sessions.pg.ts` | Sesiones: validación, creación, rotación del refresh, revocación |
 | `bookings.pg.ts` | Reservas: alta, queries por guest/listing, rangos de disponibilidad, update de estado |
 | `reviews.pg.ts` | Reseñas: listado por listing, alta |
 | `listings.mongo.ts` | Listados: lookup por id/ids, búsqueda con filtros |

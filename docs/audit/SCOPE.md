@@ -8,7 +8,7 @@ Solo se audita lo que estos flujos tocan. Los números refieren a [DIMENSIONS.md
 |---|---|---|
 | **1. Reservar** (guest reserva → host acepta/rechaza) | Concurrencia, outbox, relay, colas, notificación realtime, dos bases | 1, 2, 4, 5, 6, 7 |
 | **2. Chat host↔guest** | Realtime (socket.io), Mongo | 4, 6, 7, 9 |
-| **3. Login y sesión** | Auth con refresh, rate limiting | 2, 4, 8, 9 |
+| **3. Login y sesión** | Auth JWT, rate limiting | 2, 4, 8, 9 |
 | Transversal | Entorno reproducible (Docker + seed), docs y diagramas | 12, 13 |
 
 Fuera de alcance: búsqueda y filtros, reviews, perfil, alta de listing, fotos en S3.

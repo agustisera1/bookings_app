@@ -16,8 +16,6 @@ export type PublicUser = Pick<User, "id" | "email" | "name" | "is_host">;
 // carries the email because it models the session's own account.
 export type UserSummary = Pick<User, "id" | "name">;
 
-export type SessionRecord = PublicUser;
-
 // What a decoded access token carries (see createAccessToken's payload).
 export type CurrentUser = PublicUser & {
   permissions: string[];

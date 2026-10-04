@@ -9,7 +9,7 @@ Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo d
 - **API**: GraphQL (Apollo Server) para lecturas; Server Actions para escrituras
 - **DBs**: PostgreSQL (núcleo transaccional + outbox), MongoDB (listados, chat, notificaciones), Redis (colas, pub/sub, rate limiting)
 - **Colas**: BullMQ sobre Redis; el worker vive en el repo `greenaway-worker`
-- **Auth**: JWT (access + refresh)
+- **Auth**: JWT (access token en cookie httpOnly)
 - **Infra local**: Docker Compose
 
 ## Comandos

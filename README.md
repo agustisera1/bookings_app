@@ -14,7 +14,7 @@ usuario puede ser ambos.
 
 ## 🚦 Estado
 
-**Construido:** autenticación (JWT access + refresh, con sesiones en PostgreSQL) y RBAC; listados en
+**Construido:** autenticación (JWT) y RBAC; listados en
 MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (Apollo Server);
 notificaciones por email asíncronas (worker + BullMQ); chat host↔guest en vivo (socket.io);
 notificaciones in-app (SSE); y rate limiting en el borde de autenticación.
@@ -52,7 +52,7 @@ flowchart LR
 - **Redis** — colas (BullMQ), fan-out de sockets, rate limiting y pub/sub de las notificaciones SSE.
 
 **Tiempo real:** SSE para notificaciones (mismo origen, dentro de Next) y socket.io para el chat (en el
-worker). **Auth:** JWT access + refresh, con sesiones en PostgreSQL. El _por qué_ de estas decisiones
+worker). **Auth:** JWT en cookie httpOnly. El _por qué_ de estas decisiones
 está en `docs/architecture/`.
 
 ---

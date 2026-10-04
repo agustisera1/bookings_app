@@ -7,7 +7,7 @@
  *
  * Wipes the transactional data and leaves the world re-seedable:
  *
- *   Postgres  bookings · reviews · sessions · outbox     (users SURVIVE)
+ *   Postgres  bookings · reviews · outbox                (users SURVIVE)
  *   Mongo     listings · notifications · chats · messages
  *   S3        every object in the listings bucket
  *
@@ -26,7 +26,7 @@ import * as readline from "readline/promises";
 
 // `users` is deliberately absent: wiping it would invalidate every logged-in
 // session and every `host_id` the seeded listings point at.
-const PG_TABLES = ["bookings", "reviews", "sessions", "outbox"] as const;
+const PG_TABLES = ["bookings", "reviews", "outbox"] as const;
 
 // Each collection lives in its own database (see lib/repositories/*.mongo.ts).
 const MONGO_COLLECTIONS = [
