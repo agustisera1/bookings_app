@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { ChatParties } from "@/lib/types/booking";
-import type { ChatHistory, SerializableChatDocument } from "@/lib/types/chat";
-import type { SerializableMessageDocument } from "@/lib/types/messages";
+import type { SerializableChatDocument } from "@/lib/chat/types";
+import type { ChatThreadRow } from "./types";
+import type { SerializableMessageDocument } from "@/lib/chat/types";
 import type { ThreadMessage } from "./types";
 import {
   buildThread,
@@ -58,12 +58,6 @@ describe("buildThread", () => {
 });
 
 describe("threadReducer", () => {
-  const parties: ChatParties = {
-    chat_id: "c1",
-    host_id: "h",
-    guest_id: "g",
-    current_party: "guest",
-  };
   const chat: SerializableChatDocument = {
     _id: "chat1",
     booking_id: "c1",
@@ -71,33 +65,36 @@ describe("threadReducer", () => {
     guest_id: "g",
     host_id: "h",
   };
+  const loaded = initialThreadState({ chat, messages: [], party: "guest" });
+
+  it("starts in an error state when the page couldn't load the thread", () => {
+    expect(initialThreadState(null)).toMatchObject({ status: "error", messages: [] });
+  });
 
   it("replaces the thread with server truth on 'loaded'", () => {
-    const history: ChatHistory = {
+    const thread: ChatThreadRow = {
       chat,
       messages: [msg("a", "g", AUG1_0900)],
-      parties,
-      ticket: "tok",
+      party: "host",
     };
-    expect(threadReducer(initialThreadState, { type: "loaded", data: history })).toEqual({
+    expect(threadReducer(loaded, { type: "loaded", data: thread })).toEqual({
       status: "ready",
       error: null,
-      messages: history.messages,
+      messages: thread.messages,
       chatMeta: chat,
-      parties,
-      ticket: "tok",
+      party: "host",
     });
   });
 
   it("appends a message on 'appended'", () => {
-    const state: ThreadState = { ...initialThreadState, messages: [msg("a", "g", AUG1_0900)] };
+    const state: ThreadState = { ...loaded, messages: [msg("a", "g", AUG1_0900)] };
     const next = threadReducer(state, { type: "appended", message: msg("b", "h", AUG1_0901) });
     expect(next.messages.map((m) => m._id)).toEqual(["a", "b"]);
   });
 
   it("swaps the optimistic bubble for the server copy on 'delivered'", () => {
     const state: ThreadState = {
-      ...initialThreadState,
+      ...loaded,
       messages: [msg("temp", "g", AUG1_0900, { pending: true })],
     };
     const server: SerializableMessageDocument = {
@@ -113,7 +110,7 @@ describe("threadReducer", () => {
 
   it("marks the bubble failed (not pending) on 'sendFailed'", () => {
     const state: ThreadState = {
-      ...initialThreadState,
+      ...loaded,
       messages: [msg("temp", "g", AUG1_0900, { pending: true })],
     };
     const next = threadReducer(state, { type: "sendFailed", tempId: "temp" });
@@ -121,7 +118,7 @@ describe("threadReducer", () => {
   });
 
   it("goes to an error state on 'joinFailed'", () => {
-    const next = threadReducer(initialThreadState, { type: "joinFailed" });
+    const next = threadReducer(loaded, { type: "joinFailed" });
     expect(next.status).toBe("error");
     expect(next.error).toBe("Could not join chat");
   });

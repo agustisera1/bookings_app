@@ -5,7 +5,7 @@ import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
-import { deleteListing } from "@/lib/services/listings";
+import { deleteListing } from "@/lib/listings/actions";
 
 export function DeleteListingButton({
   listingId,

@@ -2,6 +2,8 @@
 
 Una regla sirve si alguien puede pedir "auditá X" y obtener un veredicto **sin leer todo el código**. Para eso cumple dos criterios.
 
+**Excepción — services:** una regla de services puede requerir leer el código completo del service para dar el veredicto (el orden de una action, qué rama del `catch` mapea). Si la auditoría lo necesita, se lee.
+
 ## 1. Anclada al código real
 
 Antes de escribirla, relevar cómo está hoy esa parte del código. La regla describe un patrón que **ya existe** en el repo (o que se va a introducir a propósito) y apunta a su ejemplo canónico.

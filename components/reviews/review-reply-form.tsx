@@ -7,11 +7,10 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FieldError } from "@/components/common/field";
-import { replyToReview } from "@/lib/services/reviews";
+import { replyToReview } from "@/lib/reviews/actions";
+import { hostReplySchema } from "@/lib/reviews/validation";
 
-const replySchema = z.object({
-  reply: z.string().trim().min(1, "Reply is required"),
-});
+const replySchema = z.object({ reply: hostReplySchema });
 
 export type ReviewReplyFormValues = z.infer<typeof replySchema>;
 

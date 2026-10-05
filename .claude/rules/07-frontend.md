@@ -84,13 +84,13 @@ Cada semántico tiene su par light/dark en `:root`/`.dark`. Un color nuevo **nac
 
 ### Diseño de estados
 
-Un componente que consume datos async (`use(promise)` sobre un `ServiceResult`) debe cubrir **explícitamente los tres estados**: error, vacío y cargado. Referencias: `components/reviews/listing-reviews.tsx`, `components/bookings/listing-bookings.tsx`.
+Un componente que consume datos de una query GraphQL recibe las filas o `null` (la query falló; la página la pide con `errorPolicy: "all"`), y cubre **explícitamente los tres estados**: error, vacío y cargado. Si el dato llega como promesa (para streamear bajo `<Suspense>`), la desenvuelve con `use()`. Referencias: `components/reviews/listing-reviews.tsx` (prop), `components/bookings/listing-bookings.tsx` (promesa).
 
 ```tsx
-const res = use(promise);
-if (!res.ok) return <p className="text-sm text-muted-foreground">Could not load…</p>;
-if (res.data.length === 0) return <EmptyState … /> /* o <p> inline si es compacto */;
-return <List data={res.data} />;
+const rows = use(rowsPromise); // Promise<Row[] | null>, o directamente la prop
+if (!rows) return <p className="text-sm text-muted-foreground">Could not load…</p>;
+if (rows.length === 0) return <EmptyState … /> /* o <p> inline si es compacto */;
+return <List data={rows} />;
 ```
 
 ### Partición de un componente de feature en archivos
@@ -135,8 +135,9 @@ Todo formulario en este proyecto sigue este patrón. Referencias canónicas:
 ### Estructura obligatoria
 
 ```tsx
-// 1. Schema Zod — fuera del componente, exportar el tipo inferido
-const mySchema = z.object({ ... });
+// 1. Schema Zod — el mismo que valida la action: vive en lib/<service>/validation.ts
+//    (el form puede tomar un subset con .pick/.omit). Exportar el tipo inferido.
+import { mySchema } from "@/lib/<service>/validation";
 export type MyFormValues = z.infer<typeof mySchema>;
 
 // 2. useForm con zodResolver
@@ -278,9 +279,9 @@ Reglas que salieron de `docs/audit/07-frontend-audit.md`. Mismo formato que la s
 - **Los tokens de color vienen del preset de shadcn (`b6rtAc4G2`, base `olive`); un token que se agrega o ajusta tiene que pasar 4.5:1 para texto y 3:1 para bordes de controles.** Verificación: contraste medido en el navegador.
 - **Tipografía: Outfit para todo (títulos y texto), Space Mono solo para IDs y referencias.** Escala: `text-2xs` meta y badges, `text-xs` notas, `text-sm` texto, `text-base` énfasis, `text-lg` títulos de card, `text-2xl` `Section`, `text-3xl md:text-4xl` `PageLayout`. Pesos: 600 títulos, 500 labels, 400 texto.
 - **Forma: controles (`Button`, `Input`, `Select`, `DatePicker`) y miniaturas de hasta 48px en `rounded-lg`; superficies (cards, paneles, diálogos, fotos, filas de lista) en `rounded-xl`; badges, avatares y contadores redondos; burbujas de chat en `rounded-2xl`.** Verificación: grep de `rounded-(sm|md)` fuera de `ui/` → 0.
-- **Los gradientes de portada salen de tokens (`primary`, `rating`, `success`, `muted` sobre `card`), nunca de la paleta de Tailwind.** Verificación: `listingTypeGradient` en `lib/utils.ts` solo usa tokens.
+- **Los gradientes de portada salen de tokens (`primary`, `rating`, `success`, `muted` sobre `card`), nunca de la paleta de Tailwind.** Verificación: `listingTypeGradient` en `lib/shared/utils.ts` solo usa tokens.
 - **Tema oscuro único: `color-scheme` se declara una vez en `globals.css`.** Verificación: ningún componente usa `[color-scheme:…]`.
-- **Sin guiones largos (`—`, `–`) ni emojis en texto visible; los rangos de fecha salen de `formatDateRange`.** Verificación: grep de `—`/`–` en strings y JSX → 0. Ref: `lib/dates.ts`.
+- **Sin guiones largos (`—`, `–`) ni emojis en texto visible; los rangos de fecha salen de `formatDateRange`.** Verificación: grep de `—`/`–` en strings y JSX → 0. Ref: `lib/shared/dates.ts`.
 - **Títulos y botones con mayúscula solo inicial ("Sign in", "Upcoming bookings").** Verificación: lectura de headings y labels.
 
 ### Primitivos compartidos

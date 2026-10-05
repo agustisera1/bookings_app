@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { CoverImage, OverlayBadge } from "@/components/common/cover-image";
-import { bookingStatusVariant, listingTypeGradient } from "@/lib/utils";
+import { bookingStatusVariant, listingTypeGradient } from "@/lib/shared/utils";
 import type { BookingDetailRow } from "./bookings-model";
 
 export function BookingDetailHero({ booking }: { booking: BookingDetailRow }) {

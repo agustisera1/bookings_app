@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { ChartNoAxesColumn, Hash, Mail, User } from "lucide-react";
-import { getCurrentUser } from "@/lib/services/auth";
-import { ROLE_DESCRIPTIONS, ROLE_LABELS, type Role } from "@/lib/permissions";
-import { initialsFrom } from "@/lib/utils";
+import { getCurrentUser } from "@/lib/auth/session";
+import { ROLE_DESCRIPTIONS, ROLE_LABELS, type Role } from "@/lib/auth/policy";
+import { initialsFrom } from "@/lib/shared/utils";
 import { PageLayout } from "@/components/common/page-layout";
 import { DetailColumns } from "@/components/common/detail-columns";
 import { Section } from "@/components/common/section";

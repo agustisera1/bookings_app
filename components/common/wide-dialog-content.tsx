@@ -1,6 +1,6 @@
 import type { ComponentProps } from "react";
 import { DialogContent } from "@/components/ui/dialog";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 
 // Repeats the primitive's `data-[size=lg]:sm:` prefix so tailwind-merge drops its `max-w`;
 // a bare `sm:max-w-2xl` loses on specificity.

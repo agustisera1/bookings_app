@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import type { z } from "zod";
 import { toast } from "sonner";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -20,20 +20,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { editListing } from "@/lib/services/listings";
+import { editListing } from "@/lib/listings/actions";
+import { listingDetailsSchema } from "@/lib/listings/validation";
 
-const editListingSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(120, "Title is too long"),
-  description: z.string().trim().min(1, "Description is required"),
-  price: z
-    .number({ error: "Enter a price" })
-    .positive("Price must be greater than 0"),
-  location: z.object({
-    address: z.string().trim().min(1, "Address is required"),
-    city: z.string().trim().min(1, "City is required"),
-    country: z.string().trim().min(1, "Country is required"),
-  }),
-});
+const editListingSchema = listingDetailsSchema;
 
 type EditListingFormValues = z.infer<typeof editListingSchema>;
 

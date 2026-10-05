@@ -1,10 +1,10 @@
-import { HttpLink } from "@apollo/client";
+import { SchemaLink } from "@apollo/client/link/schema";
 import {
   registerApolloClient,
   ApolloClient,
   InMemoryCache,
 } from "@apollo/client-integration-nextjs";
-import { cookies } from "next/headers";
+import { schema } from "./schema";
 
 declare module "@apollo/client" {
   export interface TypeOverrides {
@@ -12,19 +12,12 @@ declare module "@apollo/client" {
   }
 }
 
-// Ideal for RSC
+// Runs the schema in-process: a Server Component reading through HTTP to its own
+// route would pay a network hop. Resolvers read the session from `cookies()` directly.
 export const { getClient, query, PreloadQuery } = registerApolloClient(
-  async () => {
-    const headers = {
-      cookie: (await cookies()).toString(),
-    };
-
-    return new ApolloClient({
+  () =>
+    new ApolloClient({
       cache: new InMemoryCache(),
-      link: new HttpLink({
-        uri: "http://localhost:3000/api/graphql",
-        headers,
-      }),
-    });
-  },
+      link: new SchemaLink({ schema }),
+    }),
 );

@@ -20,6 +20,8 @@ const nextConfig: NextConfig = {
     authInterrupts: true,
   },
   turbopack: {
+    // Pinned: a stray lockfile in the home folder made Turbopack watch all of it.
+    root: __dirname,
     rules: {
       "*.graphql": {
         as: "*.ts",

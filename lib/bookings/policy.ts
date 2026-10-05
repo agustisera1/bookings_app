@@ -1,8 +1,6 @@
 /**
  * Booking lifecycle rules: which transitions are legal, and what a cancellation
- * refunds. Pure by design — no DB, no React, no framework — so both the service
- * (`lib/services/bookings.ts`) and the UI can ask the same question and get the
- * same answer, and so the rules are testable without standing anything up.
+ * refunds. Pure — no DB, no React — so the service and the UI ask the same question.
  *
  * Legal transitions:
  *   pending  → accepted  (host, owns the listing)
@@ -11,58 +9,47 @@
  *   accepted → cancelled (guest or host)
  * `rejected` and `cancelled` are terminal.
  */
-import type { Booking, BookingStatus, CancelActor } from "../types/booking";
+import type { Booking, BookingParty, BookingStatus, CancelActor } from "./types";
 
 /** Statuses a booking can never leave. */
 export const TERMINAL_STATUSES: BookingStatus[] = ["rejected", "cancelled"];
 
-/**
- * Statuses whose bookings still hold the listing's dates, so they block that
- * range for new bookings. The positive form of the `no_overlap` constraint
- * (003), which excludes `cancelled`/`rejected`: what it leaves is what holds.
- */
+// Statuses that still hold the listing's dates: the positive form of `no_overlap`.
 export const SLOT_HOLDING_STATUSES: BookingStatus[] = ["pending", "accepted"];
 
 /** Guests cancelling within this window of check-in forfeit their refund. */
 export const FREE_CANCELLATION_WINDOW_HOURS = 48;
 
-const FREE_CANCELLATION_WINDOW_MS =
-  FREE_CANCELLATION_WINDOW_HOURS * 60 * 60 * 1000;
+const FREE_CANCELLATION_WINDOW_MS = FREE_CANCELLATION_WINDOW_HOURS * 60 * 60 * 1000;
 
-/**
- * The booking fields the rules below actually read. Plain and normalized rather
- * than `Pick<Booking, …>`: the same predicate runs against a PG row and a
- * GraphQL row, whose field names and price types differ, so neither shape gets
- * to define the contract. Mirrors the convention that services take plain
- * params instead of importing a caller's type.
- */
-export type CancellableBooking = {
-  status: BookingStatus;
-  startDate: string;
-  totalPrice: number;
+// A Date on the server, an ISO string off the wire: `new Date()` reads both.
+type Timestamp = Date | string;
+
+export type CancellableBooking = Pick<Booking, "status" | "total_price"> & {
+  start_date: Timestamp;
 };
 
-export function toCancellableBooking(booking: Booking): CancellableBooking {
-  return {
-    status: booking.status,
-    startDate: booking.start_date,
-    totalPrice: Number(booking.total_price),
-  };
+export type CompletableBooking = Pick<Booking, "status"> & { end_date: Timestamp };
+
+/** Someone's side of a booking, or null if they're party to it in neither direction. */
+export function partyOf(
+  booking: Pick<Booking, "guest_id">,
+  userId: string,
+  listingHostId: string | undefined,
+): BookingParty | null {
+  if (booking.guest_id === userId) return "guest";
+  return listingHostId === userId ? "host" : null;
 }
 
-export function toCompletableBooking(booking: Booking): CompletableBooking {
-  return { status: booking.status, endDate: booking.end_date };
+/** Cancelling as the host also takes the permission to manage bookings. */
+export function cancelActorOf(party: BookingParty | null, canManage: boolean): CancelActor | null {
+  if (party === "host" && !canManage) return null;
+  return party;
 }
 
 export function isTerminal(status: BookingStatus): boolean {
   return TERMINAL_STATUSES.includes(status);
 }
-
-/** The fields the completion rule reads. Same reasoning as `CancellableBooking`. */
-export type CompletableBooking = {
-  status: BookingStatus;
-  endDate: string;
-};
 
 /**
  * A stay that actually happened: the host accepted it and its end date has
@@ -73,18 +60,18 @@ export type CompletableBooking = {
 export function isCompleted(booking: CompletableBooking, now: Date): boolean {
   return (
     booking.status === "accepted" &&
-    new Date(booking.endDate).getTime() < now.getTime()
+    new Date(booking.end_date).getTime() < now.getTime()
   );
 }
 
 export function hasStarted(booking: CancellableBooking, now: Date): boolean {
-  return new Date(booking.startDate).getTime() <= now.getTime();
+  return new Date(booking.start_date).getTime() <= now.getTime();
 }
 
 /** The instant the guest's free-cancellation window closes. */
 export function freeCancellationDeadline(booking: CancellableBooking): Date {
   return new Date(
-    new Date(booking.startDate).getTime() - FREE_CANCELLATION_WINDOW_MS,
+    new Date(booking.start_date).getTime() - FREE_CANCELLATION_WINDOW_MS,
   );
 }
 
@@ -102,13 +89,13 @@ export function refundFor(
   now: Date,
 ): number {
   // A request the host never accepted committed nothing, whenever it's dropped.
-  if (booking.status === "pending") return booking.totalPrice;
+  if (booking.status === "pending") return booking.total_price;
 
   // The host broke a confirmed commitment: no forfeit window applies to them.
-  if (actor === "host") return booking.totalPrice;
+  if (actor === "host") return booking.total_price;
 
   const freeUntil = freeCancellationDeadline(booking).getTime();
-  return now.getTime() < freeUntil ? booking.totalPrice : 0;
+  return now.getTime() < freeUntil ? booking.total_price : 0;
 }
 
 export type CancellationCheck =

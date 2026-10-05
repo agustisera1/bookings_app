@@ -1,5 +1,5 @@
-import { authorize } from "@/lib/authorize";
-import { getSubscriber } from "@/lib/subscriber";
+import { authorize } from "@/lib/auth/session";
+import { getSubscriber } from "@/lib/infra/subscriber";
 import { NextResponse } from "next/server";
 
 // SSE necesita el runtime Node (node-redis abre sockets TCP; Edge no puede).

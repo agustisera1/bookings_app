@@ -19,8 +19,8 @@ function booking(
   return {
     id: "b1",
     status: "accepted",
-    start_date: String(START),
-    end_date: String(END),
+    start_date: new Date(START).toISOString(),
+    end_date: new Date(END).toISOString(),
     total_price: 500,
     ...overrides,
   } as unknown as BookingDetailRow;
@@ -44,7 +44,7 @@ describe("stayStage — boundaries of the stay window", () => {
   });
 
   it("falls back to upcoming when a date can't be parsed", () => {
-    expect(stayStage(booking({ start_date: null }), END + DAY_MS)).toBe(
+    expect(stayStage(booking({ start_date: "not-a-date" }), END + DAY_MS)).toBe(
       "upcoming",
     );
   });

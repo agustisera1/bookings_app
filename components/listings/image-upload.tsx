@@ -10,7 +10,7 @@ import {
   MAX_PHOTO_BYTES,
   MAX_PHOTO_MB,
   isAcceptedPhotoType,
-} from "@/lib/listings";
+} from "@/lib/listings/validation";
 
 type ImageUploadProps = {
   value: File[];

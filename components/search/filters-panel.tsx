@@ -11,8 +11,8 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { DatePicker } from "@/components/common/date-picker";
 import { FormField } from "@/components/common/field";
-import { cn, formatPrice, humanize } from "@/lib/utils";
-import { AMENITIES, PROPERTY_TYPES, type PropertyType } from "@/lib/listings";
+import { cn, formatPrice, humanize } from "@/lib/shared/utils";
+import { AMENITIES, PROPERTY_TYPES, type PropertyType } from "@/lib/listings/validation";
 import { MinCountField } from "./min-count-field";
 import {
   LISTING_TYPES,

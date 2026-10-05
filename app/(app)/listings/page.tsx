@@ -7,7 +7,7 @@ import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
 import { query } from "@/lib/apollo/client";
 import { SearchX } from "lucide-react";
 import { Suspense } from "react";
-import { parseListingFilters, type ListingSearchParams } from "@/lib/listings";
+import { parseListingFilters, type ListingSearchParams } from "@/lib/listings/validation";
 
 export const metadata: Metadata = { title: "Explore listings" };
 

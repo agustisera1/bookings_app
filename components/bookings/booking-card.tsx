@@ -3,15 +3,15 @@ import { CalendarRange, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CoverImage, OverlayBadge } from "@/components/common/cover-image";
-import { formatDateRange, calcNights } from "@/lib/dates";
+import { formatDateRange, calcNights } from "@/lib/shared/dates";
 import {
   cn,
   formatPrice,
   bookingStatusVariant,
   listingTypeGradient,
-} from "@/lib/utils";
+} from "@/lib/shared/utils";
 import { CancelBookingButton } from "@/components/bookings/cancel-booking-button";
-import { toCancellableRow, type BookingRow } from "./bookings-model";
+import type { BookingRow } from "./bookings-model";
 
 export function BookingCard({
   booking,
@@ -92,7 +92,7 @@ export function BookingCard({
               <CancelBookingButton
                 bookingId={booking.id ?? ""}
                 actor="guest"
-                booking={toCancellableRow(booking)}
+                booking={booking}
               />
             </div>
           </div>

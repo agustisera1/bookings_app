@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { getCurrentUser } from "@/lib/services/auth";
+import { getCurrentUser } from "@/lib/auth/session";
 import { forbidden } from "next/navigation";
 import { Plus, SearchX } from "lucide-react";
 import { Suspense } from "react";
 import { query } from "@/lib/apollo/client";
 import { GetListingsDocument } from "@/lib/apollo/__generated__/operations";
-import { parseListingFilters, type ListingSearchParams } from "@/lib/listings";
+import { parseListingFilters, type ListingSearchParams } from "@/lib/listings/validation";
 import { Listings } from "@/components/listings/listings";
 import CreateListing from "@/components/listings/create-listing/create-listing";
 import { Search } from "@/components/search/search";

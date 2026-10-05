@@ -2,16 +2,18 @@ import { use } from "react";
 import { CalendarRange, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ServiceResult } from "@/lib/types";
-import { Booking } from "@/lib/services/bookings";
-import { formatDateRange, calcNights, parseTs } from "@/lib/dates";
-import { formatPrice, bookingStatusVariant } from "@/lib/utils";
+import type { GetListingBookingsQuery } from "@/lib/apollo/__generated__/operations";
+import { formatDateRange, calcNights, parseTs } from "@/lib/shared/dates";
+import { formatPrice, bookingStatusVariant } from "@/lib/shared/utils";
 import { EmptyState } from "@/components/common/empty-state";
-import { toCancellableBooking } from "@/lib/bookings/policy";
 import { ManageBookingActions } from "./manage-booking-actions";
 import { CancelBookingButton } from "./cancel-booking-button";
 
-function BookingCard({ booking }: { booking: Booking }) {
+type HostBooking = NonNullable<
+  NonNullable<GetListingBookingsQuery["listing"]>["bookings"]
+>[number];
+
+function BookingCard({ booking }: { booking: HostBooking }) {
   const nights = calcNights(booking.start_date, booking.end_date);
   const isPending = booking.status === "pending";
 
@@ -50,7 +52,7 @@ function BookingCard({ booking }: { booking: Booking }) {
 
           <div className="mt-1 flex items-center justify-between gap-2 border-t pt-3">
             <span className="text-base font-semibold tabular-nums">
-              {formatPrice(Number(booking.total_price))}
+              {formatPrice(booking.total_price)}
             </span>
             {isPending ? (
               <ManageBookingActions bookingId={booking.id} />
@@ -58,7 +60,7 @@ function BookingCard({ booking }: { booking: Booking }) {
               <CancelBookingButton
                 bookingId={booking.id}
                 actor="host"
-                booking={toCancellableBooking(booking)}
+                booking={booking}
               />
             )}
           </div>
@@ -71,19 +73,17 @@ function BookingCard({ booking }: { booking: Booking }) {
 export function ListingBookings({
   bookingsPromise,
 }: {
-  bookingsPromise: Promise<ServiceResult<Booking[]>>;
+  bookingsPromise: Promise<HostBooking[] | null>;
 }) {
-  const bookingsResponse = use(bookingsPromise);
+  const bookings = use(bookingsPromise);
 
-  if (!bookingsResponse.ok) {
+  if (!bookings) {
     return (
       <p className="text-sm text-muted-foreground">
         Could not load the bookings. Try reloading the page.
       </p>
     );
   }
-
-  const bookings = bookingsResponse.data;
 
   if (bookings.length === 0) {
     return (

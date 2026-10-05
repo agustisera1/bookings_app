@@ -1,0 +1,18 @@
+type Notification {
+  _id: ID!
+  listing_id: String!
+  host_id: String!
+  guest_id: String!
+  booking_id: String!
+  target_id: String!
+  title: String!
+  body: String!
+  is_read: Boolean!
+  created_at: DateTime!
+}
+
+# Nullable: a failed read degrades to an error state instead of failing the whole query.
+extend type Query {
+  notifications: [Notification!]
+  notificationsCount: Int
+}

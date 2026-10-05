@@ -1,5 +1,5 @@
 import { GraphQLError } from "graphql";
-import type { ErrorCode, ServiceResult } from "../types";
+import type { ErrorCode, ServiceResult } from "@/lib/shared/result";
 
 const GRAPHQL_CODE_BY_ERROR_CODE: Record<ErrorCode, string> = {
   VALIDATION: "BAD_USER_INPUT",

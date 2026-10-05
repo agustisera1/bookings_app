@@ -2,8 +2,7 @@
 
 import { use, useState } from "react";
 import { toast } from "sonner";
-import type { ServiceResult } from "@/lib/types";
-import { markAsRead } from "@/lib/services/notifications";
+import { markAsRead } from "@/lib/notifications/actions";
 import { useNotificationsActions } from "@/components/notifications/provider";
 import { partitionByRead, type Notification } from "./notifications-model";
 
@@ -19,13 +18,13 @@ type NotificationsView =
 // Unwraps the notifications promise and owns the optimistic read state; the
 // split itself is pure (partitionByRead, in notifications-model).
 export function useNotifications(
-  notificationsPromise: Promise<ServiceResult<Notification[]>>,
+  notificationsPromise: Promise<Notification[] | null>,
 ): NotificationsView {
   // Ids marked read this session, overlaid on the server data so an optimistic
   // update survives re-renders without stale derived state.
   const [readIds, setReadIds] = useState<Set<string>>(() => new Set());
   const { increment, decrement } = useNotificationsActions();
-  const response = use(notificationsPromise);
+  const notifications = use(notificationsPromise);
 
   async function handleMarkAsRead(id: string) {
     setReadIds((prev) => new Set(prev).add(id)); // optimistic
@@ -44,10 +43,14 @@ export function useNotifications(
     toast.success("Notification marked as read");
   }
 
-  if (!response.ok) {
-    return { ok: false, error: response.error, onMarkAsRead: handleMarkAsRead };
+  if (!notifications) {
+    return {
+      ok: false,
+      error: "Could not retrieve your notifications",
+      onMarkAsRead: handleMarkAsRead,
+    };
   }
 
-  const { unread, older } = partitionByRead(response.data, readIds);
+  const { unread, older } = partitionByRead(notifications, readIds);
   return { ok: true, unread, older, onMarkAsRead: handleMarkAsRead };
 }

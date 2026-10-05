@@ -8,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { humanize } from "@/lib/utils";
-import { AMENITIES, PROPERTY_TYPES } from "@/lib/listings";
+import { humanize } from "@/lib/shared/utils";
+import { AMENITIES, PROPERTY_TYPES } from "@/lib/listings/validation";
 import { NUMBER_FIELD, type StepFieldsProps } from "./create-listing-model";
 
 const PROPERTY_TYPE_ITEMS = Object.fromEntries(

@@ -9,7 +9,7 @@
 ## Contexto
 
 Nada limita cuántas veces se pueden llamar las operaciones de autenticación (`authUser`,
-`createUser`, `POST /api/auth/refresh`). De cara a un deploy público, eso habilita dos vectores cuyo
+`createUser`). De cara a un deploy público, eso habilita dos vectores cuyo
 daño **no se revierte**:
 
 1. **Fuerza bruta en login → toma de cuentas.** Probar contraseñas contra un email conocido sin
@@ -44,8 +44,8 @@ De un vistazo, la opción elegida en cada eje y para qué escala vale:
 | Estado | **Redis compartido** (el que ya existe) | Cualquier nº de instancias de la app |
 | Build vs. buy | **A mano** (`INCR`/`PEXPIRE` vía Lua) | Mientras Redis sea la infra de conteo |
 | Algoritmo | **Fixed window** | Mientras el *boundary burst* no importe |
-| Clave | **login: IP + email** · signup: IP · refresh: IP | Ataque no distribuido |
-| Failure mode | **Híbrido**: login/refresh open, signup closed | — |
+| Clave | **login: IP + email** · signup: IP | Ataque no distribuido |
+| Failure mode | **Híbrido**: login open, signup closed | — |
 
 En concreto:
 
@@ -58,9 +58,9 @@ En concreto:
 4. **Algoritmo fixed window**, ventana anclada al primer hit de cada key (el `PEXPIRE` se setea
    cuando el contador nace).
 5. **Claves diferenciadas por operación:** login lleva **dos contadores independientes** (`rl:login:ip:*`
-   y `rl:login:email:*`); signup y refresh, solo IP. El email se normaliza a minúsculas; la IP sale de
+   y `rl:login:email:*`); signup, solo IP. El email se normaliza a minúsculas; la IP sale de
    `x-forwarded-for`.
-6. **Failure mode híbrido:** si Redis no responde, login y refresh **dejan pasar** (open) y signup
+6. **Failure mode híbrido:** si Redis no responde, login **deja pasar** (open) y signup
    **rechaza** (closed). Es un campo `failMode` por política.
 7. **Respuesta uniforme:** `ServiceResult` con code `RATE_LIMITED` (→ 429 en HTTP, `TOO_MANY_REQUESTS`
    en GraphQL) y un mensaje genérico **idéntico exista o no el email**, para no volver la cota un
@@ -117,7 +117,6 @@ salto a *sliding window counter* es O(1) y no toca a los callers.
   llegaría al límite. Separadas: **la de IP** frena el barrido de muchos emails desde una IP; **la de
   email** frena el ataque contra una cuenta desde muchas IPs. Se corta si **cualquiera** se pasa.
 - **Signup → solo IP:** el email todavía no existe como cuenta.
-- **Refresh → IP:** es la única de las tres que sí es una ruta con URL propia.
 - **Normalización:** el email va en minúsculas en la key (si no, variar mayúsculas evade la cota).
 - **La IP sale de `x-forwarded-for`**, que el cliente puede falsificar salvo detrás de un proxy de
   confianza que lo reescriba. A esta escala se acepta el caveat (documentado en `SECURITY_LAYERS.md`);
@@ -133,14 +132,14 @@ flowchart TD
     A[rateLimit key, policy] --> B{Redis responde?}
     B -->|sí| C[INCR + PTTL<br/>allowed = count ≤ limit]
     B -->|no · caído/timeout| D{policy.failMode}
-    D -->|open| E[allowed = true<br/>login · refresh]
+    D -->|open| E[allowed = true<br/>login]
     D -->|closed| F[allowed = false<br/>signup]
 ```
 
 Es el trade-off **disponibilidad vs. protección**, y lo resolvimos **distinto por operación** porque
 el daño de cada una es distinto:
 
-- **Login/refresh → open.** Que un corte de Redis **no deje a nadie afuera** de la auth. El riesgo de
+- **Login → open.** Que un corte de Redis **no deje a nadie afuera** de la auth. El riesgo de
   abrir es acotado: durante la caída, la fuerza bruta sigue chocando contra `bcrypt` y el unique
   constraint; la cota es una mitigación, no el control de auth. Cerrar login haría de Redis una
   **dependencia dura de la autenticación** — hoy la auth funciona sin Redis, y cerrarla sería una
@@ -183,8 +182,8 @@ caída (eje 6). No lo blindamos con HA todavía porque a esta escala el costo op
 | Sliding window counter | Algoritmo | Upgrade diferido: barato si el burst molesta |
 | Token/leaky bucket | Algoritmo | Descartado: sirve para shaping de throughput, no para frenar brute force |
 | Key combinada `ip+email` | Clave | Descartada: rompe el freno al ataque distribuido |
-| Fail-open global | Failure mode | Parcial: lo usamos en login/refresh, no en signup |
-| Fail-closed global | Failure mode | Descartado para login/refresh: haría de Redis dependencia dura de la auth |
+| Fail-open global | Failure mode | Parcial: lo usamos en login, no en signup |
+| Fail-closed global | Failure mode | Descartado para login: haría de Redis dependencia dura de la auth |
 
 ---
 

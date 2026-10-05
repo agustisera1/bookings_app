@@ -9,7 +9,7 @@ Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo d
 - **API**: GraphQL (Apollo Server) para lecturas; Server Actions para escrituras
 - **DBs**: PostgreSQL (núcleo transaccional + outbox), MongoDB (listados, chat, notificaciones), Redis (colas, pub/sub, rate limiting)
 - **Colas**: BullMQ sobre Redis; el worker vive en el repo `greenaway-worker`
-- **Auth**: JWT (access + refresh)
+- **Auth**: JWT (access token en cookie httpOnly)
 - **Infra local**: Docker Compose
 
 ## Comandos
@@ -34,7 +34,7 @@ Las directivas viven en un archivo por dimensión (numeradas como en `docs/audit
 |---|---|---|
 | `00-convenciones.md` | `/lib` y DRY, cohesión/acoplamiento, tipos, comentarios | Siempre |
 | `01-dominio.md` | Roles, reglas clave (RNF), reglas puras compartidas | Siempre |
-| `02-backend.md` | Capas de `lib/`, repos, services, error handling | `lib/services`, `lib/repositories`, `lib/types`, `app/api` |
+| `02-services.md` | Estructura de un service, tipos, lecturas (GraphQL) y escrituras (actions), errores, repository | `lib/<service>/*`, `lib/apollo` |
 | `03-api.md` | Tipos generados de GraphQL y de dónde importarlos | `lib/apollo`, `app/api/graphql`, `codegen.ts` |
 | `04-datos.md` | Modelo de datos de PostgreSQL y MongoDB | Repos, clientes de DB, `db/`, `scripts/` |
 | `05-async.md` | Outbox y colas | Services, repos, `lib/types/outbox.ts` |

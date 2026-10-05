@@ -1,5 +1,5 @@
 import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 import { Separator } from "@/components/ui/separator";
 import type { CreateListingStep } from "./create-listing-model";
 

@@ -4,7 +4,7 @@ import { useParams } from "next/navigation";
 import { MessagesSquare } from "lucide-react";
 import { EmptyState } from "@/components/common/empty-state";
 import { ConversationItem } from "./conversation-item";
-import type { Conversation } from "@/lib/types/chat";
+import type { ConversationRow as Conversation } from "./types";
 
 // Client only for the active row, read off the route: the URL selects the conversation.
 export function ConversationList({

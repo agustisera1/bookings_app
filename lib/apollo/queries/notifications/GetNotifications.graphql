@@ -1,0 +1,14 @@
+query GetNotifications {
+  notifications {
+    _id
+    listing_id
+    host_id
+    guest_id
+    booking_id
+    target_id
+    title
+    body
+    is_read
+    created_at
+  }
+}

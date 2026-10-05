@@ -19,7 +19,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { acceptBooking, rejectBooking } from "@/lib/services/bookings";
+import { acceptBooking, rejectBooking } from "@/lib/bookings/actions";
 
 const hostMessageSchema = z.object({
   hostMessage: z.string().trim().optional(),

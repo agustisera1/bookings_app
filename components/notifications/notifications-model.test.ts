@@ -6,7 +6,7 @@ import {
   LogIn,
 } from "lucide-react";
 import { describe, expect, it } from "vitest";
-import type { NotificationDocument } from "@/lib/types/notification";
+import type { NotificationDocument } from "@/lib/notifications/types";
 import {
   isUnreadNudge,
   notificationVisual,

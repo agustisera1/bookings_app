@@ -1,0 +1,4 @@
+query GetSidebarCounts {
+  notificationsCount
+  unreadMessagesCount
+}

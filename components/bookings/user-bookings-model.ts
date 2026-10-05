@@ -1,4 +1,4 @@
-import { parseTs } from "@/lib/dates";
+import { parseTs } from "@/lib/shared/dates";
 import type { BookingRow } from "./bookings-model";
 
 function endTime(b: BookingRow) {

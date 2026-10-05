@@ -8,12 +8,11 @@ import { PageLayout } from "@/components/common/page-layout";
 import { BookingDetail } from "@/components/bookings/booking-detail";
 import { CancelBookingButton } from "@/components/bookings/cancel-booking-button";
 import { isReviewable } from "@/components/bookings/booking-detail-model";
-import { toCancellableRow } from "@/components/bookings/bookings-model";
 import { ReviewForm } from "@/components/reviews/review-form";
 import { GetBookingDocument } from "@/lib/apollo/__generated__/operations";
 import { query } from "@/lib/apollo/client";
-import { calcNights, formatDateRange } from "@/lib/dates";
-import { getCurrentUser } from "@/lib/services/auth";
+import { calcNights, formatDateRange } from "@/lib/shared/dates";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Booking details" };
 
@@ -73,7 +72,7 @@ export default async function BookingDetailPage({
           <CancelBookingButton
             bookingId={id}
             actor="guest"
-            booking={toCancellableRow(booking)}
+            booking={booking}
             variant="button"
           />
         </>

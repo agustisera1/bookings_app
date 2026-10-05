@@ -5,18 +5,20 @@ import { ChatComposer } from "./chat-composer";
 import { ChatHeader } from "./chat-header";
 import { EmptyThread, ErrorState, ThreadSkeleton } from "./chat-states";
 import { MessageThread } from "./message-thread";
-import { counterpartOf } from "./types";
+import { counterpartOf, type ChatThreadRow } from "./types";
 import { useBookingChat } from "./use-booking-chat";
 
 export default function Chat({
   bookingId,
   currentUserId,
+  thread,
 }: {
   bookingId: string;
   currentUserId: string;
+  thread: ChatThreadRow | null;
 }) {
   const { status, error, history, chatMeta, viewerParty, connected, sendMessage } =
-    useBookingChat(bookingId, currentUserId);
+    useBookingChat(bookingId, currentUserId, thread);
   // Captured once at mount: a stable "now" for relative day labels keeps render pure.
   const [now] = useState(() => new Date());
   const scrollRef = useRef<HTMLDivElement>(null);

@@ -1,9 +1,9 @@
 "use client";
 
-import { use, useState } from "react";
+import { useState } from "react";
 import { useForm, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import type { z } from "zod";
 import { toast } from "sonner";
 import { CalendarCheck, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,42 +11,26 @@ import { Input } from "@/components/ui/input";
 import { FormField } from "@/components/common/field";
 import { DatePicker } from "@/components/common/date-picker";
 import { EmptyState } from "@/components/common/empty-state";
-import { calcNights } from "@/lib/dates";
-import { formatPrice } from "@/lib/utils";
-import { createBooking } from "@/lib/services/bookings";
-import { ServiceResult } from "@/lib/types";
-import { Matcher } from "react-day-picker";
+import { calcNights, getAvailabilityFromBookings } from "@/lib/shared/dates";
+import { formatPrice } from "@/lib/shared/utils";
+import { createBooking } from "@/lib/bookings/actions";
+import { staySchema } from "@/lib/bookings/validation";
 
-const bookingSchema = z
-  .object({
-    checkIn: z.date({ error: "Select a check-in date" }),
-    checkOut: z.date({ error: "Select a check-out date" }),
-    guests: z
-      .number({ error: "Enter the number of guests" })
-      .int()
-      .min(1, "At least 1 guest")
-      .max(16, "Max 16 guests"),
-  })
-  .refine((d) => d.checkOut > d.checkIn, {
-    message: "Check-out must be after check-in",
-    path: ["checkOut"],
-  });
-
-export type BookingFormValues = z.infer<typeof bookingSchema>;
+export type BookingFormValues = z.infer<typeof staySchema>;
 
 export function BookingForm({
   listingId,
   pricePerNight,
-  availabilityPromise,
+  bookedRanges,
 }: {
   listingId: string;
   pricePerNight: number;
-  availabilityPromise: Promise<ServiceResult<Matcher[]>>;
+  bookedRanges: { start_date: string; end_date: string }[] | null;
 }) {
   const [checkInOpen, setCheckInOpen] = useState(false);
   const [checkOutOpen, setCheckOutOpen] = useState(false);
   const [today] = useState(() => new Date());
-  const availability = use(availabilityPromise);
+  const booked = getAvailabilityFromBookings(bookedRanges ?? []);
 
   const {
     control,
@@ -55,7 +39,7 @@ export function BookingForm({
     setValue,
     formState: { errors, isSubmitting, isSubmitSuccessful },
   } = useForm<BookingFormValues>({
-    resolver: zodResolver(bookingSchema),
+    resolver: zodResolver(staySchema),
     defaultValues: { guests: 1 },
   });
 
@@ -114,7 +98,7 @@ export function BookingForm({
                 // Inclusive DateRange matchers: each booking blocks its start and end date.
                 disabled={[
                   { before: today },
-                  ...(availability.ok ? availability.data : []),
+                  ...booked,
                 ]}
               />
             )}

@@ -9,7 +9,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { datePickerTriggerClass, formatDate } from "@/lib/dates";
+import { datePickerTriggerClass, formatDate } from "@/lib/shared/dates";
 
 // `open`/`onOpenChange` are optional, to chain sibling pickers ("until" right after "from").
 export function DatePicker({

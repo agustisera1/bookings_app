@@ -2,18 +2,16 @@
 
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { FormField } from "@/components/common/field";
 import { StarRatingInput } from "@/components/common/star-rating";
-import { createReview } from "@/lib/services/reviews";
+import type { z } from "zod";
+import { createReview } from "@/lib/reviews/actions";
+import { createReviewSchema } from "@/lib/reviews/validation";
 
-const reviewSchema = z.object({
-  rating: z.number().int().min(1, "Select a rating").max(5),
-  comment: z.string().trim().min(1, "Comment is required"),
-});
+const reviewSchema = createReviewSchema.omit({ bookingId: true });
 
 export type ReviewFormValues = z.infer<typeof reviewSchema>;
 

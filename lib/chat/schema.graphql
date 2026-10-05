@@ -1,0 +1,38 @@
+type ChatMeta {
+  _id: ID!
+  booking_id: String!
+  started_at: String!
+  guest_id: String!
+  host_id: String!
+}
+
+type ChatMessage {
+  _id: ID!
+  chat_id: String!
+  sender_id: String!
+  body: String!
+  timestamp: String!
+}
+
+# `chat` is null until someone speaks; `party` is the viewer's side of the booking.
+type ChatThread {
+  chat: ChatMeta
+  messages: [ChatMessage!]!
+  party: BookingParty!
+}
+
+type Conversation {
+  id: ID!
+  title: String!
+  photo: String
+  start_date: DateTime!
+  end_date: DateTime!
+  status: BookingStatus!
+  party: BookingParty!
+}
+
+extend type Query {
+  conversations: [Conversation!]
+  unreadMessagesCount: Int
+  chatThread(bookingId: ID!): ChatThread
+}

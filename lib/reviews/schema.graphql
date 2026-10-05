@@ -1,0 +1,14 @@
+type Review {
+  id: ID!
+  listing_id: String!
+  author_name: String!
+  rating: Int!
+  comment: String!
+  host_reply: String
+  created_at: DateTime!
+}
+
+# Nullable: if the reviews fail to load, the listing still renders.
+extend type Listing {
+  reviews: [Review!]
+}
