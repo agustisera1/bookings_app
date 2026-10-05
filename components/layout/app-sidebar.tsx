@@ -3,7 +3,7 @@ import {
   SidebarContent,
   SidebarHeader,
 } from "@/components/ui/sidebar";
-import { getCurrentUser } from "@/lib/services/auth";
+import { getCurrentUser } from "@/lib/auth/session";
 import { SidebarNav } from "./sidebar-nav";
 import { SidebarUserFooter } from "./sidebar-user-footer";
 import Image from "next/image";

@@ -1,4 +1,4 @@
-import { formatDate } from "@/lib/dates";
+import { formatDate } from "@/lib/shared/dates";
 import { ChatAvatar } from "./chat-avatar";
 import type { Counterpart, Status } from "./types";
 

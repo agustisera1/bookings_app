@@ -1,4 +1,4 @@
-import type { PropertyType } from "@/lib/listings";
+import type { PropertyType } from "@/lib/listings/validation";
 
 
 export const LISTING_TYPES = [

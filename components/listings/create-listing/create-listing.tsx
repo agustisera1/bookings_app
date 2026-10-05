@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
-import { createListing } from "@/lib/services/listings";
+import { createListing } from "@/lib/listings/actions";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -22,8 +22,8 @@ import { BasicsStep } from "./basics-step";
 import { LocationStep } from "./location-step";
 import { DetailsStep } from "./details-step";
 import { StepIndicator } from "./step-indicator";
+import { createListingSchema } from "@/lib/listings/validation";
 import {
-  createListingSchema,
   DEFAULT_VALUES,
   STEPS,
   type CreateListingFormValues,

@@ -1,4 +1,4 @@
-import { formatDate, formatTime } from "@/lib/dates";
+import { formatDate, formatTime } from "@/lib/shared/dates";
 import { DayDivider, MessageBubble } from "./message-bubble";
 import { buildThread } from "./thread-model";
 import type { Counterpart, ThreadMessage } from "./types";

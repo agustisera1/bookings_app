@@ -1,0 +1,9 @@
+# A user as their counterparty may see them: no email.
+type UserSummary {
+  id: ID!
+  name: String
+}
+
+extend type Booking {
+  host: UserSummary
+}

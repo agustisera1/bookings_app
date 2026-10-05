@@ -5,14 +5,14 @@ import { toast } from "sonner";
 import { CircleXIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
-import { cancelBooking } from "@/lib/services/bookings";
-import { formatPrice } from "@/lib/utils";
+import { cancelBooking } from "@/lib/bookings/actions";
+import { formatPrice } from "@/lib/shared/utils";
 import {
   canCancel,
   FREE_CANCELLATION_WINDOW_HOURS,
   type CancellableBooking,
 } from "@/lib/bookings/policy";
-import type { CancelActor } from "@/lib/types/booking";
+import type { CancelActor } from "@/lib/bookings/types";
 
 // Same predicate the service enforces, so the button can't offer a cancellation
 // the server will refuse.

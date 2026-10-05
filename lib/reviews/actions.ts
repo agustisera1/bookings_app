@@ -1,8 +1,8 @@
 "use server";
-import { authorize } from "@/lib/authorize";
-import { isCompleted, toCompletableBooking } from "@/lib/bookings/policy";
-import * as bookingsRepo from "@/lib/repositories/bookings.pg";
-import * as listingsRepo from "@/lib/repositories/listings.mongo";
+import { authorize } from "@/lib/auth/session";
+import { isCompleted } from "@/lib/bookings/policy";
+import * as bookingsRepo from "@/lib/bookings/repository";
+import * as listingsRepo from "@/lib/listings/repository";
 import type { ServiceResult } from "@/lib/shared/result";
 import { revalidatePaths } from "@/lib/shared/revalidate";
 import * as repo from "./repository";
@@ -21,12 +21,12 @@ export async function createReview(
   const { bookingId, rating, comment } = parsed.data;
 
   try {
-    const booking = await bookingsRepo.getBookingById(bookingId);
+    const booking = await bookingsRepo.findBookingById(bookingId);
     // Someone else's booking reads the same as a missing one.
     if (!booking || booking.guest_id !== auth.data.id)
       return { ok: false, error: "Booking not found", code: "NOT_FOUND" };
 
-    if (!isCompleted(toCompletableBooking(booking), new Date()))
+    if (!isCompleted(booking, new Date()))
       return {
         ok: false,
         error: "You can only review a stay once it's finished",

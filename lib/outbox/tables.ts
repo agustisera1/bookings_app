@@ -1,7 +1,7 @@
 import { sql } from "drizzle-orm";
 import { index, jsonb, pgTable, primaryKey, timestamp, uuid, varchar } from "drizzle-orm/pg-core";
 
-const timestamptz = () => timestamp({ withTimezone: true, mode: "string" });
+const timestamptz = () => timestamp({ withTimezone: true, mode: "date" });
 
 export const outbox = pgTable(
   "outbox",

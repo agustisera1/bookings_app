@@ -1,8 +1,10 @@
 import { Separator } from "@/components/ui/separator";
-import type { Review } from "@/lib/reviews/types";
+import type { GetListingQuery } from "@/lib/apollo/__generated__/operations";
 import { ReviewReplyForm } from "@/components/reviews/review-reply-form";
 import { StarRating } from "@/components/common/star-rating";
-import { formatDate } from "@/lib/dates";
+import { formatDate } from "@/lib/shared/dates";
+
+type Review = NonNullable<NonNullable<GetListingQuery["listing"]>["reviews"]>[number];
 
 function ReviewCard({
   review,

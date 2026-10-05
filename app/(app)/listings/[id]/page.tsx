@@ -12,13 +12,12 @@ import { notFound } from "next/navigation";
 import { BackLink } from "@/components/common/back-link";
 import { PageLayout } from "@/components/common/page-layout";
 import { query } from "@/lib/apollo/client";
-import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
-import { ListingReviews } from "@/components/reviews/listing-reviews";
-import { getCurrentUser } from "@/lib/services/auth";
 import {
-  getListingAvailability,
-  getListingBookings,
-} from "@/lib/services/listings";
+  GetListingBookingsDocument,
+  GetListingDocument,
+} from "@/lib/apollo/__generated__/operations";
+import { ListingReviews } from "@/components/reviews/listing-reviews";
+import { getCurrentUser } from "@/lib/auth/session";
 import { ListingBookings } from "@/components/bookings/listing-bookings";
 
 export const metadata: Metadata = { title: "Listing" };
@@ -43,8 +42,14 @@ export default async function ListingDetailPage({
   const isHostMode =
     !!currentUser?.is_host && currentUser.id === listing.host_id;
 
-  const availabilityPromise = getListingAvailability(id);
-  const bookingsPromise = isHostMode ? getListingBookings(id) : undefined;
+  // A second query: whether you're the host is only known once the listing is in.
+  const bookingsPromise = isHostMode
+    ? query({
+        query: GetListingBookingsDocument,
+        variables: { listing_id: id },
+        errorPolicy: "all",
+      }).then(({ data }) => data?.listing?.bookings ?? null)
+    : undefined;
 
   return (
     <div className="flex min-h-full flex-col lg:h-full lg:min-h-0 lg:flex-row">
@@ -172,7 +177,7 @@ export default async function ListingDetailPage({
             <BookingForm
               listingId={listing._id}
               pricePerNight={listing.price}
-              availabilityPromise={availabilityPromise}
+              bookedRanges={listing.availability ?? null}
             />
           </Section>
         )}

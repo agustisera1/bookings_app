@@ -1,4 +1,4 @@
-import { authorize } from "@/lib/authorize";
+import { authorize } from "@/lib/auth/session";
 import type { ServiceResult } from "@/lib/shared/result";
 import * as repo from "./repository";
 import type { Review } from "./types";

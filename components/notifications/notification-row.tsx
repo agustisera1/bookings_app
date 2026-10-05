@@ -1,6 +1,6 @@
 import { Check } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { formatDate } from "@/lib/dates";
+import { cn } from "@/lib/shared/utils";
+import { formatDate } from "@/lib/shared/dates";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {

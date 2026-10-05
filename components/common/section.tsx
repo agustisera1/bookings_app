@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 
 // `card` for presentational data; leave it off when the child owns its surface (a form, a card list).
 export function Section({

@@ -1,0 +1,49 @@
+# Mirrors BookingStatus in lib/bookings/types.ts and the booking_status_valid CHECK.
+enum BookingStatus {
+  pending
+  accepted
+  rejected
+  cancelled
+}
+
+# Someone's side of *this* booking, not their roles.
+enum BookingParty {
+  guest
+  host
+}
+
+type Booking {
+  id: ID!
+  created_at: DateTime!
+  start_date: DateTime!
+  end_date: DateTime!
+  guests: Int!
+  status: BookingStatus!
+  status_reason: String
+  total_price: Float!
+  refund_amount: Float!
+  cancelled_by: BookingParty
+  cancelled_at: DateTime
+  # Which side of this booking the caller is on.
+  party: BookingParty
+  listing: Listing
+}
+
+type BookedRange {
+  start_date: DateTime!
+  end_date: DateTime!
+}
+
+extend type Query {
+  # Bookings the caller made as a guest: their trips.
+  guestBookings: [Booking!]
+  # A single booking, resolvable by either party to it.
+  booking(id: ID!): Booking
+}
+
+extend type Listing {
+  # Date ranges still held by a booking: the calendar blocks them.
+  availability: [BookedRange!]
+  # The reservations made on this listing, for its host.
+  bookings: [Booking!]
+}

@@ -1,7 +1,7 @@
 "use client";
 
-import { logoutUser } from "@/lib/services/auth";
-import { initialsFrom } from "@/lib/utils";
+import { logoutUser } from "@/lib/auth/actions";
+import { initialsFrom } from "@/lib/shared/utils";
 import { SidebarFooter } from "@/components/ui/sidebar";
 import {
   DropdownMenu,

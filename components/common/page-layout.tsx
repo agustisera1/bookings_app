@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 
 // `sticky`, not fixed: it pins against whichever scroll container encloses it.
 // No `max-w-*`: a page fills its column and the padding gives the breathing room.

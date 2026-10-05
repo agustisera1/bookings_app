@@ -2,9 +2,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { MessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { formatDateRange } from "@/lib/dates";
-import { bookingStatusVariant, cn } from "@/lib/utils";
-import type { Conversation } from "@/lib/types/chat";
+import { formatDateRange } from "@/lib/shared/dates";
+import { bookingStatusVariant, cn } from "@/lib/shared/utils";
+import type { ConversationRow as Conversation } from "./types";
 import { counterpartOf } from "./types";
 
 export function ConversationItem({

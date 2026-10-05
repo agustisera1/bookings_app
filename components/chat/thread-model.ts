@@ -1,8 +1,7 @@
-import { formatDayLabel, toDayKey, toMillis } from "@/lib/dates";
-import type { ChatParties } from "@/lib/types/booking";
-import type { ChatHistory, SerializableChatDocument } from "@/lib/types/chat";
-import type { SerializableMessageDocument } from "@/lib/types/messages";
-import type { Status, ThreadMessage } from "./types";
+import { formatDayLabel, toDayKey, toMillis } from "@/lib/shared/dates";
+import type { BookingParty } from "@/lib/bookings/types";
+import type { SerializableMessageDocument } from "@/lib/chat/types";
+import type { ChatThreadRow, Status, ThreadMessage } from "./types";
 
 // A message plus its display flags (mine, run start/end, day divider), computed from its neighbours.
 export type ThreadItem = {
@@ -48,23 +47,25 @@ export type ThreadState = {
   status: Status;
   error: string | null;
   messages: ThreadMessage[];
-  chatMeta: SerializableChatDocument | null;
-  parties: ChatParties | null;
-  ticket: string | null;
+  chatMeta: ChatThreadRow["chat"];
+  party: BookingParty;
 };
 
-export const initialThreadState: ThreadState = {
-  status: "loading",
-  error: null,
-  messages: [],
-  chatMeta: null,
-  parties: null,
-  ticket: null,
-};
+// The thread arrives server-rendered; null means the page couldn't load it.
+export function initialThreadState(thread: ChatThreadRow | null): ThreadState {
+  if (!thread)
+    return {
+      status: "error",
+      error: "Could not load this conversation",
+      messages: [],
+      chatMeta: null,
+      party: "guest",
+    };
+  return { status: "ready", error: null, messages: thread.messages, chatMeta: thread.chat, party: thread.party };
+}
 
 export type ThreadAction =
-  | { type: "loaded"; data: ChatHistory }
-  | { type: "loadFailed"; error: string }
+  | { type: "loaded"; data: ChatThreadRow }
   | { type: "joinFailed" }
   | { type: "appended"; message: ThreadMessage }
   | { type: "delivered"; tempId: string; message: SerializableMessageDocument }
@@ -76,18 +77,8 @@ export function threadReducer(
 ): ThreadState {
   switch (action.type) {
     case "loaded":
-      // A load (mount or reconnect) replaces the thread with server truth — and
-      // carries the fresh ticket the join effect re-fires on.
-      return {
-        status: "ready",
-        error: null,
-        messages: action.data.messages,
-        chatMeta: action.data.chat,
-        parties: action.data.parties,
-        ticket: action.data.ticket,
-      };
-    case "loadFailed":
-      return { ...state, status: "error", error: action.error };
+      // A refresh (mount or reconnect) replaces the thread with server truth.
+      return initialThreadState(action.data);
     case "joinFailed":
       return { ...state, status: "error", error: "Could not join chat" };
     case "appended":

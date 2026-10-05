@@ -1,4 +1,4 @@
-import { cn, formatPrice } from "@/lib/utils";
+import { cn, formatPrice } from "@/lib/shared/utils";
 
 export function PriceLabel({
   price,

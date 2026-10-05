@@ -1,6 +1,6 @@
 import { FREE_CANCELLATION_WINDOW_HOURS } from "@/lib/bookings/policy";
-import { formatDate, formatTime } from "@/lib/dates";
-import { formatPrice } from "@/lib/utils";
+import { formatDate, formatTime } from "@/lib/shared/dates";
+import { formatPrice } from "@/lib/shared/utils";
 import {
   cancellationRecord,
   guestCancellation,

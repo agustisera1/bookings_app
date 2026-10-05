@@ -21,7 +21,7 @@ const ANY_TIME = new Date("2026-01-01T00:00:00.000Z");
 function booking(
   overrides: Partial<CancellableBooking> = {},
 ): CancellableBooking {
-  return { status: "accepted", startDate: CHECK_IN, totalPrice: 500, ...overrides };
+  return { status: "accepted", start_date: CHECK_IN, total_price: 500, ...overrides };
 }
 
 describe("refundFor — 48h free-cancellation window (guest, accepted)", () => {
@@ -101,14 +101,14 @@ describe("canCancel — host on a pending request", () => {
 
 describe("isCompleted — a stay that actually happened", () => {
   const CHECK_OUT = "2026-08-05T00:00:00.000Z";
-  const stay = { status: "accepted", endDate: CHECK_OUT } as const;
+  const stay = { status: "accepted", end_date: CHECK_OUT } as const;
   const checkOut = new Date(CHECK_OUT);
 
   it("is not complete one instant before check-out", () => {
     expect(isCompleted(stay, new Date(checkOut.getTime() - 1))).toBe(false);
   });
 
-  // `now < endDate` is strict the other way round: at equality the last night
+  // `now < end_date` is strict the other way round: at equality the last night
   // is still running, same reading the availability range gives it.
   it("is not complete at the check-out instant itself", () => {
     expect(isCompleted(stay, checkOut)).toBe(false);
@@ -121,6 +121,6 @@ describe("isCompleted — a stay that actually happened", () => {
   it("needs the host's acceptance, not just elapsed dates", () => {
     const after = new Date(checkOut.getTime() + 1);
     for (const status of ["pending", "rejected", "cancelled"] as const)
-      expect(isCompleted({ status, endDate: CHECK_OUT }, after)).toBe(false);
+      expect(isCompleted({ status, end_date: CHECK_OUT }, after)).toBe(false);
   });
 });

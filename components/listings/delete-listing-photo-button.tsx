@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/common/confirm-dialog";
-import { removeListingPhoto } from "@/lib/services/listings";
+import { removeListingPhoto } from "@/lib/listings/actions";
 
 type DeleteListingPhotoButtonProps = {
   listingId: string;

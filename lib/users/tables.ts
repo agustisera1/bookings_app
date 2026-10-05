@@ -7,8 +7,8 @@ export const users = pgTable(
     email: varchar({ length: 80 }).notNull(),
     password_hash: varchar({ length: 256 }).notNull(),
     name: varchar({ length: 80 }).notNull(),
-    is_host: boolean().default(false),
-    created_at: timestamp({ withTimezone: true, mode: "string" }).defaultNow(),
+    is_host: boolean().notNull().default(false),
+    created_at: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (table) => [unique("unique_email").on(table.email)],
 );

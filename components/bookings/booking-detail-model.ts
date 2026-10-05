@@ -4,13 +4,9 @@ import {
   isCompleted,
   type CancellationCheck,
 } from "@/lib/bookings/policy";
-import { calcNights, parseTs } from "@/lib/dates";
-import type { BookingParty, BookingStatus } from "@/lib/types/booking";
-import {
-  toCancellableRow,
-  toCompletableRow,
-  type BookingDetailRow,
-} from "./bookings-model";
+import { calcNights, parseTs } from "@/lib/shared/dates";
+import type { BookingParty, BookingStatus } from "@/lib/bookings/types";
+import type { BookingDetailRow } from "./bookings-model";
 
 /** Where the stay sits relative to `now`, independent of who confirmed it. */
 export type StayStage = "upcoming" | "in_progress" | "past";
@@ -36,7 +32,7 @@ export type PriceBreakdown = {
 // what the listing costs *today*, and this is a receipt for what was charged.
 export function priceBreakdown(booking: BookingDetailRow): PriceBreakdown {
   const nights = calcNights(booking.start_date, booking.end_date);
-  const total = booking.total_price ?? 0;
+  const total = booking.total_price;
   return { nights, nightlyRate: nights > 0 ? total / nights : null, total };
 }
 
@@ -96,16 +92,16 @@ export function guestCancellation(
   booking: BookingDetailRow,
   now: Date,
 ): CancellationCheck {
-  return canCancel(toCancellableRow(booking), "guest", now);
+  return canCancel(booking, "guest", now);
 }
 
 export function refundDeadline(booking: BookingDetailRow): Date {
-  return freeCancellationDeadline(toCancellableRow(booking));
+  return freeCancellationDeadline(booking);
 }
 
 // Same predicate `createReview` gates on, so the form is never offered for a refused review.
 export function isReviewable(booking: BookingDetailRow, now: Date): boolean {
-  return isCompleted(toCompletableRow(booking), now);
+  return isCompleted(booking, now);
 }
 
 export type CancellationRecord = {

@@ -10,10 +10,10 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
-import type { BookingParty, BookingStatus } from "../types/booking";
+import type { BookingParty, BookingStatus } from "./types";
 import { users } from "../users/tables";
 
-const timestamptz = () => timestamp({ withTimezone: true, mode: "string" });
+const timestamptz = () => timestamp({ withTimezone: true, mode: "date" });
 
 export const bookings = pgTable(
   "bookings",
@@ -31,7 +31,7 @@ export const bookings = pgTable(
     guests: smallint().notNull(),
     cancelled_by: varchar({ length: 10 }).$type<BookingParty>(),
     cancelled_at: timestamptz(),
-    created_at: timestamptz().defaultNow(),
+    created_at: timestamptz().notNull().defaultNow(),
   },
   (table) => [
     foreignKey({ name: "guest_fk", columns: [table.guest_id], foreignColumns: [users.id] })

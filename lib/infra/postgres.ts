@@ -12,6 +12,8 @@ const pool = new Pool({
 
 export const db = drizzle({ client: pool });
 
+export type Transaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
 export const query = <R extends QueryResultRow = QueryResultRow>(
   text: string,
   params: unknown[],

@@ -1,5 +1,5 @@
 import { MessagesSquareIcon, TriangleAlertIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 import { EmptyState } from "@/components/common/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Counterpart } from "./types";

@@ -1,5 +1,9 @@
-import type { BookingParty } from "@/lib/types/booking";
-import type { SerializableMessageDocument } from "@/lib/types/messages";
+import type { BookingParty } from "@/lib/bookings/types";
+import type {
+  GetChatThreadQuery,
+  GetConversationsQuery,
+} from "@/lib/apollo/__generated__/operations";
+import type { SerializableMessageDocument } from "@/lib/chat/types";
 
 // `pending` and `failed` are client-only states of an optimistic message; never persisted.
 export type ThreadMessage = SerializableMessageDocument & {
@@ -17,3 +21,9 @@ export type Counterpart = "Host" | "Guest";
 export function counterpartOf(viewerParty: BookingParty): Counterpart {
   return viewerParty === "guest" ? "Host" : "Guest";
 }
+
+/** A row of the messages rail, as GraphQL delivers it. */
+export type ConversationRow = NonNullable<GetConversationsQuery["conversations"]>[number];
+
+/** A thread as the page loads it: messages, chat meta (null until someone speaks) and the viewer's side. */
+export type ChatThreadRow = NonNullable<GetChatThreadQuery["chatThread"]>;

@@ -4,8 +4,9 @@ import { Suspense } from "react";
 import { PageLayout } from "@/components/common/page-layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { NotificationsList } from "@/components/notifications/notifications-list";
-import { getUserNotifications } from "@/lib/services/notifications";
-import { getCurrentUser } from "@/lib/services/auth";
+import { query } from "@/lib/apollo/client";
+import { GetNotificationsDocument } from "@/lib/apollo/__generated__/operations";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "Notifications" };
 
@@ -13,7 +14,10 @@ export default async function NotificationsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/auth/sign-in");
 
-  const notificationsPromise = getUserNotifications();
+  const notificationsPromise = query({
+    query: GetNotificationsDocument,
+    errorPolicy: "all",
+  }).then(({ data }) => data?.notifications ?? null);
 
   return (
     <PageLayout

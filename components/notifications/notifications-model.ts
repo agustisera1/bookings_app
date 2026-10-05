@@ -9,7 +9,7 @@ import {
   Star,
   type LucideIcon,
 } from "lucide-react";
-import type { NotificationDocument } from "@/lib/types/notification";
+import type { NotificationDocument } from "@/lib/notifications/types";
 
 
 export type Notification = NotificationDocument;

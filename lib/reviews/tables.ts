@@ -11,7 +11,7 @@ export const reviews = pgTable(
     rating: smallint().notNull(),
     comment: varchar({ length: 256 }).notNull(),
     host_reply: varchar({ length: 256 }),
-    created_at: timestamp({ withTimezone: true, mode: "string" }).notNull().defaultNow(),
+    created_at: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (table) => [check("reviews_rating_range", sql`${table.rating} BETWEEN 1 AND 5`)],
 );

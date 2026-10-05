@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "./lib/jwt";
+import { verifyToken } from "@/lib/infra/jwt";
 
 const AUTH_PATHS = ["/auth/sign-in", "/auth/sign-up"];
 

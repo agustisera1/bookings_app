@@ -4,7 +4,7 @@ import { UserBookings } from "@/components/bookings/user-bookings";
 import { PageLayout } from "@/components/common/page-layout";
 import { GetUserBookingsDocument } from "@/lib/apollo/__generated__/operations";
 import { query } from "@/lib/apollo/client";
-import { getCurrentUser } from "@/lib/services/auth";
+import { getCurrentUser } from "@/lib/auth/session";
 
 export const metadata: Metadata = { title: "My bookings" };
 

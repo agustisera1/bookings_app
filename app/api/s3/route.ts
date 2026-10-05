@@ -1,5 +1,5 @@
-import { addListingPhoto } from "@/lib/services/listings";
-import { toHttpResponse } from "@/lib/http";
+import { addListingPhoto } from "@/lib/listings/actions";
+import { toHttpResponse } from "@/lib/shared/http";
 import type { ServiceResult } from "@/lib/shared/result";
 import { NextRequest } from "next/server";
 

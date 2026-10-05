@@ -1,0 +1,61 @@
+type Location {
+  coordinates: [Float!]
+  city: String
+  country: String
+  address: String
+}
+
+type ListingAttributes {
+  beds: Int
+  bathrooms: Int
+  max_guests: Int
+  check_in_time: String
+  check_out_time: String
+  amenities: [String]
+  minimum_nights: Int
+  property_type: String
+}
+
+type Listing {
+  _id: String!
+  type: String!
+  host_id: String!
+  title: String!
+  description: String!
+  price: Int!
+  location: Location
+  attributes: ListingAttributes
+  photos: [String]
+  rating_avg: Float
+  rating: Float
+  availabilityRange: [String]
+}
+
+input LocationInput {
+  type: String
+  coordinates: [Float]
+  city: String
+  country: String
+  address: String
+}
+
+input FiltersInput {
+  own: Boolean # non customer faced
+  limit: Int
+  type: String
+  term: String
+  location: LocationInput
+  rating: Float
+  availabilityRange: [String]
+  priceRange: [Float!]
+  propertyType: String
+  beds: Int
+  bathrooms: Int
+  maxGuests: Int
+  amenities: [String!]
+}
+
+extend type Query {
+  listings(filters: FiltersInput): [Listing!]
+  listing(listing_id: String!): Listing
+}

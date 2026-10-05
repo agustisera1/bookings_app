@@ -4,8 +4,8 @@ import { DetailColumns } from "@/components/common/detail-columns";
 import { Fact } from "@/components/common/fact";
 import { Section } from "@/components/common/section";
 import { Separator } from "@/components/ui/separator";
-import { formatDate } from "@/lib/dates";
-import { cn, formatPrice } from "@/lib/utils";
+import { formatDate } from "@/lib/shared/dates";
+import { cn, formatPrice } from "@/lib/shared/utils";
 import { BookingCancellationPolicy } from "./booking-detail-cancellation";
 import { BookingDetailHero } from "./booking-detail-hero";
 import {

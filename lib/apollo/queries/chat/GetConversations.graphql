@@ -1,0 +1,11 @@
+query GetConversations {
+  conversations {
+    id
+    title
+    photo
+    start_date
+    end_date
+    status
+    party
+  }
+}

@@ -2,7 +2,7 @@ import { GetListingsQuery } from "@/lib/apollo/__generated__/operations";
 import { Card, CardContent } from "@/components/ui/card";
 import { CoverImage, OverlayBadge } from "@/components/common/cover-image";
 import { PriceLabel } from "@/components/common/price-label";
-import { listingTypeGradient } from "@/lib/utils";
+import { listingTypeGradient } from "@/lib/shared/utils";
 import { MapPin } from "lucide-react";
 import Link from "next/link";
 

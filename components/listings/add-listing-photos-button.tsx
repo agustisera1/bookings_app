@@ -12,7 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ImageUpload } from "@/components/listings/image-upload";
-import { editListing } from "@/lib/services/listings";
+import { editListing } from "@/lib/listings/actions";
 
 type AddListingPhotosButtonProps = {
   listingId: string;

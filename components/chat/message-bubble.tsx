@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 import { Separator } from "@/components/ui/separator";
 import { ChatAvatar } from "./chat-avatar";
 import type { Counterpart } from "./types";

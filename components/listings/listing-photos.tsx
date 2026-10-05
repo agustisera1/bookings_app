@@ -14,7 +14,7 @@ import {
 import { EmptyState } from "@/components/common/empty-state";
 import { AddListingPhotosButton } from "@/components/listings/add-listing-photos-button";
 import { DeleteListingPhotoButton } from "@/components/listings/delete-listing-photo-button";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/shared/utils";
 
 const GRID_TILES = 5;
 

@@ -13,6 +13,10 @@ query GetListing($listing_id: String!) {
     rating_avg
     title
     type
+    availability {
+      start_date
+      end_date
+    }
     reviews {
       id
       listing_id

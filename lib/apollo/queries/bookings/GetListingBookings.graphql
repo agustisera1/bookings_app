@@ -1,0 +1,17 @@
+query GetListingBookings($listing_id: String!) {
+  listing(listing_id: $listing_id) {
+    _id
+    bookings {
+      id
+      created_at
+      start_date
+      end_date
+      guests
+      status
+      status_reason
+      total_price
+      refund_amount
+      cancelled_by
+    }
+  }
+}

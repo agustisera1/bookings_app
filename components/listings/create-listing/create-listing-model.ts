@@ -1,4 +1,4 @@
-import { z } from "zod";
+import type { z } from "zod";
 import type {
   Control,
   DefaultValues,
@@ -6,33 +6,7 @@ import type {
   FieldPath,
   UseFormRegister,
 } from "react-hook-form";
-import { PROPERTY_TYPES } from "@/lib/listings";
-
-export const createListingSchema = z.object({
-  title: z.string().trim().min(1, "Title is required").max(120, "Title is too long"),
-  description: z.string().trim().min(1, "Description is required"),
-  price: z
-    .number({ error: "Enter a price" })
-    .positive("Price must be greater than 0"),
-  location: z.object({
-    address: z.string().trim().min(1, "Address is required"),
-    city: z.string().trim().min(1, "City is required"),
-    country: z.string().trim().min(1, "Country is required"),
-  }),
-  attributes: z.object({
-    beds: z.number().int().min(0).optional(),
-    bathrooms: z.number().int().min(0).optional(),
-    max_guests: z
-      .number({ error: "Enter max guests" })
-      .int()
-      .min(1, "At least 1 guest"),
-    check_in_time: z.string().optional(),
-    check_out_time: z.string().optional(),
-    amenities: z.array(z.string()).optional(),
-    minimum_nights: z.number().int().min(1).optional(),
-    property_type: z.enum(PROPERTY_TYPES).optional(),
-  }),
-});
+import type { createListingSchema } from "@/lib/listings/validation";
 
 export type CreateListingFormValues = z.infer<typeof createListingSchema>;
 
