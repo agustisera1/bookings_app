@@ -74,7 +74,7 @@ export const reviews = pgTable(
     rating: smallint().notNull(),
     comment: varchar({ length: 256 }).notNull(),
     host_reply: varchar({ length: 256 }),
-    created_at: timestamp({ withTimezone: true, mode: "string" }).notNull().defaultNow(),
+    created_at: timestamp({ withTimezone: true, mode: "date" }).notNull().defaultNow(),
   },
   (table) => [check("reviews_rating_range", sql`${table.rating} BETWEEN 1 AND 5`)],
 );
@@ -107,8 +107,12 @@ import { z } from "zod";
 
 export const createReviewSchema = z.object({
   bookingId: z.uuid(),
-  rating: z.int().min(1).max(5),
-  comment: z.string().trim().min(1, "Write a comment").max(256, "Keep it under 256 characters"),
+  rating: z.int().min(1, "Select a rating").max(5),
+  comment: z
+    .string()
+    .trim()
+    .min(1, "Comment is required")
+    .max(256, "Keep it under 256 characters"),
 });
 
 export type CreateReviewInput = z.infer<typeof createReviewSchema>;
@@ -116,7 +120,7 @@ export type CreateReviewInput = z.infer<typeof createReviewSchema>;
 export const hostReplySchema = z
   .string()
   .trim()
-  .min(1, "Write a reply")
+  .min(1, "Reply is required")
   .max(256, "Keep it under 256 characters");
 ```
 
@@ -152,7 +156,7 @@ export async function setHostReply(reviewId: string, reply: string): Promise<boo
 Las lecturas. No llevan `"use server"`: no son un endpoint, las llama el resolver.
 
 ```ts
-import { authorize } from "@/lib/auth/authorize";
+import { authorize } from "@/lib/auth/session";
 import type { ServiceResult } from "@/lib/shared/result";
 import * as repo from "./repository";
 import type { Review } from "./types";
@@ -183,7 +187,7 @@ traduce con `pgErrorToCode` a un código de dominio (`CONFLICT`) con su propio m
 
 ```ts
 "use server";
-import { authorize } from "@/lib/auth/authorize";
+import { authorize } from "@/lib/auth/session";
 import { isCompleted } from "@/lib/bookings/policy";
 import * as bookingsRepo from "@/lib/bookings/repository";
 import * as listingsRepo from "@/lib/listings/repository";
@@ -211,7 +215,11 @@ export async function createReview(
       return { ok: false, error: "Booking not found", code: "NOT_FOUND" };
 
     if (!isCompleted(booking, new Date()))
-      return { ok: false, error: "You can only review a stay once it's finished", code: "FORBIDDEN" };
+      return {
+        ok: false,
+        error: "You can only review a stay once it's finished",
+        code: "FORBIDDEN",
+      };
 
     const review = await repo.insertReview({
       listing_id: booking.listing_id,
@@ -278,7 +286,7 @@ type Review {
   rating: Int!
   comment: String!
   host_reply: String
-  created_at: String!
+  created_at: DateTime!
 }
 
 # Nullable: if the reviews fail to load, the listing still renders.
@@ -305,28 +313,65 @@ export const reviewsResolvers: Resolvers = {
 };
 ```
 
-### `apollo/index.ts` y `codegen.ts`
+### `apollo/schema.ts` y `codegen.ts`
 
-`lib/apollo` no tiene types ni resolvers de ningún service: su `schema.graphql` declara solo la
-raíz (`type Query`), y el server junta lo que aporta cada service.
+`lib/apollo` no tiene types ni resolvers de ningún service: su `schema.graphql` declara solo la raíz
+(`scalar DateTime` y `type Query`), y `schema.ts` junta lo que aporta cada service en un único schema
+ejecutable. Lo sirve `/api/graphql` y lo ejecuta en el mismo proceso el cliente de Server Components
+(`SchemaLink`), sin request HTTP de por medio.
 
 ```ts
-import rootTypeDefs from "./schema.graphql";
+import { makeExecutableSchema } from "@graphql-tools/schema";
+import bookingsTypeDefs from "@/lib/bookings/schema.graphql";
+import { bookingsResolvers } from "@/lib/bookings/resolvers";
+import chatTypeDefs from "@/lib/chat/schema.graphql";
+import { chatResolvers } from "@/lib/chat/resolvers";
 import listingsTypeDefs from "@/lib/listings/schema.graphql";
-import reviewsTypeDefs from "@/lib/reviews/schema.graphql";
 import { listingsResolvers } from "@/lib/listings/resolvers";
+import notificationsTypeDefs from "@/lib/notifications/schema.graphql";
+import { notificationsResolvers } from "@/lib/notifications/resolvers";
+import reviewsTypeDefs from "@/lib/reviews/schema.graphql";
 import { reviewsResolvers } from "@/lib/reviews/resolvers";
+import usersTypeDefs from "@/lib/users/schema.graphql";
+import { usersResolvers } from "@/lib/users/resolvers";
+import { rootResolvers } from "./resolvers";
+import rootTypeDefs from "./schema.graphql";
 
-const server = new ApolloServer<ApolloContext>({
-  typeDefs: [rootTypeDefs, listingsTypeDefs, reviewsTypeDefs],
-  resolvers: [listingsResolvers, reviewsResolvers],
-  validationRules: [maxRootFieldsRule],
+// One executable schema: served by /api/graphql and run in-process by the RSC client.
+export const schema = makeExecutableSchema({
+  typeDefs: [
+    rootTypeDefs,
+    listingsTypeDefs,
+    bookingsTypeDefs,
+    reviewsTypeDefs,
+    usersTypeDefs,
+    notificationsTypeDefs,
+    chatTypeDefs,
+  ],
+  resolvers: [
+    rootResolvers,
+    listingsResolvers,
+    bookingsResolvers,
+    reviewsResolvers,
+    usersResolvers,
+    notificationsResolvers,
+    chatResolvers,
+  ],
 });
 ```
 
 ```ts
-// codegen.ts
+// lib/apollo/client.ts
+export const { getClient, query, PreloadQuery } = registerApolloClient(
+  () => new ApolloClient({ cache: new InMemoryCache(), link: new SchemaLink({ schema }) }),
+);
+```
+
+```ts
+// codegen.ts — `DateTime` sale de Drizzle como Date y viaja como ISO string
 schema: "./lib/*/schema.graphql",
+scalars: { DateTime: { input: "Date", output: "Date | string" } }, // resolvers-types
+scalars: { DateTime: "string" },                                    // operations
 ```
 
 ### `shared/revalidate.ts`
@@ -346,32 +391,23 @@ export function revalidatePaths(targets: RevalidationTarget[]) {
 
 ## Consumidores
 
-```graphql
-# lib/apollo/queries/listings/GetListing.graphql — las reviews viajan con el listing
-query GetListing($listing_id: String!) {
-  listing(listing_id: $listing_id) {
-    _id
-    title
-    # …
-    reviews {
-      id
-      listing_id
-      author_name
-      rating
-      comment
-      host_reply
-      created_at
-    }
-  }
-}
+```ts
+// Página (Server Component): lee por GraphQL. "all": un campo anidado que falla
+// (reviews) llega como null en vez de tirar la query entera.
+const { data } = await query({
+  query: GetListingDocument,
+  variables: { listing_id: id },
+  errorPolicy: "all",
+});
 ```
 
 ```ts
-// Client Component: tipo + action, cada uno de su puerta
-import type { Review } from "@/lib/reviews/types";
+// Componente: tipa con la operación (lo que llegó por el cable, fechas en ISO),
+// no con el tipo de dominio. Las escrituras salen de actions.
+import type { GetListingQuery } from "@/lib/apollo/__generated__/operations";
 import { replyToReview } from "@/lib/reviews/actions";
 
-// Otro service: lee del repo, nunca de actions
+// Otro service: lee del repo, nunca de actions ni queries
 import * as reviewsRepo from "@/lib/reviews/repository";
 ```
 

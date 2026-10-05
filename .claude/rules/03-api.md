@@ -7,6 +7,8 @@ paths:
 
 # Contrato de API (dimensión 3)
 
+> **Desactualizada.** Describe el estado previo a la auditoría de esta dimensión y puede contradecir el código. Ante una diferencia, mandan el código y las reglas ya auditadas (`02-services.md`, `07-frontend.md`).
+
 ### GraphQL — de dónde importar los tipos generados
 
 `pnpm codegen` produce **dos** archivos en `lib/apollo/__generated__/`, con responsabilidades distintas. La configuración vive en `codegen.ts`:

@@ -6,6 +6,8 @@ paths:
 
 # Testing (dimensión 11)
 
+> **Desactualizada.** Describe el estado previo a la auditoría de esta dimensión y puede contradecir el código. Ante una diferencia, mandan el código y las reglas ya auditadas (`02-services.md`, `07-frontend.md`).
+
 **Runner:** Vitest, en ambos repos. Corren en Node (sin entorno DOM): **lógica pura** —sin DB, sin
 red, sin montar componentes— y los **services** con mocks acotados al borde (ver abajo).
 

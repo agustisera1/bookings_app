@@ -11,6 +11,8 @@ paths:
 
 # Seguridad (dimensión 9)
 
+> **Desactualizada.** Describe el estado previo a la auditoría de esta dimensión y puede contradecir el código. Ante una diferencia, mandan el código y las reglas ya auditadas (`02-services.md`, `07-frontend.md`).
+
 ### Auth — cómo fluye la identidad
 
 **Server Actions / RSC directos:**
