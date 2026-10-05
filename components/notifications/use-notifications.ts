@@ -2,7 +2,7 @@
 
 import { use, useState } from "react";
 import { toast } from "sonner";
-import type { ServiceResult } from "@/lib/types";
+import type { ServiceResult } from "@/lib/shared/result";
 import { markAsRead } from "@/lib/services/notifications";
 import { useNotificationsActions } from "@/components/notifications/provider";
 import { partitionByRead, type Notification } from "./notifications-model";

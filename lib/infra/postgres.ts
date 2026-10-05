@@ -1,5 +1,6 @@
+import { drizzle } from "drizzle-orm/node-postgres";
 import { Pool, QueryResult, QueryResultRow } from "pg";
-import type { ErrorCode } from "./types";
+import type { ErrorCode } from "@/lib/shared/result";
 
 const pool = new Pool({
   user: process.env.PGUSER,
@@ -8,6 +9,8 @@ const pool = new Pool({
   port: Number(process.env.PGPORT),
   database: process.env.PGDATABASE,
 });
+
+export const db = drizzle({ client: pool });
 
 export const query = <R extends QueryResultRow = QueryResultRow>(
   text: string,
@@ -36,12 +39,18 @@ const PG_VALIDATION: ReadonlySet<string> = new Set([
   "22008", // datetime_field_overflow
 ]);
 
+// Drizzle wraps driver errors in DrizzleQueryError: the pg code lives in `cause`.
+function pgCode(error: unknown): string | undefined {
+  const source = error instanceof Error && error.cause ? error.cause : error;
+  if (source !== null && typeof source === "object" && "code" in source)
+    return String(source.code);
+}
+
 export function pgErrorToCode(error: unknown): ErrorCode {
-  if (error !== null && typeof error === "object" && "code" in error) {
-    const pg = (error as { code: string }).code;
-    if (PG_CONFLICT.has(pg)) return "CONFLICT";
-    if (PG_NOT_FOUND.has(pg)) return "NOT_FOUND";
-    if (PG_VALIDATION.has(pg)) return "VALIDATION";
-  }
+  const code = pgCode(error);
+  if (code === undefined) return "UNEXPECTED";
+  if (PG_CONFLICT.has(code)) return "CONFLICT";
+  if (PG_NOT_FOUND.has(code)) return "NOT_FOUND";
+  if (PG_VALIDATION.has(code)) return "VALIDATION";
   return "UNEXPECTED";
 }

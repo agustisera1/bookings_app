@@ -1,6 +1,6 @@
 "use server";
 import * as usersRepo from "../repositories/users.pg";
-import type { ServiceResult } from "../types";
+import type { ServiceResult } from "@/lib/shared/result";
 import type { UserSummary } from "../types/user";
 
 export type { UserSummary } from "../types/user";

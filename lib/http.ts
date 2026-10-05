@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import type { ErrorCode, ServiceResult } from "./types";
+import type { ErrorCode, ServiceResult } from "@/lib/shared/result";
 
 const STATUS_BY_CODE: Record<ErrorCode, number> = {
   VALIDATION: 400,

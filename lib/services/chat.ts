@@ -1,6 +1,6 @@
 "use server";
 import { authorize } from "../authorize";
-import { ServiceResult } from "../types";
+import { ServiceResult } from "@/lib/shared/result";
 import * as chatsRepo from "../repositories/chat.mongo";
 import * as messagesRepo from "../repositories/messages.mongo";
 import * as bookingsRepo from "../repositories/bookings.pg";

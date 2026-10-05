@@ -281,8 +281,9 @@ type Review {
   created_at: String!
 }
 
+# Nullable: if the reviews fail to load, the listing still renders.
 extend type Listing {
-  reviews: [Review!]!
+  reviews: [Review!]
 }
 ```
 
@@ -325,7 +326,7 @@ const server = new ApolloServer<ApolloContext>({
 
 ```ts
 // codegen.ts
-schema: ["./lib/apollo/schema.graphql", "./lib/*/schema.graphql"],
+schema: "./lib/*/schema.graphql",
 ```
 
 ### `shared/revalidate.ts`

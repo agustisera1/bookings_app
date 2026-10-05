@@ -1,4 +1,4 @@
-import * as db from "../postgres";
+import * as db from "@/lib/infra/postgres";
 import type { Booking, BookingStatus } from "../types/booking";
 import type { OutboxEvent } from "../types/outbox";
 

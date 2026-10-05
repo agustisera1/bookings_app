@@ -13,7 +13,6 @@ import { BackLink } from "@/components/common/back-link";
 import { PageLayout } from "@/components/common/page-layout";
 import { query } from "@/lib/apollo/client";
 import { GetListingDocument } from "@/lib/apollo/__generated__/operations";
-import { getListingReviews } from "@/lib/services/reviews";
 import { ListingReviews } from "@/components/reviews/listing-reviews";
 import { getCurrentUser } from "@/lib/services/auth";
 import {
@@ -30,21 +29,20 @@ export default async function ListingDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const {
-    data: { listing },
-    error,
-  } = await query({
+  // "all": a failed nested field (reviews) still returns the listing.
+  const { data } = await query({
     query: GetListingDocument,
     variables: { listing_id: id },
+    errorPolicy: "all",
   });
 
-  if (error || listing === null) notFound();
+  const listing = data?.listing;
+  if (!listing) notFound();
 
   const currentUser = await getCurrentUser();
   const isHostMode =
     !!currentUser?.is_host && currentUser.id === listing.host_id;
 
-  const reviewsPromise = getListingReviews(id);
   const availabilityPromise = getListingAvailability(id);
   const bookingsPromise = isHostMode ? getListingBookings(id) : undefined;
 
@@ -133,7 +131,7 @@ export default async function ListingDetailPage({
             cardSize="sm"
           >
             <ListingReviews
-              reviewsPromise={reviewsPromise}
+              reviews={listing.reviews ?? null}
               isHostMode={isHostMode}
             />
           </Section>

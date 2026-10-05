@@ -1,6 +1,6 @@
 "use server";
 import { authorize } from "../authorize";
-import type { ServiceResult } from "../types";
+import type { ServiceResult } from "@/lib/shared/result";
 import * as listingsRepo from "../repositories/listings.mongo";
 import * as bookingsRepo from "../repositories/bookings.pg";
 import { addListingObject, deleteListingObject } from "../s3";

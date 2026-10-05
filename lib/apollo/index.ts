@@ -3,12 +3,14 @@ import { startServerAndCreateNextHandler } from "@as-integrations/next";
 import { resolvers } from "./resolvers";
 import { NextRequest } from "next/server";
 import schema from "./schema.graphql";
+import reviewsSchema from "@/lib/reviews/schema.graphql";
+import { reviewsResolvers } from "@/lib/reviews/resolvers";
 import type { ApolloContext } from "./context";
 import { maxRootFieldsRule } from "./limits";
 
 const server = new ApolloServer<ApolloContext>({
-  typeDefs: schema,
-  resolvers,
+  typeDefs: [schema, reviewsSchema],
+  resolvers: [resolvers, reviewsResolvers],
   validationRules: [maxRootFieldsRule],
 });
 const handler = startServerAndCreateNextHandler<NextRequest, ApolloContext>(

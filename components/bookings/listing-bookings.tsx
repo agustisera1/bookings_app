@@ -2,7 +2,7 @@ import { use } from "react";
 import { CalendarRange, Users } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ServiceResult } from "@/lib/types";
+import { ServiceResult } from "@/lib/shared/result";
 import { Booking } from "@/lib/services/bookings";
 import { formatDateRange, calcNights, parseTs } from "@/lib/dates";
 import { formatPrice, bookingStatusVariant } from "@/lib/utils";

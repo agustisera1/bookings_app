@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { authorize } from "../authorize";
 import * as notificationsRepo from "../repositories/notifications.mongo";
-import { ServiceResult } from "../types";
+import { ServiceResult } from "@/lib/shared/result";
 import { NotificationDocument } from "../types/notification";
 
 export type { NotificationDocument } from "../types/notification";

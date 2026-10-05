@@ -68,6 +68,7 @@ export type Listing = {
   price: Scalars['Int']['output'];
   rating?: Maybe<Scalars['Float']['output']>;
   rating_avg?: Maybe<Scalars['Float']['output']>;
+  reviews?: Maybe<Array<Review>>;
   title: Scalars['String']['output'];
   type: Scalars['String']['output'];
 };
@@ -121,6 +122,17 @@ export type QueryListingArgs = {
 
 export type QueryListingsArgs = {
   filters?: InputMaybe<FiltersInput>;
+};
+
+export type Review = {
+  __typename?: 'Review';
+  author_name: Scalars['String']['output'];
+  comment: Scalars['String']['output'];
+  created_at: Scalars['String']['output'];
+  host_reply?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  listing_id: Scalars['String']['output'];
+  rating: Scalars['Int']['output'];
 };
 
 export type UserSummary = {
@@ -216,6 +228,7 @@ export type ResolversTypes = ResolversObject<{
   Location: ResolverTypeWrapper<Location>;
   LocationInput: LocationInput;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
+  Review: ResolverTypeWrapper<Review>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
   UserSummary: ResolverTypeWrapper<UserSummary>;
 }>;
@@ -233,6 +246,7 @@ export type ResolversParentTypes = ResolversObject<{
   Location: Location;
   LocationInput: LocationInput;
   Query: Record<PropertyKey, never>;
+  Review: Review;
   String: Scalars['String']['output'];
   UserSummary: UserSummary;
 }>;
@@ -265,6 +279,7 @@ export type ListingResolvers<ContextType = ApolloContext, ParentType extends Res
   price?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
   rating?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   rating_avg?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
+  reviews?: Resolver<Maybe<Array<ResolversTypes['Review']>>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   type?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
@@ -294,6 +309,16 @@ export type QueryResolvers<ContextType = ApolloContext, ParentType extends Resol
   listings?: Resolver<Maybe<Array<ResolversTypes['Listing']>>, ParentType, ContextType, Partial<QueryListingsArgs>>;
 }>;
 
+export type ReviewResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Review'] = ResolversParentTypes['Review']> = ResolversObject<{
+  author_name?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  comment?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  created_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  host_reply?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  listing_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  rating?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
+}>;
+
 export type UserSummaryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['UserSummary'] = ResolversParentTypes['UserSummary']> = ResolversObject<{
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   name?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
@@ -305,6 +330,7 @@ export type Resolvers<ContextType = ApolloContext> = ResolversObject<{
   ListingAttributes?: ListingAttributesResolvers<ContextType>;
   Location?: LocationResolvers<ContextType>;
   Query?: QueryResolvers<ContextType>;
+  Review?: ReviewResolvers<ContextType>;
   UserSummary?: UserSummaryResolvers<ContextType>;
 }>;
 

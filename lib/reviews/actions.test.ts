@@ -1,23 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Same seams as bookings.test.ts: identity and data access mocked at the module
-// border, the pure rules (../bookings/policy) and pgErrorToCode left real.
-vi.mock("../authorize", () => ({ authorize: vi.fn() }));
-vi.mock("../repositories/reviews.pg", () => ({
-  createReviewRecord: vi.fn(),
+// Identity and data access mocked at the module border; the pure rules
+// (bookings/policy) and the zod schemas left real.
+vi.mock("@/lib/authorize", () => ({ authorize: vi.fn() }));
+vi.mock("./repository", () => ({
+  insertReview: vi.fn(),
   findReviewsByListingId: vi.fn(),
-  addReply: vi.fn(),
+  setHostReply: vi.fn(),
 }));
-vi.mock("../repositories/bookings.pg", () => ({ getBookingById: vi.fn() }));
-vi.mock("../repositories/listings.mongo", () => ({ findListingById: vi.fn() }));
+vi.mock("@/lib/repositories/bookings.pg", () => ({ getBookingById: vi.fn() }));
+vi.mock("@/lib/repositories/listings.mongo", () => ({ findListingById: vi.fn() }));
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
-import { authorize } from "../authorize";
-import * as bookingsRepo from "../repositories/bookings.pg";
-import * as reviewsRepo from "../repositories/reviews.pg";
-import type { Booking } from "../types/booking";
-import type { CurrentUser } from "../types/user";
-import { createReview } from "./reviews";
+import { authorize } from "@/lib/authorize";
+import * as bookingsRepo from "@/lib/repositories/bookings.pg";
+import type { Booking } from "@/lib/types/booking";
+import type { CurrentUser } from "@/lib/types/user";
+import { createReview } from "./actions";
+import * as reviewsRepo from "./repository";
 
 const FINISHED = "2026-07-01T00:00:00.000Z";
 const NOT_FINISHED = "2099-01-01T00:00:00.000Z";
@@ -53,13 +53,14 @@ function makeBooking(overrides: Partial<Booking> = {}): Booking {
   };
 }
 
-const input = { bookingId: "b1", rating: 5, comment: "Great stay" };
+const BOOKING_ID = "8f3c2a1e-4b5d-4c6e-9f7a-1b2c3d4e5f60";
+const input = { bookingId: BOOKING_ID, rating: 5, comment: "Great stay" };
 
 beforeEach(() => {
   vi.clearAllMocks();
   vi.mocked(authorize).mockResolvedValue({ ok: true, data: guestUser() });
   vi.mocked(bookingsRepo.getBookingById).mockResolvedValue(makeBooking());
-  vi.mocked(reviewsRepo.createReviewRecord).mockResolvedValue({ id: "r1" });
+  vi.mocked(reviewsRepo.insertReview).mockResolvedValue({ id: "r1" });
 });
 
 describe("createReview", () => {
@@ -71,7 +72,7 @@ describe("createReview", () => {
     });
     const res = await createReview(input);
     expect(res).toEqual({ ok: false, error: "Forbidden", code: "FORBIDDEN" });
-    expect(reviewsRepo.createReviewRecord).not.toHaveBeenCalled();
+    expect(reviewsRepo.insertReview).not.toHaveBeenCalled();
   });
 
   it("refuses a booking that isn't the caller's, same as a missing one", async () => {
@@ -85,7 +86,7 @@ describe("createReview", () => {
     vi.mocked(bookingsRepo.getBookingById).mockResolvedValue(null);
     expect(await createReview(input)).toEqual(notFound);
 
-    expect(reviewsRepo.createReviewRecord).not.toHaveBeenCalled();
+    expect(reviewsRepo.insertReview).not.toHaveBeenCalled();
   });
 
   // The gate the old "has *a* booking" check never actually enforced.
@@ -104,23 +105,29 @@ describe("createReview", () => {
         code: "FORBIDDEN",
       });
     }
-    expect(reviewsRepo.createReviewRecord).not.toHaveBeenCalled();
+    expect(reviewsRepo.insertReview).not.toHaveBeenCalled();
   });
 
   it("writes the review against the booking's listing, not a caller-supplied one", async () => {
     const res = await createReview(input);
     expect(res).toEqual({ ok: true, data: { id: "r1" } });
-    expect(reviewsRepo.createReviewRecord).toHaveBeenCalledWith({
+    expect(reviewsRepo.insertReview).toHaveBeenCalledWith({
       rating: 5,
       comment: "Great stay",
       // Read off the booking row, and the author off the session.
-      listingId: "L1",
-      authorName: "Jane",
+      listing_id: "L1",
+      author_name: "Jane",
     });
   });
 
+  it("rejects invalid input before touching the repos", async () => {
+    const res = await createReview({ ...input, rating: 6 });
+    expect(res).toMatchObject({ ok: false, code: "VALIDATION" });
+    expect(bookingsRepo.getBookingById).not.toHaveBeenCalled();
+  });
+
   it("maps an unexpected repo failure to a generic message", async () => {
-    vi.mocked(reviewsRepo.createReviewRecord).mockRejectedValue(
+    vi.mocked(reviewsRepo.insertReview).mockRejectedValue(
       new Error("connection reset"),
     );
     const res = await createReview(input);

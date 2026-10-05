@@ -1,7 +1,7 @@
 "use client";
 
 import { BellOff } from "lucide-react";
-import type { ServiceResult } from "@/lib/types";
+import type { ServiceResult } from "@/lib/shared/result";
 import { EmptyState } from "@/components/common/empty-state";
 import { NotificationGroup } from "./notification-group";
 import { useNotifications } from "./use-notifications";

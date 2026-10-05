@@ -1,6 +1,6 @@
 import { addListingPhoto } from "@/lib/services/listings";
 import { toHttpResponse } from "@/lib/http";
-import type { ServiceResult } from "@/lib/types";
+import type { ServiceResult } from "@/lib/shared/result";
 import { NextRequest } from "next/server";
 
 const failed: ServiceResult<string> = {

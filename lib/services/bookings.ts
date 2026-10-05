@@ -1,7 +1,7 @@
 "use server";
 import { authorize } from "../authorize";
-import type { ServiceResult } from "../types";
-import * as db from "../postgres";
+import type { ServiceResult } from "@/lib/shared/result";
+import * as db from "@/lib/infra/postgres";
 import * as bookingsRepo from "../repositories/bookings.pg";
 import * as listingsRepo from "../repositories/listings.mongo";
 import { revalidatePath } from "next/cache";

@@ -13,5 +13,14 @@ query GetListing($listing_id: String!) {
     rating_avg
     title
     type
+    reviews {
+      id
+      listing_id
+      author_name
+      rating
+      comment
+      host_reply
+      created_at
+    }
   }
 }

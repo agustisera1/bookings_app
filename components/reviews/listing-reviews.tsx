@@ -1,7 +1,5 @@
 import { Separator } from "@/components/ui/separator";
-import { use } from "react";
-import { ServiceResult } from "@/lib/types";
-import { Review } from "@/lib/services/reviews";
+import type { Review } from "@/lib/reviews/types";
 import { ReviewReplyForm } from "@/components/reviews/review-reply-form";
 import { StarRating } from "@/components/common/star-rating";
 import { formatDate } from "@/lib/dates";
@@ -46,23 +44,19 @@ function ReviewCard({
 }
 
 export function ListingReviews({
-  reviewsPromise,
+  reviews,
   isHostMode = false,
 }: {
-  reviewsPromise: Promise<ServiceResult<Review[]>>;
+  reviews: Review[] | null;
   isHostMode?: boolean;
 }) {
-  const reviewsResponse = use(reviewsPromise);
-
-  if (!reviewsResponse.ok) {
+  if (!reviews) {
     return (
       <p className="text-sm text-muted-foreground">
         Could not load the reviews. Try reloading the page.
       </p>
     );
   }
-
-  const reviews = reviewsResponse.data;
 
   if (reviews.length === 0) {
     return (

@@ -1,6 +1,6 @@
 "use server";
 import { getCurrentUser, type CurrentUser } from "./services/auth";
-import type { ServiceResult } from "./types";
+import type { ServiceResult } from "@/lib/shared/result";
 
 export async function authorize(
   permissionKey: string,

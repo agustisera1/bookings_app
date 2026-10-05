@@ -14,7 +14,7 @@ import { EmptyState } from "@/components/common/empty-state";
 import { calcNights } from "@/lib/dates";
 import { formatPrice } from "@/lib/utils";
 import { createBooking } from "@/lib/services/bookings";
-import { ServiceResult } from "@/lib/types";
+import { ServiceResult } from "@/lib/shared/result";
 import { Matcher } from "react-day-picker";
 
 const bookingSchema = z

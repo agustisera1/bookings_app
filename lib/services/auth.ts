@@ -1,7 +1,7 @@
 "use server";
-import * as db from "../postgres";
+import * as db from "@/lib/infra/postgres";
 import { hash, compare } from "bcryptjs";
-import type { ServiceResult } from "../types";
+import type { ServiceResult } from "@/lib/shared/result";
 import { signToken, verifyToken } from "../jwt";
 import { cookies } from "next/headers";
 import {
