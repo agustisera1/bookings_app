@@ -14,10 +14,16 @@ export const chatResolvers: Resolvers = {
       if (!result.ok) throw toGraphQLError(result);
       return result.data;
     },
-    chatThread: async (_, { bookingId }) => {
-      const result = await getChatThread(bookingId);
+    chatThread: async (_, { id, from }) => {
+      const result = await getChatThread(id, from ?? null);
       if (!result.ok) throw toGraphQLError(result);
       return result.data;
     },
+  },
+  ChatMeta: {
+    id: (chat) => chat._id,
+  },
+  ChatMessage: {
+    id: (message) => message._id,
   },
 };

@@ -5,7 +5,7 @@ import * as bookingsRepo from "@/lib/bookings/repository";
 import type { ServiceResult } from "@/lib/shared/result";
 import * as repo from "./repository";
 import type { Listing } from "./types";
-import { listingFiltersSchema, type ListingFilters, type ListingFiltersInput } from "./validation";
+import { listingFiltersSchema, listingIdSchema, type ListingFilters, type ListingFiltersInput } from "./validation";
 
 const DEFAULT_LISTINGS_LIMIT = 12;
 const MAX_LISTINGS_LIMIT = 100;
@@ -13,6 +13,9 @@ const MAX_LISTINGS_LIMIT = 100;
 export async function getListing(listingId: string): Promise<ServiceResult<Listing | null>> {
   const auth = await authorize("listings:view");
   if (!auth.ok) return auth;
+
+  // Not an ObjectId: no listing can have it, and `new ObjectId` would throw.
+  if (!listingIdSchema.safeParse(listingId).success) return { ok: true, data: null };
 
   try {
     return { ok: true, data: await repo.findListingById(listingId) };

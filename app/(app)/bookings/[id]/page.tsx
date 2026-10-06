@@ -40,7 +40,7 @@ export default async function BookingDetailPage({
 
   const now = new Date();
   const nights = calcNights(booking.start_date, booking.end_date);
-  const listingId = booking.listing?._id;
+  const listingId = booking.listing?.id;
   const title = booking.listing?.title ?? "Booking details";
   const subtitle = `${formatDateRange(booking.start_date, booking.end_date)} · ${nights} night${nights === 1 ? "" : "s"}`;
 

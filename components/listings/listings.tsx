@@ -14,8 +14,8 @@ export function Listings({
   return (
     <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       {listings?.map((listing) => (
-        <li key={listing._id}>
-          <Link href={`/listings/${listing._id}`}>
+        <li key={listing.id}>
+          <Link href={`/listings/${listing.id}`}>
             <Card className="group h-full overflow-hidden p-0 transition-shadow duration-300 hover:shadow-lg">
               <CoverImage
                 src={listing.photos?.[0]}

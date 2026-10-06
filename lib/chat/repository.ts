@@ -35,14 +35,34 @@ export async function findChatByBookingId(
   return document ? { ...document, _id: document._id.toString() } : null;
 }
 
-// The last 50, oldest first: sorted descending so the limit cuts the old end.
-export async function findMessagesByChatId(chatId: string): Promise<SerializableMessageDocument[]> {
+// Oldest first, sorted descending so the limit cuts the old end. With `from`, everything since
+// that timestamp (ISO-8601 UTC strings compare in time order).
+export async function findMessagesByChatId(
+  chatId: string,
+  from: string | null,
+  limit: number,
+): Promise<SerializableMessageDocument[]> {
   const documents = await (await messages())
-    .find({ chat_id: chatId })
+    .find({ chat_id: chatId, ...(from ? { timestamp: { $gte: from } } : {}) })
     .sort({ timestamp: -1 })
-    .limit(50)
+    .limit(limit)
     .toArray();
   return documents.reverse().map((document) => ({ ...document, _id: document._id.toString() }));
+}
+
+// Where the page before `before` starts: null when nothing older exists.
+export async function findOlderCursor(
+  chatId: string,
+  before: string,
+  pageSize: number,
+): Promise<string | null> {
+  const documents = await (await messages())
+    .find({ chat_id: chatId, timestamp: { $lt: before } })
+    .sort({ timestamp: -1 })
+    .limit(pageSize)
+    .project<Pick<MessageDocument, "timestamp">>({ timestamp: 1, _id: 0 })
+    .toArray();
+  return documents.at(-1)?.timestamp ?? null;
 }
 
 export async function findReadCursor(userId: string): Promise<string | null> {

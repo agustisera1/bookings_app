@@ -4,6 +4,7 @@ import {
   ApolloClient,
   InMemoryCache,
 } from "@apollo/client-integration-nextjs";
+import { createContext } from "./context";
 import { schema } from "./schema";
 
 declare module "@apollo/client" {
@@ -12,12 +13,11 @@ declare module "@apollo/client" {
   }
 }
 
-// Runs the schema in-process: a Server Component reading through HTTP to its own
-// route would pay a network hop. Resolvers read the session from `cookies()` directly.
+// One client per request, so the loaders never share their cache across users.
 export const { getClient, query, PreloadQuery } = registerApolloClient(
   () =>
     new ApolloClient({
       cache: new InMemoryCache(),
-      link: new SchemaLink({ schema }),
+      link: new SchemaLink({ schema, context: createContext() }),
     }),
 );

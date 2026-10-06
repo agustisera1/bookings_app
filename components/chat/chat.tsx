@@ -17,7 +17,7 @@ export default function Chat({
   currentUserId: string;
   thread: ChatThreadRow | null;
 }) {
-  const { status, error, history, chatMeta, viewerParty, connected, sendMessage } =
+  const { status, error, history, olderCursor, chatMeta, viewerParty, connected, sendMessage } =
     useBookingChat(bookingId, currentUserId, thread);
   // Captured once at mount: a stable "now" for relative day labels keeps render pure.
   const [now] = useState(() => new Date());
@@ -26,11 +26,16 @@ export default function Chat({
   // The side comes from the server; deriving it from `chatMeta` mislabels a host on a fresh thread.
   const counterpart = counterpartOf(viewerParty);
 
-  // Pin to the latest message whenever the thread settles.
+  // Pin to the latest message when one lands; loading older ones leaves the scroll alone.
+  const latestId = history.at(-1)?.id;
   useEffect(() => {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
-  }, [status, history.length]);
+  }, [status, latestId]);
+
+  const olderHref = olderCursor
+    ? `/messages/${bookingId}?from=${encodeURIComponent(olderCursor)}`
+    : undefined;
 
   return (
     // Inherits the pane's `background`, a step darker than the rail: that
@@ -58,6 +63,7 @@ export default function Chat({
             currentUserId={currentUserId}
             counterpart={counterpart}
             startedAt={chatMeta?.started_at}
+            olderHref={olderHref}
             now={now}
           />
         )}

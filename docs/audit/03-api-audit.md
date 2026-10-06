@@ -115,3 +115,26 @@ Están en [security/services.md](security/services.md), así que no se repiten c
 | T10 | Escalado horizontal | Hay una sola instancia. El adapter de Redis ya está; si se escala, faltan las sticky sessions |
 | T11 | Rate limit por evento | Solo hay usuarios autenticados y el proyecto es para demos |
 | T12 | Re-auth de conexiones largas | Tampoco hay revocación en HTTP (JWT stateless de 24 h), así que cortar sockets no agrega nada. No confundir con #21, que es el mismo tab |
+
+## Resolución
+
+Resueltos en `refactor/api-contracts` (este repo y `greenaway-worker`). G9 queda en "No aplica": `/api/graphql` se cerró (#18).
+
+| # | Cómo se resolvió |
+|---|---|
+| 1, 2 | `CONFLICT` para un estado que impide la operación. El `UPDATE` ahora exige el estado leído (`updateBooking(id, expectedStatus, …)`): antes no detectaba ninguna carrera, solo una fila borrada |
+| 3, 5 | Un id mal formado responde como inexistente (`listing` en `null`, `markAsRead` en `NOT_FOUND`). `markAsRead` compara `matchedCount`: releer una notificación leída no es "no encontrada" |
+| 4 | `createBooking` verifica que el listing exista antes de insertar |
+| 6–8, 19, 20 | `id` en todo el schema (los resolvers de Mongo lo derivan de `_id` vía mappers de codegen), argumentos `id`, fechas `DateTime`, ids `ID`. `Listing.rating` y `Listing.availabilityRange` se sacaron: nadie los resolvía |
+| 9 | En un `CONFLICT`, si la reserva superpuesta es del mismo guest y la misma estadía, se devuelve esa reserva |
+| 10 | Tope de 100 en las listas de reservas y conversaciones, de 50 en notificaciones |
+| 11 | Cursor en la URL (`?from=`) y "Load older messages" |
+| 12 | `/api/subscribe` responde por `toHttpResponse`; código nuevo `UNAVAILABLE` (503) |
+| 13, 14 | Las actions del alcance reciben un objeto validado por zod; `getUserToken` devuelve `ServiceResult` |
+| 15 | `Booking.party` non-null |
+| 16 | `guestBookings` pasó a `getUserBookings`, dentro de su `try`. Sin endpoint HTTP, ningún error sale del server |
+| 17 | DataLoader por request (`lib/apollo/loaders.ts`, `context.ts`) |
+| 18 | Endpoint borrado junto con `@apollo/server` |
+| 21 | La conexión la maneja `ChatConnection` en el layout de `/messages`: conecta al montar, desconecta en el cleanup |
+| 22–25 | Contrato tipado en los dos repos, acks `{ ok, code, error }`, validación del payload y ack en todo camino |
+| 26 | Al reabrirse el `EventSource`, `router.refresh()` vuelve a traer los contadores de la DB |

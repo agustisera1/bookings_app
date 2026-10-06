@@ -3,12 +3,14 @@ import type { ServiceResult } from "@/lib/shared/result";
 import * as repo from "./repository";
 import type { NotificationDocument } from "./types";
 
+const MAX_NOTIFICATIONS = 50;
+
 export async function getUserNotifications(): Promise<ServiceResult<NotificationDocument[]>> {
   const auth = await authorize("notifications:view");
   if (!auth.ok) return auth;
 
   try {
-    const notifications = await repo.getNotifications(auth.data.id);
+    const notifications = await repo.getNotifications(auth.data.id, MAX_NOTIFICATIONS);
     return { ok: true, data: notifications };
   } catch (error) {
     console.error("[getUserNotifications]", error);

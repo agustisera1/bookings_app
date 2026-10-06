@@ -2,17 +2,33 @@ import { authorize } from "@/lib/auth/session";
 import * as listingsRepo from "@/lib/listings/repository";
 import type { Listing } from "@/lib/listings/types";
 import type { ServiceResult } from "@/lib/shared/result";
-import { SLOT_HOLDING_STATUSES, partyOf } from "./policy";
+import { MAX_BOOKINGS_PER_LIST, SLOT_HOLDING_STATUSES, partyOf } from "./policy";
 import * as repo from "./repository";
 import type { BookedRange, Booking, BookingParty } from "./types";
 import { bookingIdSchema } from "./validation";
 
-export async function getUserBookings(): Promise<ServiceResult<Booking[]>> {
+export async function getUserBookings(): Promise<
+  ServiceResult<(Booking & { listing: Listing })[]>
+> {
   const auth = await authorize("bookings:view-own-listings");
   if (!auth.ok) return auth;
 
   try {
-    return { ok: true, data: await repo.findBookingsByGuestId(auth.data.id) };
+    const bookings = await repo.findBookingsByGuestId(auth.data.id, MAX_BOOKINGS_PER_LIST);
+    const listings = await listingsRepo.findListingsByIds(
+      bookings.map(({ listing_id }) => listing_id),
+    );
+    const byId = new Map(listings.map((listing) => [listing._id, listing]));
+
+    return {
+      ok: true,
+      data: bookings.flatMap((booking) => {
+        const listing = byId.get(booking.listing_id);
+        if (listing) return [{ ...booking, listing }];
+        console.error(`[getUserBookings] booking ${booking.id} points at a missing listing`);
+        return [];
+      }),
+    };
   } catch (error) {
     console.error("[getUserBookings]", error);
     return { ok: false, error: "Could not retrieve your bookings", code: "UNEXPECTED" };
@@ -44,28 +60,36 @@ export async function getBooking(
   }
 }
 
-export async function getListingBookings(listingId: string): Promise<ServiceResult<Booking[]>> {
+export async function getListingsBookings(
+  listingIds: string[],
+): Promise<ServiceResult<Booking[]>> {
   const auth = await authorize("bookings:view-own-listings");
   if (!auth.ok) return auth;
 
   try {
-    return { ok: true, data: await repo.findBookingsByListingId(listingId) };
+    return {
+      ok: true,
+      data: await repo.findBookingsByListingIds(listingIds, MAX_BOOKINGS_PER_LIST),
+    };
   } catch (error) {
-    console.error("[getListingBookings]", error);
+    console.error("[getListingsBookings]", error);
     return { ok: false, error: "Could not retrieve the bookings", code: "UNEXPECTED" };
   }
 }
 
-export async function getListingAvailability(
-  listingId: string,
-): Promise<ServiceResult<BookedRange[]>> {
+export async function getListingsAvailability(
+  listingIds: string[],
+): Promise<ServiceResult<(BookedRange & Pick<Booking, "listing_id">)[]>> {
   const auth = await authorize("bookings:create");
   if (!auth.ok) return auth;
 
   try {
-    return { ok: true, data: await repo.findBookedRanges(listingId, SLOT_HOLDING_STATUSES) };
+    return {
+      ok: true,
+      data: await repo.findBookedRangesByListingIds(listingIds, SLOT_HOLDING_STATUSES),
+    };
   } catch (error) {
-    console.error("[getListingAvailability]", error);
+    console.error("[getListingsAvailability]", error);
     return {
       ok: false,
       error: "Could not retrieve the listing availability",

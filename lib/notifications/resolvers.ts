@@ -15,4 +15,7 @@ export const notificationsResolvers: Resolvers = {
       return result.data;
     },
   },
+  Notification: {
+    id: (notification) => notification._id,
+  },
 };

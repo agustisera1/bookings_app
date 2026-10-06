@@ -15,7 +15,7 @@ usuario puede ser ambos.
 ## 🚦 Estado
 
 **Construido:** autenticación (JWT) y RBAC; listados en
-MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (Apollo Server);
+MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (schema en proceso, sin endpoint HTTP);
 notificaciones por email asíncronas (worker + BullMQ); chat host↔guest en vivo (socket.io);
 notificaciones in-app (SSE); y rate limiting en el borde de autenticación.
 

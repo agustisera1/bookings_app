@@ -1,7 +1,12 @@
 import { GraphQLResolveInfo, GraphQLScalarType, GraphQLScalarTypeConfig } from 'graphql';
+import { BookingNode as BookingNodeModel } from '@/lib/bookings/types';
+import { Listing as ListingModel } from '@/lib/listings/types';
+import { NotificationDocument as NotificationDocumentModel } from '@/lib/notifications/types';
+import { SerializableChatDocument as SerializableChatDocumentModel, SerializableMessageDocument as SerializableMessageDocumentModel } from '@/lib/chat/types';
 import { ApolloContext } from '../context';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
+export type Omit<T, K extends keyof T> = Pick<T, Exclude<keyof T, K>>;
 export type RequireFields<T, K extends keyof T> = Omit<T, K> & { [P in K]-?: NonNullable<T[P]> };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
@@ -29,7 +34,7 @@ export type Booking = {
   host?: Maybe<UserSummary>;
   id: Scalars['ID']['output'];
   listing?: Maybe<Listing>;
-  party?: Maybe<BookingParty>;
+  party: BookingParty;
   refund_amount: Scalars['Float']['output'];
   start_date: Scalars['DateTime']['output'];
   status: BookingStatus;
@@ -49,26 +54,32 @@ export type BookingStatus =
 
 export type ChatMessage = {
   __typename?: 'ChatMessage';
-  _id: Scalars['ID']['output'];
   body: Scalars['String']['output'];
-  chat_id: Scalars['String']['output'];
-  sender_id: Scalars['String']['output'];
-  timestamp: Scalars['String']['output'];
+  chat_id: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  sender_id: Scalars['ID']['output'];
+  timestamp: Scalars['DateTime']['output'];
+};
+
+export type ChatMessagePage = {
+  __typename?: 'ChatMessagePage';
+  items: Array<ChatMessage>;
+  olderCursor?: Maybe<Scalars['DateTime']['output']>;
 };
 
 export type ChatMeta = {
   __typename?: 'ChatMeta';
-  _id: Scalars['ID']['output'];
-  booking_id: Scalars['String']['output'];
-  guest_id: Scalars['String']['output'];
-  host_id: Scalars['String']['output'];
-  started_at: Scalars['String']['output'];
+  booking_id: Scalars['ID']['output'];
+  guest_id: Scalars['ID']['output'];
+  host_id: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
+  started_at: Scalars['DateTime']['output'];
 };
 
 export type ChatThread = {
   __typename?: 'ChatThread';
   chat?: Maybe<ChatMeta>;
-  messages: Array<ChatMessage>;
+  messages: ChatMessagePage;
   party: BookingParty;
 };
 
@@ -101,17 +112,15 @@ export type FiltersInput = {
 
 export type Listing = {
   __typename?: 'Listing';
-  _id: Scalars['String']['output'];
   attributes?: Maybe<ListingAttributes>;
   availability?: Maybe<Array<BookedRange>>;
-  availabilityRange?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   bookings?: Maybe<Array<Booking>>;
   description: Scalars['String']['output'];
-  host_id: Scalars['String']['output'];
+  host_id: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
   location?: Maybe<Location>;
   photos?: Maybe<Array<Maybe<Scalars['String']['output']>>>;
   price: Scalars['Int']['output'];
-  rating?: Maybe<Scalars['Float']['output']>;
   rating_avg?: Maybe<Scalars['Float']['output']>;
   reviews?: Maybe<Array<Review>>;
   title: Scalars['String']['output'];
@@ -148,15 +157,15 @@ export type LocationInput = {
 
 export type Notification = {
   __typename?: 'Notification';
-  _id: Scalars['ID']['output'];
   body: Scalars['String']['output'];
-  booking_id: Scalars['String']['output'];
+  booking_id: Scalars['ID']['output'];
   created_at: Scalars['DateTime']['output'];
-  guest_id: Scalars['String']['output'];
-  host_id: Scalars['String']['output'];
+  guest_id: Scalars['ID']['output'];
+  host_id: Scalars['ID']['output'];
+  id: Scalars['ID']['output'];
   is_read: Scalars['Boolean']['output'];
-  listing_id: Scalars['String']['output'];
-  target_id: Scalars['String']['output'];
+  listing_id: Scalars['ID']['output'];
+  target_id: Scalars['ID']['output'];
   title: Scalars['String']['output'];
 };
 
@@ -180,12 +189,13 @@ export type QueryBookingArgs = {
 
 
 export type QueryChatThreadArgs = {
-  bookingId: Scalars['ID']['input'];
+  from?: InputMaybe<Scalars['DateTime']['input']>;
+  id: Scalars['ID']['input'];
 };
 
 
 export type QueryListingArgs = {
-  listing_id: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
 };
 
 
@@ -200,7 +210,7 @@ export type Review = {
   created_at: Scalars['DateTime']['output'];
   host_reply?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
-  listing_id: Scalars['String']['output'];
+  listing_id: Scalars['ID']['output'];
   rating: Scalars['Int']['output'];
 };
 
@@ -285,24 +295,25 @@ export type DirectiveResolverFn<TResult = Record<PropertyKey, never>, TParent = 
 /** Mapping between all available schema types and the resolvers types */
 export type ResolversTypes = ResolversObject<{
   BookedRange: ResolverTypeWrapper<BookedRange>;
-  Booking: ResolverTypeWrapper<Booking>;
+  Booking: ResolverTypeWrapper<BookingNodeModel>;
   BookingParty: BookingParty;
   BookingStatus: BookingStatus;
   Boolean: ResolverTypeWrapper<Scalars['Boolean']['output']>;
-  ChatMessage: ResolverTypeWrapper<ChatMessage>;
-  ChatMeta: ResolverTypeWrapper<ChatMeta>;
-  ChatThread: ResolverTypeWrapper<ChatThread>;
+  ChatMessage: ResolverTypeWrapper<SerializableMessageDocumentModel>;
+  ChatMessagePage: ResolverTypeWrapper<Omit<ChatMessagePage, 'items'> & { items: Array<ResolversTypes['ChatMessage']> }>;
+  ChatMeta: ResolverTypeWrapper<SerializableChatDocumentModel>;
+  ChatThread: ResolverTypeWrapper<Omit<ChatThread, 'chat' | 'messages'> & { chat?: Maybe<ResolversTypes['ChatMeta']>, messages: ResolversTypes['ChatMessagePage'] }>;
   Conversation: ResolverTypeWrapper<Conversation>;
   DateTime: ResolverTypeWrapper<Scalars['DateTime']['output']>;
   FiltersInput: FiltersInput;
   Float: ResolverTypeWrapper<Scalars['Float']['output']>;
   ID: ResolverTypeWrapper<Scalars['ID']['output']>;
   Int: ResolverTypeWrapper<Scalars['Int']['output']>;
-  Listing: ResolverTypeWrapper<Listing>;
+  Listing: ResolverTypeWrapper<ListingModel>;
   ListingAttributes: ResolverTypeWrapper<ListingAttributes>;
   Location: ResolverTypeWrapper<Location>;
   LocationInput: LocationInput;
-  Notification: ResolverTypeWrapper<Notification>;
+  Notification: ResolverTypeWrapper<NotificationDocumentModel>;
   Query: ResolverTypeWrapper<Record<PropertyKey, never>>;
   Review: ResolverTypeWrapper<Review>;
   String: ResolverTypeWrapper<Scalars['String']['output']>;
@@ -312,22 +323,23 @@ export type ResolversTypes = ResolversObject<{
 /** Mapping between all available schema types and the resolvers parents */
 export type ResolversParentTypes = ResolversObject<{
   BookedRange: BookedRange;
-  Booking: Booking;
+  Booking: BookingNodeModel;
   Boolean: Scalars['Boolean']['output'];
-  ChatMessage: ChatMessage;
-  ChatMeta: ChatMeta;
-  ChatThread: ChatThread;
+  ChatMessage: SerializableMessageDocumentModel;
+  ChatMessagePage: Omit<ChatMessagePage, 'items'> & { items: Array<ResolversParentTypes['ChatMessage']> };
+  ChatMeta: SerializableChatDocumentModel;
+  ChatThread: Omit<ChatThread, 'chat' | 'messages'> & { chat?: Maybe<ResolversParentTypes['ChatMeta']>, messages: ResolversParentTypes['ChatMessagePage'] };
   Conversation: Conversation;
   DateTime: Scalars['DateTime']['output'];
   FiltersInput: FiltersInput;
   Float: Scalars['Float']['output'];
   ID: Scalars['ID']['output'];
   Int: Scalars['Int']['output'];
-  Listing: Listing;
+  Listing: ListingModel;
   ListingAttributes: ListingAttributes;
   Location: Location;
   LocationInput: LocationInput;
-  Notification: Notification;
+  Notification: NotificationDocumentModel;
   Query: Record<PropertyKey, never>;
   Review: Review;
   String: Scalars['String']['output'];
@@ -348,7 +360,7 @@ export type BookingResolvers<ContextType = ApolloContext, ParentType extends Res
   host?: Resolver<Maybe<ResolversTypes['UserSummary']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   listing?: Resolver<Maybe<ResolversTypes['Listing']>, ParentType, ContextType>;
-  party?: Resolver<Maybe<ResolversTypes['BookingParty']>, ParentType, ContextType>;
+  party?: Resolver<ResolversTypes['BookingParty'], ParentType, ContextType>;
   refund_amount?: Resolver<ResolversTypes['Float'], ParentType, ContextType>;
   start_date?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   status?: Resolver<ResolversTypes['BookingStatus'], ParentType, ContextType>;
@@ -357,24 +369,29 @@ export type BookingResolvers<ContextType = ApolloContext, ParentType extends Res
 }>;
 
 export type ChatMessageResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['ChatMessage'] = ResolversParentTypes['ChatMessage']> = ResolversObject<{
-  _id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  chat_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  sender_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  timestamp?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  chat_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  sender_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  timestamp?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
+}>;
+
+export type ChatMessagePageResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['ChatMessagePage'] = ResolversParentTypes['ChatMessagePage']> = ResolversObject<{
+  items?: Resolver<Array<ResolversTypes['ChatMessage']>, ParentType, ContextType>;
+  olderCursor?: Resolver<Maybe<ResolversTypes['DateTime']>, ParentType, ContextType>;
 }>;
 
 export type ChatMetaResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['ChatMeta'] = ResolversParentTypes['ChatMeta']> = ResolversObject<{
-  _id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  booking_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  guest_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  host_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  started_at?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  booking_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  guest_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  host_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  started_at?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
 }>;
 
 export type ChatThreadResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['ChatThread'] = ResolversParentTypes['ChatThread']> = ResolversObject<{
   chat?: Resolver<Maybe<ResolversTypes['ChatMeta']>, ParentType, ContextType>;
-  messages?: Resolver<Array<ResolversTypes['ChatMessage']>, ParentType, ContextType>;
+  messages?: Resolver<ResolversTypes['ChatMessagePage'], ParentType, ContextType>;
   party?: Resolver<ResolversTypes['BookingParty'], ParentType, ContextType>;
 }>;
 
@@ -393,17 +410,15 @@ export interface DateTimeScalarConfig extends GraphQLScalarTypeConfig<ResolversT
 }
 
 export type ListingResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Listing'] = ResolversParentTypes['Listing']> = ResolversObject<{
-  _id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
   attributes?: Resolver<Maybe<ResolversTypes['ListingAttributes']>, ParentType, ContextType>;
   availability?: Resolver<Maybe<Array<ResolversTypes['BookedRange']>>, ParentType, ContextType>;
-  availabilityRange?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   bookings?: Resolver<Maybe<Array<ResolversTypes['Booking']>>, ParentType, ContextType>;
   description?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  host_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  host_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   location?: Resolver<Maybe<ResolversTypes['Location']>, ParentType, ContextType>;
   photos?: Resolver<Maybe<Array<Maybe<ResolversTypes['String']>>>, ParentType, ContextType>;
   price?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
-  rating?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   rating_avg?: Resolver<Maybe<ResolversTypes['Float']>, ParentType, ContextType>;
   reviews?: Resolver<Maybe<Array<ResolversTypes['Review']>>, ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
@@ -429,24 +444,24 @@ export type LocationResolvers<ContextType = ApolloContext, ParentType extends Re
 }>;
 
 export type NotificationResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Notification'] = ResolversParentTypes['Notification']> = ResolversObject<{
-  _id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   body?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  booking_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  booking_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   created_at?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
-  guest_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  host_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  guest_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  host_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   is_read?: Resolver<ResolversTypes['Boolean'], ParentType, ContextType>;
-  listing_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
-  target_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  listing_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
+  target_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   title?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
 }>;
 
 export type QueryResolvers<ContextType = ApolloContext, ParentType extends ResolversParentTypes['Query'] = ResolversParentTypes['Query']> = ResolversObject<{
   booking?: Resolver<Maybe<ResolversTypes['Booking']>, ParentType, ContextType, RequireFields<QueryBookingArgs, 'id'>>;
-  chatThread?: Resolver<Maybe<ResolversTypes['ChatThread']>, ParentType, ContextType, RequireFields<QueryChatThreadArgs, 'bookingId'>>;
+  chatThread?: Resolver<Maybe<ResolversTypes['ChatThread']>, ParentType, ContextType, RequireFields<QueryChatThreadArgs, 'id'>>;
   conversations?: Resolver<Maybe<Array<ResolversTypes['Conversation']>>, ParentType, ContextType>;
   guestBookings?: Resolver<Maybe<Array<ResolversTypes['Booking']>>, ParentType, ContextType>;
-  listing?: Resolver<Maybe<ResolversTypes['Listing']>, ParentType, ContextType, RequireFields<QueryListingArgs, 'listing_id'>>;
+  listing?: Resolver<Maybe<ResolversTypes['Listing']>, ParentType, ContextType, RequireFields<QueryListingArgs, 'id'>>;
   listings?: Resolver<Maybe<Array<ResolversTypes['Listing']>>, ParentType, ContextType, Partial<QueryListingsArgs>>;
   notifications?: Resolver<Maybe<Array<ResolversTypes['Notification']>>, ParentType, ContextType>;
   notificationsCount?: Resolver<Maybe<ResolversTypes['Int']>, ParentType, ContextType>;
@@ -459,7 +474,7 @@ export type ReviewResolvers<ContextType = ApolloContext, ParentType extends Reso
   created_at?: Resolver<ResolversTypes['DateTime'], ParentType, ContextType>;
   host_reply?: Resolver<Maybe<ResolversTypes['String']>, ParentType, ContextType>;
   id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
-  listing_id?: Resolver<ResolversTypes['String'], ParentType, ContextType>;
+  listing_id?: Resolver<ResolversTypes['ID'], ParentType, ContextType>;
   rating?: Resolver<ResolversTypes['Int'], ParentType, ContextType>;
 }>;
 
@@ -472,6 +487,7 @@ export type Resolvers<ContextType = ApolloContext> = ResolversObject<{
   BookedRange?: BookedRangeResolvers<ContextType>;
   Booking?: BookingResolvers<ContextType>;
   ChatMessage?: ChatMessageResolvers<ContextType>;
+  ChatMessagePage?: ChatMessagePageResolvers<ContextType>;
   ChatMeta?: ChatMetaResolvers<ContextType>;
   ChatThread?: ChatThreadResolvers<ContextType>;
   Conversation?: ConversationResolvers<ContextType>;

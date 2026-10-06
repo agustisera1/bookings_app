@@ -3,6 +3,7 @@ paths:
   - "components/**"
   - "app/**/*.tsx"
   - "app/globals.css"
+  - "lib/*/socket.ts"
 ---
 
 # Frontend / UI / UX (dimensión 7)
@@ -123,6 +124,21 @@ Cuando un componente de feature crece y **acumula varios sub-componentes, mezcla
 **Referencia canónica:** `components/chat/` — `chat.tsx` (orquestador) + `use-booking-chat.ts` (hook) + `thread-model.ts` (lógica pura del hilo, testeable) + `types.ts` + piezas presentacionales (`chat-header`, `message-thread`, `message-bubble`, `chat-composer`, `chat-states`, `chat-avatar`).
 
 > La UI ya construida todavía no sigue este patrón en todos lados; se aplica de forma **gradual** (refactor futuro, no bloqueante). Cuando un componente de feature toque los disparadores de arriba, partirlo es parte de "terminar" el cambio.
+
+---
+
+## Efectos y estado externo
+
+Basado en la guía oficial de React ([You Might Not Need an Effect](https://react.dev/learn/you-might-not-need-an-effect),
+[Synchronizing with Effects](https://react.dev/learn/synchronizing-with-effects),
+[`useSyncExternalStore`](https://react.dev/reference/react/useSyncExternalStore)). Un `useEffect` o un
+estado manual que no encaja en una de estas reglas es un parche: se frena y se consulta antes de escribirlo.
+
+- **Un `useEffect` solo sincroniza con un sistema externo (red, socket, DOM, timer), y si abre algo, lo cierra en su cleanup.** Verificación: cada `useEffect` de `components/` y `app/` toca una API de afuera de React; lint (`react-hooks/set-state-in-effect` + el `no-restricted-syntax` de `eslint.config.mjs`) rechaza un setter o un `dispatch` síncrono en el cuerpo de un efecto. Ref: `components/chat/chat-connection.tsx`.
+- **Un prop que cambia nunca se copia a estado con un Effect.** En orden de preferencia: derivarlo en el render, resetear con `key`, o ajustar el estado durante el render guardando el valor anterior. Verificación: el lint de arriba. Ref: `components/chat/use-booking-chat.ts` (el `thread` que llega en cada refresh).
+- **El estado mutable de afuera de React (si una conexión está viva, una API del browser) se lee con `useSyncExternalStore` desde un módulo sin React; nunca se espeja en un `useState`.** Verificación: ningún `useState` guarda el estado de una conexión. Ref: `lib/chat/socket.ts` + `useSocketStatus`.
+- **La vida de una conexión la maneja el efecto del componente cuyo alcance coincide con su uso: conecta al montar y cierra en el cleanup.** Nunca llamadas imperativas de abrir o cerrar repartidas en handlers (login, logout, navegación). Verificación: `connect()`, `disconnect()` y `close()` de una conexión solo aparecen en el cuerpo o el cleanup de un efecto. Ref: `ChatConnection` montado en `app/(app)/messages/layout.tsx`.
+- **Pedirle al server otra porción de datos (paginar, ampliar, filtrar) es navegar: el parámetro va en la URL, la página lo lee de `searchParams` y el control es un `<Link>`.** Nunca un fetch del cliente con estado propio. Ref: `?from=` en `app/(app)/messages/[bookingId]/page.tsx` y `components/chat/message-thread.tsx`.
 
 ---
 

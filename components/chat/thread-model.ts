@@ -1,6 +1,6 @@
 import { formatDayLabel, toDayKey, toMillis } from "@/lib/shared/dates";
 import type { BookingParty } from "@/lib/bookings/types";
-import type { SerializableMessageDocument } from "@/lib/chat/types";
+import type { DeliveredMessage } from "@/lib/chat/socket";
 import type { ChatThreadRow, Status, ThreadMessage } from "./types";
 
 // A message plus its display flags (mine, run start/end, day divider), computed from its neighbours.
@@ -47,6 +47,7 @@ export type ThreadState = {
   status: Status;
   error: string | null;
   messages: ThreadMessage[];
+  olderCursor: string | null;
   chatMeta: ChatThreadRow["chat"];
   party: BookingParty;
 };
@@ -58,17 +59,25 @@ export function initialThreadState(thread: ChatThreadRow | null): ThreadState {
       status: "error",
       error: "Could not load this conversation",
       messages: [],
+      olderCursor: null,
       chatMeta: null,
       party: "guest",
     };
-  return { status: "ready", error: null, messages: thread.messages, chatMeta: thread.chat, party: thread.party };
+  return {
+    status: "ready",
+    error: null,
+    messages: thread.messages.items,
+    olderCursor: thread.messages.olderCursor ?? null,
+    chatMeta: thread.chat,
+    party: thread.party,
+  };
 }
 
 export type ThreadAction =
   | { type: "loaded"; data: ChatThreadRow }
   | { type: "joinFailed" }
   | { type: "appended"; message: ThreadMessage }
-  | { type: "delivered"; tempId: string; message: SerializableMessageDocument }
+  | { type: "delivered"; tempId: string; message: DeliveredMessage }
   | { type: "sendFailed"; tempId: string };
 
 export function threadReducer(
@@ -91,7 +100,7 @@ export function threadReducer(
       return {
         ...state,
         messages: state.messages.map((m) =>
-          m._id === action.tempId ? action.message : m,
+          m.id === action.tempId ? action.message : m,
         ),
       };
     case "sendFailed":
@@ -100,7 +109,7 @@ export function threadReducer(
       return {
         ...state,
         messages: state.messages.map((m) =>
-          m._id === action.tempId ? { ...m, pending: false, failed: true } : m,
+          m.id === action.tempId ? { ...m, pending: false, failed: true } : m,
         ),
       };
   }

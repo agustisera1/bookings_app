@@ -4,6 +4,7 @@ import { useState, type KeyboardEvent } from "react";
 import { SendHorizontalIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { MAX_MESSAGE_LENGTH } from "@/lib/chat/validation";
 import type { Counterpart } from "./types";
 
 // Owns only the draft; sending goes through `onSend` so socket calls live in `useBookingChat`.
@@ -45,6 +46,7 @@ export function ChatComposer({
           value={body}
           onChange={(event) => setBody(event.target.value)}
           onKeyDown={handleKeyDown}
+          maxLength={MAX_MESSAGE_LENGTH}
           disabled={!connected}
           aria-label={`Message your ${counterpart.toLowerCase()}`}
           placeholder={`Message your ${counterpart.toLowerCase()}…`}

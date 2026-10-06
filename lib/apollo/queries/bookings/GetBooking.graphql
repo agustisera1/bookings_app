@@ -17,7 +17,7 @@ query GetBooking($id: ID!) {
       name
     }
     listing {
-      _id
+      id
       type
       title
       price

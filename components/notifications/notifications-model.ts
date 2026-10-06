@@ -9,10 +9,9 @@ import {
   Star,
   type LucideIcon,
 } from "lucide-react";
-import type { NotificationDocument } from "@/lib/notifications/types";
+import type { GetNotificationsQuery } from "@/lib/apollo/__generated__/operations";
 
-
-export type Notification = NotificationDocument;
+export type Notification = NonNullable<GetNotificationsQuery["notifications"]>[number];
 
 // Notifications have no `type` field, so the icon and tint are keyed off title keywords.
 export function notificationVisual(title: string): {
@@ -56,7 +55,7 @@ export function partitionByRead(
   notifications: Notification[],
   readIds: Set<string>,
 ): { unread: Notification[]; older: Notification[] } {
-  const isRead = (n: Notification) => n.is_read || readIds.has(n._id);
+  const isRead = (n: Notification) => n.is_read || readIds.has(n.id);
   return {
     unread: notifications.filter((n) => !isRead(n)),
     older: notifications.filter(isRead),

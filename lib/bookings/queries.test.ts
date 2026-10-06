@@ -6,12 +6,16 @@ vi.mock("./repository", () => ({
   findBookingsByGuestId: vi.fn(),
   findBookingById: vi.fn(),
 }));
-vi.mock("@/lib/listings/repository", () => ({ findListingById: vi.fn() }));
+vi.mock("@/lib/listings/repository", () => ({
+  findListingById: vi.fn(),
+  findListingsByIds: vi.fn(),
+}));
 
 import { authorize } from "@/lib/auth/session";
 import type { CurrentUser } from "@/lib/auth/types";
 import * as listingsRepo from "@/lib/listings/repository";
 import type { Listing } from "@/lib/listings/types";
+import { MAX_BOOKINGS_PER_LIST } from "./policy";
 import { getBooking, getUserBookings } from "./queries";
 import * as repo from "./repository";
 import type { Booking } from "./types";
@@ -66,12 +70,14 @@ describe("getUserBookings", () => {
     expect(repo.findBookingsByGuestId).not.toHaveBeenCalled();
   });
 
-  it("returns the caller's bookings, scoped to the authenticated user", async () => {
-    const rows = [makeBooking()];
-    vi.mocked(repo.findBookingsByGuestId).mockResolvedValue(rows);
-    expect(await getUserBookings()).toEqual({ ok: true, data: rows });
+  it("returns the caller's bookings with their listings, scoped to the authenticated user", async () => {
+    const booking = makeBooking();
+    const listing = { _id: booking.listing_id } as Listing;
+    vi.mocked(repo.findBookingsByGuestId).mockResolvedValue([booking]);
+    vi.mocked(listingsRepo.findListingsByIds).mockResolvedValue([listing]);
+    expect(await getUserBookings()).toEqual({ ok: true, data: [{ ...booking, listing }] });
     // The id comes from auth, never from the caller.
-    expect(repo.findBookingsByGuestId).toHaveBeenCalledWith("u1");
+    expect(repo.findBookingsByGuestId).toHaveBeenCalledWith("u1", MAX_BOOKINGS_PER_LIST);
   });
 
   it("maps an unexpected repo failure to a generic message", async () => {

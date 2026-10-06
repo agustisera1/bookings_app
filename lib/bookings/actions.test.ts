@@ -6,6 +6,7 @@ vi.mock("@/lib/auth/session", () => ({ authorize: vi.fn() }));
 vi.mock("./repository", () => ({
   insertBooking: vi.fn(),
   findBookingById: vi.fn(),
+  findBookingForStay: vi.fn(),
   updateBooking: vi.fn(),
 }));
 vi.mock("@/lib/listings/repository", () => ({ findListingById: vi.fn() }));
@@ -74,6 +75,7 @@ beforeEach(() => {
     created_at: new Date("2026-07-01T00:00:00.000Z"),
   });
   vi.mocked(repo.findBookingById).mockResolvedValue(makeBooking());
+  vi.mocked(repo.findBookingForStay).mockResolvedValue(null);
   vi.mocked(repo.updateBooking).mockResolvedValue(true);
   vi.mocked(listingsRepo.findListingById).mockResolvedValue(listing("h1"));
 });
@@ -137,27 +139,28 @@ describe("createBooking", () => {
 describe("cancelBooking", () => {
   it("refuses when the caller has no standing over the booking", async () => {
     vi.mocked(repo.findBookingById).mockResolvedValue(makeBooking({ guest_id: "someone-else" }));
-    expect(await cancelBooking(BOOKING_ID)).toMatchObject({ ok: false, code: "FORBIDDEN" });
+    expect(await cancelBooking({ bookingId: BOOKING_ID })).toMatchObject({ ok: false, code: "FORBIDDEN" });
     expect(repo.updateBooking).not.toHaveBeenCalled();
   });
 
   it("blocks a cancellation the policy rejects, without writing", async () => {
     vi.mocked(repo.findBookingById).mockResolvedValue(makeBooking({ status: "cancelled" }));
-    expect(await cancelBooking(BOOKING_ID)).toEqual({
+    expect(await cancelBooking({ bookingId: BOOKING_ID })).toEqual({
       ok: false,
       error: "This booking is already cancelled",
-      code: "VALIDATION",
+      code: "CONFLICT",
     });
     expect(repo.updateBooking).not.toHaveBeenCalled();
   });
 
   it("writes the cancellation with the refund the policy decided", async () => {
-    expect(await cancelBooking(BOOKING_ID)).toEqual({
+    expect(await cancelBooking({ bookingId: BOOKING_ID })).toEqual({
       ok: true,
       data: { id: BOOKING_ID, refundAmount: 500 },
     });
     expect(repo.updateBooking).toHaveBeenCalledWith(
       BOOKING_ID,
+      "accepted",
       expect.objectContaining({ status: "cancelled", cancelled_by: "guest", refund_amount: 500 }),
       expect.objectContaining({ type: "booking.cancelled" }),
     );
@@ -172,24 +175,25 @@ describe("acceptBooking", () => {
   it("forbids a host who does not own the listing", async () => {
     vi.mocked(repo.findBookingById).mockResolvedValue(makeBooking({ status: "pending" }));
     vi.mocked(listingsRepo.findListingById).mockResolvedValue(listing("other"));
-    expect(await acceptBooking(BOOKING_ID)).toMatchObject({ ok: false, code: "FORBIDDEN" });
+    expect(await acceptBooking({ bookingId: BOOKING_ID })).toMatchObject({ ok: false, code: "FORBIDDEN" });
     expect(repo.updateBooking).not.toHaveBeenCalled();
   });
 
   it("rejects a booking that is not pending", async () => {
-    expect(await acceptBooking(BOOKING_ID)).toEqual({
+    expect(await acceptBooking({ bookingId: BOOKING_ID })).toEqual({
       ok: false,
       error: "This booking is already accepted",
-      code: "VALIDATION",
+      code: "CONFLICT",
     });
     expect(repo.updateBooking).not.toHaveBeenCalled();
   });
 
   it("accepts a pending booking", async () => {
     vi.mocked(repo.findBookingById).mockResolvedValue(makeBooking({ status: "pending" }));
-    expect((await acceptBooking(BOOKING_ID)).ok).toBe(true);
+    expect((await acceptBooking({ bookingId: BOOKING_ID })).ok).toBe(true);
     expect(repo.updateBooking).toHaveBeenCalledWith(
       BOOKING_ID,
+      "pending",
       expect.objectContaining({ status: "accepted" }),
       expect.objectContaining({ type: "booking.accepted" }),
     );
@@ -202,20 +206,21 @@ describe("rejectBooking", () => {
   });
 
   it("steers an already-accepted booking to cancellation instead", async () => {
-    expect(await rejectBooking(BOOKING_ID)).toEqual({
+    expect(await rejectBooking({ bookingId: BOOKING_ID })).toEqual({
       ok: false,
       error:
         "This booking was already accepted. Cancel it instead: the guest will be refunded in full.",
-      code: "VALIDATION",
+      code: "CONFLICT",
     });
     expect(repo.updateBooking).not.toHaveBeenCalled();
   });
 
   it("rejects a pending booking", async () => {
     vi.mocked(repo.findBookingById).mockResolvedValue(makeBooking({ status: "pending" }));
-    expect((await rejectBooking(BOOKING_ID)).ok).toBe(true);
+    expect((await rejectBooking({ bookingId: BOOKING_ID })).ok).toBe(true);
     expect(repo.updateBooking).toHaveBeenCalledWith(
       BOOKING_ID,
+      "pending",
       expect.objectContaining({ status: "rejected" }),
       expect.objectContaining({ type: "booking.rejected" }),
     );

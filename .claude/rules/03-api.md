@@ -33,7 +33,7 @@ Los ejemplos usan TypeScript. `fail(code, msg)` abrevia `{ ok: false, code, erro
   `err.stack` en el código que arma respuestas da 0.
 
   ```ts
-  type ErrorCode = "VALIDATION" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "RATE_LIMITED" | "UNEXPECTED";
+  type ErrorCode = "VALIDATION" | "UNAUTHORIZED" | "FORBIDDEN" | "NOT_FOUND" | "CONFLICT" | "RATE_LIMITED" | "UNAVAILABLE" | "UNEXPECTED";
   type Result<T> = { ok: true; data: T } | { ok: false; code: ErrorCode; error: string };
 
   try {
@@ -55,7 +55,8 @@ Los ejemplos usan TypeScript. `fail(code, msg)` abrevia `{ ok: false, code, erro
   | El recurso no existe, su id está mal formado, o es ajeno y no se quiere confirmar que existe | `NOT_FOUND` |
   | El **estado actual** del recurso impide la operación, o perdió una carrera | `CONFLICT` |
   | Superó la cota | `RATE_LIMITED` |
-  | Bug o infraestructura | `UNEXPECTED` |
+  | Una dependencia está caída y reintentar tiene sentido | `UNAVAILABLE` |
+  | Bug o falla no prevista | `UNEXPECTED` |
 
   ```ts
   if (!isValidId(id)) return fail("NOT_FOUND", "Order not found");
@@ -140,7 +141,7 @@ Los ejemplos usan TypeScript. `fail(code, msg)` abrevia `{ ok: false, code, erro
   ```ts
   const STATUS: Record<ErrorCode, number> = {
     VALIDATION: 400, UNAUTHORIZED: 401, FORBIDDEN: 403, NOT_FOUND: 404,
-    CONFLICT: 409, RATE_LIMITED: 429, UNEXPECTED: 500,
+    CONFLICT: 409, RATE_LIMITED: 429, UNAVAILABLE: 503, UNEXPECTED: 500,
   };
   export const toHttp = <T>(r: Result<T>) => Response.json(r, { status: r.ok ? 200 : STATUS[r.code] });
   ```
@@ -353,11 +354,18 @@ aplican están en `docs/audit/03-api-audit.md`.
 | C1 `Result` | `lib/shared/result.ts` (`ServiceResult`) |
 | R2 mapper HTTP | `lib/shared/http.ts` (`toHttpResponse`) |
 | G2 mapper GraphQL | `lib/apollo/errors.ts` (`toGraphQLError`) |
-| G4 en lote desde el padre | `lib/bookings/resolvers.ts` (`guestBookings`) |
-| G5 tope de campos raíz | `lib/apollo/limits.ts` |
+| C2 id mal formado y carrera | `lib/bookings/actions.ts` (`parseBookingInput`, `updateBooking` con estado esperado) |
+| C7 reintento reconocido | `lib/bookings/actions.ts` (`createBooking`, rama `CONFLICT`) |
 | C8 clamp de `limit` | `lib/listings/queries.ts` (`getListings`) |
+| C8 cursor | `lib/chat/queries.ts` (`getChatThread`) + `?from=` en `app/(app)/messages/[bookingId]/page.tsx` |
 | R3 cota de login | `lib/auth/actions.ts` (`authUser`) |
+| R4 un objeto de input | `lib/bookings/actions.ts`, `lib/bookings/validation.ts` |
+| G4 DataLoader por request | `lib/apollo/loaders.ts` + `lib/apollo/context.ts` |
+| G6 sin endpoint HTTP | `lib/apollo/client.ts` (`SchemaLink`) |
+| T1 vida del socket | `components/chat/chat-connection.tsx` |
 | T2 contrato del socket | `lib/chat/socket.ts` ↔ `greenaway-worker/src/chat/types.ts` |
+| T4, T5 validación y ack garantizado | `greenaway-worker/src/chat/validation.ts`, `src/redis/socket.ts` |
+| T6 refetch al reabrir el SSE | `components/notifications/provider.tsx` |
 
 **Tipos generados (`pnpm codegen`, config en `codegen.ts`):** los resultados, variables y
 documents de una operación se importan de `__generated__/operations.ts`; los tipos del schema, los

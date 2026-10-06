@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { listingIdSchema } from "@/lib/listings/validation";
 
 const stayFields = {
   checkIn: z.date({ error: "Select a check-in date" }),
@@ -22,7 +23,7 @@ export const staySchema = z
 export const createBookingSchema = z
   .object({
     ...stayFields,
-    listingId: z.string().regex(/^[a-f\d]{24}$/i, "Listing not found"),
+    listingId: listingIdSchema,
     totalPrice: z.number().positive(),
   })
   .refine(checkOutAfterCheckIn.check, checkOutAfterCheckIn.message);
@@ -32,4 +33,18 @@ export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 export const bookingIdSchema = z.uuid("Booking not found");
 
 // Optional note the host or guest attaches to a status change.
-export const statusReasonSchema = z.string().trim().max(256, "Keep it under 256 characters").optional();
+const statusReasonSchema = z.string().trim().max(256, "Keep it under 256 characters").optional();
+
+export const cancelBookingSchema = z.object({
+  bookingId: bookingIdSchema,
+  reason: statusReasonSchema,
+});
+
+export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;
+
+export const manageBookingSchema = z.object({
+  bookingId: bookingIdSchema,
+  hostMessage: statusReasonSchema,
+});
+
+export type ManageBookingInput = z.infer<typeof manageBookingSchema>;

@@ -1,5 +1,6 @@
 import { authorize } from "@/lib/auth/session";
 import { getSubscriber } from "@/lib/infra/subscriber";
+import { toHttpResponse } from "@/lib/shared/http";
 import { NextResponse } from "next/server";
 
 // SSE necesita el runtime Node (node-redis abre sockets TCP; Edge no puede).
@@ -10,15 +11,10 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   // 1. Identidad desde la cookie httpOnly (same-origin → viaja sola en el GET).
   const auth = await authorize("notifications:view");
-  if (!auth.ok) {
-    const status = auth.code === "UNAUTHORIZED" ? 401 : 403;
-    return new NextResponse(auth.error, { status });
-  }
+  if (!auth.ok) return toHttpResponse(auth);
   const channel = `notifications:${auth.data.id}`;
 
-  // 2. El subscriber compartido de todo el proceso (una sola conexión a Redis).
-  //    Si Redis no responde, devolvemos 503 antes de abrir el stream — el
-  //    EventSource reintenta solo.
+  // 2. Sin Redis, 503 antes de abrir el stream.
   let subscriber: Awaited<ReturnType<typeof getSubscriber>>;
   try {
     subscriber = await getSubscriber();
@@ -27,8 +23,10 @@ export async function GET(req: Request) {
       "[subscribe]: could not reach the notifications broker",
       error,
     );
-    return new NextResponse("Notifications channel unavailable", {
-      status: 503,
+    return toHttpResponse({
+      ok: false,
+      error: "Notifications channel unavailable",
+      code: "UNAVAILABLE",
     });
   }
 

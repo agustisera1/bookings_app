@@ -13,6 +13,15 @@ const config: CodegenConfig = {
         enumsAsTypes: true,
         // Resolvers return the Drizzle `Date`; the scalar serializes it to ISO.
         scalars: { DateTime: { input: "Date", output: "Date | string" } },
+        // Resolvers receive and return the domain shape; the schema's `id` is derived from it.
+        mapperTypeSuffix: "Model",
+        mappers: {
+          Booking: "@/lib/bookings/types#BookingNode",
+          Listing: "@/lib/listings/types#Listing",
+          Notification: "@/lib/notifications/types#NotificationDocument",
+          ChatMeta: "@/lib/chat/types#SerializableChatDocument",
+          ChatMessage: "@/lib/chat/types#SerializableMessageDocument",
+        },
       },
     },
     "./lib/apollo/__generated__/operations.ts": {

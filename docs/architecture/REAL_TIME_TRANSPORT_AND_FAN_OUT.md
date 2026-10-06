@@ -73,7 +73,7 @@ sirve (la verdad ya está en Mongo). Herramienta equivocada para el trabajo.
 El borde se elige **por feature**, según la dirección del tráfico:
 
 - **Notificaciones son one-way** (server→client). **SSE** es la herramienta del tamaño justo:
-  reconexión nativa del browser (`EventSource`), más simple, y —al servirse desde Next— **same-origin**,
+  reconexión nativa del browser ante una caída de red (`EventSource`), más simple, y —al servirse desde Next— **same-origin**,
   lo que hace que la cookie del JWT viaje sola. Montar socket.io acá sería overkill y encima
   reintroduciría el problema de auth cross-origin.
 - **Mensajería es bidireccional** (el guest escribe, el host escribe) → SSE **no sirve**. Ahí entra
@@ -126,8 +126,8 @@ de verdad; el pub/sub es entrega en vivo, descartable. El peor caso de una pérd
 El costo de perder un mensaje pub/sub no es "notificación perdida para siempre" — es "**el aviso en
 vivo llegó tarde**". La correctitud la garantiza la DB, no el canal en vivo.
 
-**Patrón que cierra el hueco (casi gratis):** los clientes de tiempo real reconectan solos
-(`EventSource` y socket.io ambos). Si en cada (re)conexión el cliente **refetchea las notificaciones
+**Patrón que cierra el hueco (casi gratis):** los clientes de tiempo real reconectan solos ante una
+caída de red (`EventSource` y socket.io ambos). Si en cada (re)conexión el cliente **refetchea las notificaciones
 desde la DB**, cualquier cosa perdida mientras estuvo desconectado se recupera ahí. La DB pasa a ser
 el mecanismo de reconciliación y la ventana de pérdida de pub/sub se vuelve irrelevante para la
 correctitud.
@@ -161,8 +161,9 @@ crudo, otra cosa.)
 - **Un suscriptor Redis compartido.** El proceso Next abre **una** suscripción al canal y reparte a
   las conexiones SSE en memoria filtrando por `userId` (`lib/subscriber.ts`) — **no** una suscripción
   Redis por cliente.
-- **Refetch en el (re)connect.** Al abrir/reabrir el `EventSource`, el cliente refetchea de Mongo para
-  reconciliar lo que se haya perdido mientras estuvo desconectado (ver la sección de at-most-once).
+- **Refetch en el (re)connect.** Al reabrir el `EventSource`, el cliente hace `router.refresh()` y los
+  contadores vuelven a salir de la DB: se reconcilia lo perdido mientras estuvo desconectado (ver la
+  sección de at-most-once).
 - **Orden en el worker.** Persistir en Mongo **primero**, publicar después: `sendNotification` inserta
   con `insertNotification` y recién ahí publica al canal (`src/processors/notifications.ts`).
 
@@ -174,6 +175,16 @@ crudo, otra cosa.)
   cookie), con CORS `credentials` para el origen del cliente. La autorización del room va por un
   **ticket firmado** aparte (`ChatParties`): el handshake autentica *quién*, el ticket autoriza *a qué
   room* — el worker sólo verifica firma, sin PG ni Mongo (`src/chat/auth.ts`).
+- **Vida de la conexión: la sección de mensajes.** El socket se construye sin conectar y lo conecta
+  `ChatConnection`, montado en el layout de `/messages`; al salir de la sección (o al cerrar sesión)
+  se desconecta. La función `auth` corre en cada conexión, así que una sesión nueva entrega su propio
+  token.
+- **Contrato tipado, con acks en el formato de la API.** Los eventos, payloads y acks viajan como
+  genéricos de socket.io en los dos lados (`lib/chat/socket.ts` ↔ `src/chat/types.ts`, espejo a
+  mano). Todo ack es `{ ok, data }` o `{ ok, code, error }`, y el server lo responde en todo camino,
+  también si falla la persistencia. El payload se valida en el worker (`src/chat/validation.ts`).
+- **Historial: cursor en la URL.** El hilo abre en sus últimos 50 mensajes; "Load older messages" es
+  un link a `?from=<cursor>` que la página lee por GraphQL (`chatThread(id, from)`).
 - **Routing: rooms por conversación.** En el join, el ticket nombra su propio `chat_id` y el socket
   entra a esa room; la entrega usa `socket.to(room)`, que excluye al emisor (por eso el emisor
   reconcilia con el ack).
