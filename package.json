@@ -12,6 +12,12 @@
     "codegen": "graphql-codegen",
     "db:generate": "dotenv -e .env.local -- drizzle-kit generate",
     "db:migrate": "dotenv -e .env.local -- drizzle-kit migrate",
+    "infra:up": "docker compose --env-file .env.local up -d --wait && pnpm db:setup && pnpm db:seed",
+    "infra:down": "docker compose --env-file .env.local down",
+    "infra:reset": "docker compose --env-file .env.local down -v && pnpm infra:up",
+    "db:indexes": "dotenv -e .env.local -- tsx scripts/db_indexes.ts",
+    "db:setup": "pnpm db:migrate && pnpm db:indexes",
+    "db:seed": "dotenv -e .env.local -- tsx scripts/seed.ts",
     "db:schema": "dotenv -e .env.local -- tsx scripts/db_schema.ts",
     "db:reset": "dotenv -e .env.local -- tsx scripts/reset_data.ts"
   },

@@ -1,70 +1,97 @@
-# Database scripts
+# Base de datos
 
-## Commands
+## Comandos
 
 ```bash
-pnpm db:schema        # print current DB schema as JSON
-pnpm db:migrate       # apply all pending migrations
-pnpm db:rollback      # roll back the last applied migration
-pnpm db:rollback -- --steps 3  # roll back the last 3
-pnpm db:reset         # wipe the data (asks first); `-- --dry-run` to preview
+pnpm db:setup      # schema completo: db:migrate + db:indexes (idempotente)
+pnpm db:migrate    # aplica las migraciones pendientes de PostgreSQL
+pnpm db:indexes    # crea los índices de MongoDB (scripts/db_indexes.ts)
+pnpm db:seed       # datos de demo en las dos bases (scripts/seed.ts)
+pnpm db:reset      # borra los datos (pregunta antes); `-- --dry-run` para ver qué borraría
+pnpm db:generate   # genera una migración desde los cambios en lib/*/tables.ts
+pnpm db:schema     # imprime el schema actual de PostgreSQL como JSON
 ```
 
-All commands load `.env.local` automatically via `dotenv-cli`.
+Todos cargan `.env.local` con `dotenv-cli`.
 
-`db:reset` is a **data** reset, not a schema one: vacía `bookings` / `reviews` / `outbox`
-en Postgres (los `users` **sobreviven**), las cuatro colecciones de Mongo y el bucket de S3.
-Los índices de Mongo quedan intactos porque borra con `deleteMany({})`, nunca con `drop()`.
+## Infra en Docker
 
----
+`docker-compose.yml` levanta Postgres, Mongo, Redis y Mongo Express con las credenciales y puertos
+de `.env.local` (Redis con el ACL de `REDIS_USER`). Lo usan la app y `greenaway-worker`.
 
-## Migrations
-
-Files live in `db/migrations/` and must follow the naming convention:
-
-```
-NNN_description.sql   # e.g. 002_add_reviews_index.sql
+```bash
+pnpm infra:up      # contenedores sanos + db:setup + db:seed
+pnpm infra:down    # los baja; los datos quedan en los volúmenes
+pnpm infra:reset   # borra contenedores y volúmenes, y vuelve a infra:up
 ```
 
-Each file has two sections:
+## Orden
 
-```sql
--- up
-CREATE TABLE ...;
+1. **`db:setup`** deja el schema listo en las dos bases. Se puede correr las veces que haga falta.
+2. **`db:seed`** (opcional) carga datos de demo. La app funciona sin seed.
 
--- down
-DROP TABLE ...;
-```
+`infra:up` corre los dos. Para volver a empezar sin tocar los contenedores:
+`pnpm db:reset --yes && pnpm db:seed`.
 
-The runner applies files in alphabetical order. Each migration runs inside a transaction — if it fails, it rolls back and stops.
+Sin `db:indexes` la app funciona pero más lenta, salvo los índices **únicos** (`chats.booking_id`,
+`read_cursors.user_id`, `notifications.event_id`): sostienen invariantes, no performance.
 
-Applied migrations are tracked in the `schema_migrations` table:
+## PostgreSQL — migraciones de drizzle
 
-```sql
-CREATE TABLE schema_migrations (
-  version    TEXT        PRIMARY KEY,
-  applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-```
+- El schema se define en `lib/<service>/tables.ts`. `pnpm db:generate` compara contra el último
+  snapshot (`db/migrations/meta/`) y escribe el SQL en `db/migrations/NNNN_nombre.sql`.
+- Lo que drizzle no modela (un `EXCLUDE`, un backfill de datos) va en una migración custom:
+  `pnpm db:generate --custom --name=<nombre>` crea el archivo vacío para escribirlo a mano.
+  Ej.: `0001_booking_no_overlap.sql`, `0004_users_email_lowercase_data.sql`.
+- drizzle registra lo aplicado en `drizzle.__drizzle_migrations`. No hay rollback: un cambio se
+  revierte con una migración nueva.
 
-### Bootstrapping an existing DB
+## MongoDB — índices
 
-If the tables already exist (e.g. created manually), create `schema_migrations` and register the baseline migration without re-running the DDL:
+Todos los índices viven en `scripts/db_indexes.ts`, y ningún otro script crea índices.
+`createIndexes` no hace nada si el índice ya existe con la misma definición; si cambia su
+definición, hay que dropear el viejo antes.
 
-```sql
-CREATE TABLE schema_migrations (
-  version    TEXT        PRIMARY KEY,
-  applied_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
+## Seed
 
-INSERT INTO schema_migrations (version) VALUES ('001_initial_schema');
-```
+`pnpm db:seed` carga un set determinístico, con fechas relativas al día en que corre, que cubre
+los tres flujos del alcance (`docs/audit/scope.md`):
 
----
+| Qué | Cuánto |
+|---|---|
+| Usuarios `@greenaway.test` (contraseña `greenaway-demo`) | 3 hosts (`lucia`, `martin`, `sofia`) y 6 guests |
+| Listings | 30, repartidos entre los hosts |
+| Reservas | ~100 en los cuatro estados: estadías pasadas, en curso, próximas, pendientes, canceladas (con su reembolso) y rechazadas |
+| Notificaciones | las que el worker habría escrito por cada transición; las de más de 3 días, leídas |
+| Chats | ~70 con sus mensajes, y un cursor de lectura por usuario que deja mensajes sin leer |
 
-## Scripts
+### Usuarios de prueba
 
-| File | Description |
-|------|-------------|
-| `scripts/migrate.ts` | Migration runner (`up` / `down` commands) |
-| `scripts/db_schema.ts` | Introspects tables, constraints, indexes, functions, and extensions from `information_schema` and `pg_catalog` |
+Todos con la contraseña **`greenaway-demo`**.
+
+| Rol | Nombre | Email |
+|---|---|---|
+| Host | Lucía Fernández | `lucia@greenaway.test` |
+| Host | Martín Gómez | `martin@greenaway.test` |
+| Host | Sofía Romero | `sofia@greenaway.test` |
+| Guest | Valentina Díaz | `valentina@greenaway.test` |
+| Guest | Joaquín Pereyra | `joaquin@greenaway.test` |
+| Guest | Camila Sosa | `camila@greenaway.test` |
+| Guest | Tomás Herrera | `tomas@greenaway.test` |
+| Guest | Florencia Ruiz | `florencia@greenaway.test` |
+| Guest | Nicolás Benítez | `nicolas@greenaway.test` |
+
+Para una demo, dos ventanas: un host (`lucia`) y un guest (`valentina`) muestran los dos lados de
+una misma reserva y de su chat.
+
+### Reglas
+
+- Siembra solo tablas de datos vacías: si encuentra reservas o listings, se saltea y lo avisa.
+- Los usuarios se insertan con `ON CONFLICT DO NOTHING`, así que sobreviven al reset y no se duplican.
+- No escribe en el outbox: sembrar no dispara emails ni notificaciones en vivo.
+
+## Reset
+
+`db:reset` borra datos, no schema: `bookings`, `reviews`, `outbox` y `processed_events` en Postgres
+(los `users` quedan), las colecciones de Mongo con `deleteMany` (los índices quedan) y el bucket de
+S3. Si las credenciales no pueden listar el bucket (`s3:ListBucket`), S3 se saltea con un aviso.

@@ -10,7 +10,7 @@ Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo d
 - **DBs**: PostgreSQL (núcleo transaccional + outbox), MongoDB (listados, chat, notificaciones), Redis (colas, pub/sub, rate limiting)
 - **Colas**: BullMQ sobre Redis; el worker vive en el repo `greenaway-worker`
 - **Auth**: JWT (access token en cookie httpOnly)
-- **Infra local**: Docker Compose
+- **Infra local**: Docker Compose (`docker-compose.yml`, credenciales de `.env.local`)
 
 ## Comandos
 
@@ -21,8 +21,13 @@ pnpm lint        # linting
 pnpm test        # tests (una corrida)
 pnpm test:watch  # tests en watch
 pnpm codegen     # tipos de GraphQL
-pnpm db:migrate  # migraciones de PostgreSQL
+pnpm infra:up    # Postgres, Mongo y Redis en Docker + db:setup + db:seed (idempotente)
+pnpm db:setup    # migraciones de PostgreSQL + índices de MongoDB (idempotente)
+pnpm db:generate # migración desde los cambios en lib/*/tables.ts
+pnpm db:seed     # datos de demo (pnpm db:reset --yes para volver a empezar)
 ```
+
+Detalle de la base (migraciones, índices, seed, reset): `db/README.md`.
 
 ## Implementar sobre la guía oficial
 
@@ -42,7 +47,7 @@ de arreglar otra cosa.
 
 **Antes de modificar código, leé las reglas de `.claude/rules/` de las dimensiones que toca la tarea y alineá el cambio con ellas.**
 
-Las directivas viven en un archivo por dimensión (numeradas como en `docs/audit/DIMENSIONS.md`). Las que tienen `paths:` se cargan solo al tocar archivos que matchean. Para escribir una regla nueva: `docs/audit/HOW_TO_ADD_RULE.md`.
+Las directivas viven en un archivo por dimensión (numeradas como en `docs/audit/dimensions.md`). Las que tienen `paths:` se cargan solo al tocar archivos que matchean. Para escribir una regla nueva: `docs/audit/how-to-add-rule.md`.
 
 | Archivo | Cubre | Se carga |
 |---|---|---|

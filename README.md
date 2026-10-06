@@ -19,8 +19,8 @@ MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (
 notificaciones por email asíncronas (worker + BullMQ); chat host↔guest en vivo (socket.io);
 notificaciones in-app (SSE); y rate limiting en el borde de autenticación.
 
-**Próximo:** auditoría del sistema y entorno reproducible con Docker + seed (`docs/audit/`). La deuda
-técnica conocida vive en `docs/tech_debt/`.
+**Entorno:** reproducible con Docker + seed (`pnpm infra:up`). La auditoría del sistema vive en
+`docs/audit/` y la deuda técnica conocida, en `docs/tech-debt/`.
 
 ---
 
@@ -74,8 +74,7 @@ scripts/        Seeds y utilidades de datos
 
 ## 📦 Prerequisitos
 
-- **Node.js 20+** y **pnpm**
-- **PostgreSQL**, **MongoDB** y **Redis** accesibles (localmente o vía Docker)
+- **Node.js 20+**, **pnpm** y **Docker** (con Compose)
 - Para emails y chat en vivo: el repo **`greenaway-worker`** corriendo por separado
 
 ---
@@ -85,11 +84,18 @@ scripts/        Seeds y utilidades de datos
 ```bash
 pnpm install
 cp .env.example .env.local      # completar PG · Mongo · Redis · JWT · S3
-pnpm db:migrate                 # migraciones de PostgreSQL
+pnpm infra:up                   # Postgres, Mongo y Redis en Docker + schema + seed
 pnpm dev
 ```
 
-La app queda en `http://localhost:3000`. Para emails y chat en vivo, correr `greenaway-worker` por
+`infra:up` levanta los contenedores con las credenciales y puertos de `.env.local`, espera a que
+estén sanos y corre `db:setup` y `db:seed`. Se puede correr de nuevo: el seed se saltea si ya hay
+datos. Los puertos tienen que estar libres: un Postgres o un Mongo instalado en la máquina con el
+mismo puerto choca con el contenedor. Mongo Express (UI de Mongo) queda en `http://localhost:8081`.
+
+La app queda en `http://localhost:3000`. Con el seed, entrá como `lucia@greenaway.test` (host) o
+`valentina@greenaway.test` (guest), contraseña `greenaway-demo`; el resto de los usuarios de prueba
+está en `db/README.md`. Para emails y chat en vivo, correr `greenaway-worker` por
 separado (ver su repo).
 
 ---
@@ -101,7 +107,14 @@ separado (ver su repo).
 | `pnpm dev` / `build`                            | desarrollo / build de producción              |
 | `pnpm lint` · `pnpm test`                       | linting · tests (Vitest)                      |
 | `pnpm codegen`                                  | regenera los tipos de GraphQL desde el schema |
+| `pnpm infra:up`                                 | infra en Docker + schema + seed               |
+| `pnpm infra:down` · `infra:reset`               | baja la infra / la borra con sus datos y la levanta de cero |
+| `pnpm db:setup`                                 | schema completo: `db:migrate` + `db:indexes`  |
 | `pnpm db:generate` · `db:migrate`              | genera / aplica migraciones de PostgreSQL     |
+| `pnpm db:indexes`                               | crea los índices de MongoDB                   |
+| `pnpm db:seed` · `db:reset`                     | carga / borra los datos de demo               |
+
+Detalle de migraciones, índices, seed y reset: `db/README.md`.
 
 ---
 
@@ -114,7 +127,7 @@ responde cada uno**:
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
 | entender **por qué** se tomó una decisión de arquitectura | `docs/architecture/` — ADRs (realtime, colas, rate limiting)                        |
 | las **convenciones** para extender el código              | `.claude/rules/` — una regla por dimensión; índice en `CLAUDE.md`                   |
-| qué es **deuda conocida**                                  | `docs/tech_debt/`                                                                   |
+| qué es **deuda conocida**                                  | `docs/tech-debt/`                                                                   |
 
 ---
 

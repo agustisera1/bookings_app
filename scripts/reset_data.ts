@@ -1,20 +1,5 @@
-/**
- * Data reset for local development.
- *
- *   pnpm db:reset             ask first, then wipe
- *   pnpm db:reset --dry-run   count what it would delete, touch nothing
- *   pnpm db:reset --yes       skip the prompt (CI / scripted runs)
- *
- * Wipes the transactional data and leaves the world re-seedable:
- *
- *   Postgres  bookings · reviews · outbox                (users SURVIVE)
- *   Mongo     listings · notifications · chats · messages
- *   S3        every object in the listings bucket
- *
- * The Mongo side uses `deleteMany({})`, never `drop()`: dropping a collection
- * takes its indexes with it, and they only exist because someone created them by
- * hand. The schema survives on both sides — this only removes rows.
- */
+// Data reset for local development: removes rows, never schema. Usage and what it wipes: db/README.md.
+// `--dry-run` counts without touching anything; `--yes` skips the prompt.
 import { Pool } from "pg";
 import { MongoClient } from "mongodb";
 import {
@@ -26,14 +11,15 @@ import * as readline from "readline/promises";
 
 // `users` is deliberately absent: wiping it would invalidate every logged-in
 // session and every `host_id` the seeded listings point at.
-const PG_TABLES = ["bookings", "reviews", "outbox"] as const;
+const PG_TABLES = ["bookings", "reviews", "outbox", "processed_events"] as const;
 
-// Each collection lives in its own database (see lib/repositories/*.mongo.ts).
+// Each collection lives in its own database (see lib/*/repository.ts).
 const MONGO_COLLECTIONS = [
   { db: "listingsdb", collection: "listings" },
   { db: "notificationsdb", collection: "notifications" },
   { db: "chatsdb", collection: "chats" },
   { db: "messagesdb", collection: "messages" },
+  { db: "messagesdb", collection: "read_cursors" },
 ] as const;
 
 const args = process.argv.slice(2);
@@ -241,7 +227,7 @@ async function main() {
     } else {
       await resetS3(bucket);
     }
-    console.log("\nDone. Re-seed with scripts/seed_listings.js.");
+    console.log("\nDone. Re-seed with `pnpm db:seed`.");
   });
 }
 
