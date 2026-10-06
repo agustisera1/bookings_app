@@ -74,6 +74,9 @@ scripts/        Seeds y utilidades de datos
 ## 📦 Prerequisitos
 
 - **Node.js 20+**, **pnpm** y **Docker** (con Compose)
+- **Puertos libres** para los contenedores: los de `PGPORT` y `REDIS_PORT` en `.env.local`, `27017`
+  (Mongo) y `8081` (Mongo Express). Un Postgres, Mongo o Redis instalado en la máquina o un contenedor
+  viejo en esos puertos hay que detenerlo antes: cómo, en [`db/README.md`](db/README.md#puertos-ocupados).
 - Para emails y chat en vivo: el repo **`greenaway-worker`** corriendo por separado
 
 ---
