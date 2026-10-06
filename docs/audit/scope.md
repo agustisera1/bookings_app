@@ -2,7 +2,7 @@
 
 ## Flujos ↔ dimensiones
 
-Solo se audita lo que estos flujos tocan. Los números refieren a [DIMENSIONS.md](DIMENSIONS.md).
+Solo se audita lo que estos flujos tocan. Los números refieren a [dimensions.md](dimensions.md).
 
 | Flujo | Features | Dimensiones |
 |---|---|---|

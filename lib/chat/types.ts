@@ -3,7 +3,7 @@ import type { BookingParty, BookingStatus } from "@/lib/bookings/types";
 
 export type ChatDocument = WithId<{
   booking_id: string;
-  started_at: string;
+  started_at: Date;
   guest_id: string;
   host_id: string;
 }>;
@@ -13,7 +13,7 @@ export type SerializableChatDocument = Omit<ChatDocument, "_id"> & { _id: string
 export type MessageDocument = WithId<{
   chat_id: string;
   sender_id: string;
-  timestamp: string;
+  timestamp: Date;
   body: string;
 }>;
 
@@ -22,12 +22,12 @@ export type SerializableMessageDocument = Omit<MessageDocument, "_id"> & { _id: 
 // The only persisted read state: unread = later messages I didn't send. One per user.
 export type MessageReadCursor = {
   user_id: string;
-  last_seen_at: string;
+  last_seen_at: Date;
 };
 
 export type ChatMessagePage = {
   items: SerializableMessageDocument[];
-  olderCursor: string | null;
+  olderCursor: Date | null;
 };
 
 // `chat` is null until someone speaks: an empty thread, not a failure.

@@ -252,7 +252,7 @@ export function MyActionButton({ id }: { id: string }) {
 
 ## Web Interface Guidelines
 
-Subconjunto aplicable de [vercel.com/design/guidelines](https://vercel.com/design/guidelines). Formato: `docs/audit/HOW_TO_ADD_RULE.md`. Todas las verificaciones excluyen `components/ui/`.
+Subconjunto aplicable de [vercel.com/design/guidelines](https://vercel.com/design/guidelines). Formato: `docs/audit/how-to-add-rule.md`. Todas las verificaciones excluyen `components/ui/`.
 
 ### Accesibilidad y semántica
 

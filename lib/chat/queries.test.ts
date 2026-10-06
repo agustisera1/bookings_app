@@ -32,7 +32,7 @@ import type { Listing } from "@/lib/listings/types";
 import { getChatThread, getUnreadMessagesCount } from "./queries";
 import * as repo from "./repository";
 
-const CURSOR = "2026-08-01T00:00:00.000Z";
+const CURSOR = new Date("2026-08-01T00:00:00.000Z");
 
 function user(overrides: Partial<CurrentUser> = {}): CurrentUser {
   return {

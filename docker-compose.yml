@@ -1,0 +1,65 @@
+# Local infra for the app and greenaway-worker. Credentials and ports come from .env.local:
+# `pnpm infra:up` brings it up healthy with schema and seed (db/README.md).
+name: greenaway
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${PGUSER:?set PGUSER in .env.local}
+      POSTGRES_PASSWORD: ${PGPASSWORD:?set PGPASSWORD in .env.local}
+      POSTGRES_DB: ${PGDATABASE:?set PGDATABASE in .env.local}
+    ports:
+      - "${PGPORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mongo:
+    image: mongo:8
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+
+  redis:
+    image: redis:8-alpine
+    environment:
+      REDIS_USER: ${REDIS_USER:?set REDIS_USER in .env.local}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.local}
+    # ACL from env: the default user is off, the app and the worker log in as REDIS_USER.
+    command:
+      - sh
+      - -c
+      - exec redis-server --user default off --user "$$REDIS_USER" on ">$$REDIS_PASSWORD" "~*" "&*" "+@all"
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli --user \"$$REDIS_USER\" --pass \"$$REDIS_PASSWORD\" --no-auth-warning ping | grep -q PONG"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  mongo-express:
+    image: mongo-express:latest
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo:27017
+      ME_CONFIG_BASICAUTH: "false"
+    ports:
+      - "127.0.0.1:${MONGO_EXPRESS_PORT:-8081}:8081"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  mongo-data:

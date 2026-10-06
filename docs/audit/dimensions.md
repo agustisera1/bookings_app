@@ -16,6 +16,6 @@ La auditoría se hace por partes: una dimensión por vez, cada una en su branch 
 | 10 | **Observabilidad** | Logs, manejo de errores inesperados, trazas, métricas |
 | 11 | **Testing** | Qué se testea, en qué capa, qué huecos hay |
 | 12 | **DX / tooling** | Lint, tsc, codegen, hooks, scripts, CI |
-| 13 | **Docs / gobierno** | CLAUDE.md y `.claude/rules/`, ADRs, tech_debt — y que coincidan con el código |
+| 13 | **Docs / gobierno** | CLAUDE.md y `.claude/rules/`, diagramas, tech-debt — y que coincidan con el código |
 
 Las dimensiones 1 a 5 son las más acopladas entre sí: un criterio de arquitectura cambia la forma de 1, 2, 3 y 5 a la vez, así que conviene auditarlas juntas o en ese orden.

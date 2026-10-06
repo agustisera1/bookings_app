@@ -43,4 +43,4 @@ De más fuerte a más débil: **lint o hook** (se cumple solo) → **comando de 
 
 ## Auditar con estas reglas
 
-Como cada regla trae su verificación, "auditá la dimensión N" es correr las verificaciones de su archivo sobre el alcance de [SCOPE.md](SCOPE.md) y listar qué archivos incumplen cada regla.
+Como cada regla trae su verificación, "auditá la dimensión N" es correr las verificaciones de su archivo sobre el alcance de [scope.md](scope.md) y listar qué archivos incumplen cada regla.

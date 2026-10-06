@@ -19,8 +19,8 @@ MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (
 notificaciones por email asíncronas (worker + BullMQ); chat host↔guest en vivo (socket.io);
 notificaciones in-app (SSE); y rate limiting en el borde de autenticación.
 
-**Próximo:** auditoría del sistema y entorno reproducible con Docker + seed (`docs/audit/`). La deuda
-técnica conocida vive en `docs/tech_debt/`.
+**Entorno:** reproducible con Docker + seed (`pnpm infra:up`). La auditoría del sistema vive en
+`docs/audit/` y la deuda técnica conocida, en `docs/tech-debt/`.
 
 ---
 
@@ -53,8 +53,7 @@ flowchart LR
 - **Redis** — colas (BullMQ), fan-out de sockets, rate limiting y pub/sub de las notificaciones SSE.
 
 **Tiempo real:** SSE para notificaciones (mismo origen, dentro de Next) y socket.io para el chat (en el
-worker). **Auth:** JWT en cookie httpOnly. El _por qué_ de estas decisiones
-está en `docs/architecture/`.
+worker). **Auth:** JWT en cookie httpOnly. Los diagramas de cada flujo están en `docs/diagrams/`.
 
 ---
 
@@ -66,7 +65,7 @@ components/     ui/ (shadcn) · common/ (primitivos propios) · <feature>/ (book
 lib/            <service>/ (auth, bookings, chat, listings, notifications, reviews, users) ·
                 apollo/ (schema raíz y cliente) · infra/ (clientes de DB y servicios) · shared/
 db/migrations/  Migraciones de PostgreSQL, generadas por drizzle-kit desde lib/*/tables.ts
-docs/           ADRs, deuda técnica y auditoría
+docs/           Diagramas, deuda técnica y auditoría
 scripts/        Seeds y utilidades de datos
 ```
 
@@ -74,8 +73,10 @@ scripts/        Seeds y utilidades de datos
 
 ## 📦 Prerequisitos
 
-- **Node.js 20+** y **pnpm**
-- **PostgreSQL**, **MongoDB** y **Redis** accesibles (localmente o vía Docker)
+- **Node.js 20+**, **pnpm** y **Docker** (con Compose)
+- **Puertos libres** para los contenedores: los de `PGPORT` y `REDIS_PORT` en `.env.local`, `27017`
+  (Mongo) y `8081` (Mongo Express). Un Postgres, Mongo o Redis instalado en la máquina o un contenedor
+  viejo en esos puertos hay que detenerlo antes: cómo, en [`db/README.md`](db/README.md#puertos-ocupados).
 - Para emails y chat en vivo: el repo **`greenaway-worker`** corriendo por separado
 
 ---
@@ -85,11 +86,19 @@ scripts/        Seeds y utilidades de datos
 ```bash
 pnpm install
 cp .env.example .env.local      # completar PG · Mongo · Redis · JWT · S3
-pnpm db:migrate                 # migraciones de PostgreSQL
+pnpm infra:up                   # Postgres, Mongo y Redis en Docker + schema + seed
 pnpm dev
 ```
 
-La app queda en `http://localhost:3000`. Para emails y chat en vivo, correr `greenaway-worker` por
+`infra:up` (script de `package.json` sobre `docker-compose.yml`) levanta los contenedores con las
+credenciales y puertos de `.env.local`, espera a que estén sanos y corre `db:setup` y `db:seed`. Se
+puede correr de nuevo: el seed se saltea si ya hay datos. Mongo Express (UI de Mongo) queda en
+`http://localhost:8081`. Qué hace cada script de base, qué hacer si un puerto está ocupado y los
+usuarios de prueba: [`db/README.md`](db/README.md).
+
+La app queda en `http://localhost:3000`. Con el seed, entrá como `lucia@greenaway.test` (host) o
+`valentina@greenaway.test` (guest), contraseña `greenaway-demo`; el resto de los usuarios de prueba
+está en `db/README.md`. Para emails y chat en vivo, correr `greenaway-worker` por
 separado (ver su repo).
 
 ---
@@ -101,7 +110,14 @@ separado (ver su repo).
 | `pnpm dev` / `build`                            | desarrollo / build de producción              |
 | `pnpm lint` · `pnpm test`                       | linting · tests (Vitest)                      |
 | `pnpm codegen`                                  | regenera los tipos de GraphQL desde el schema |
+| `pnpm infra:up`                                 | infra en Docker + schema + seed               |
+| `pnpm infra:down` · `infra:reset`               | baja la infra / la borra con sus datos y la levanta de cero |
+| `pnpm db:setup`                                 | schema completo: `db:migrate` + `db:indexes`  |
 | `pnpm db:generate` · `db:migrate`              | genera / aplica migraciones de PostgreSQL     |
+| `pnpm db:indexes`                               | crea los índices de MongoDB                   |
+| `pnpm db:seed` · `db:reset`                     | carga / borra los datos de demo               |
+
+Detalle de migraciones, índices, seed y reset: `db/README.md`.
 
 ---
 
@@ -112,19 +128,6 @@ responde cada uno**:
 
 | Si querés…                                                | Andá a                                                                              |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| entender **por qué** se tomó una decisión de arquitectura | `docs/architecture/` — ADRs (realtime, colas, rate limiting)                        |
+| ver un **flujo** dibujado                                  | `docs/diagrams/` — chat, SSE, outbox, mailing, rate limiting                        |
 | las **convenciones** para extender el código              | `.claude/rules/` — una regla por dimensión; índice en `CLAUDE.md`                   |
-| qué es **deuda conocida**                                  | `docs/tech_debt/`                                                                   |
-
----
-
-## 📄 Licencia
-
-Sin licencia definida todavía: hasta que se agregue un archivo `LICENSE`, se reservan todos los
-derechos. Elegir una es un pendiente para exponer el proyecto públicamente.
-
----
-
-## 👤 Autor
-
-**Agustín Tisera** — proyecto de portfolio. _(Contacto y links: a completar.)_
+| qué es **deuda conocida**                                  | `docs/tech-debt/`                                                                   |

@@ -1,6 +1,6 @@
 # Auditoría — Services (dimensión 2)
 
-Alcance: los 7 services (`auth`, `bookings`, `chat`, `listings`, `notifications`, `reviews`, `users`), sus repos, sus tipos y `lib/apollo`. Criterio: `.claude/rules/02-services.md` (ejemplo canónico + checklist de auditoría). Se leyó cada service completo, como permite la excepción de `HOW_TO_ADD_RULE.md`.
+Alcance: los 7 services (`auth`, `bookings`, `chat`, `listings`, `notifications`, `reviews`, `users`), sus repos, sus tipos y `lib/apollo`. Criterio: `.claude/rules/02-services.md` (ejemplo canónico + checklist de auditoría). Se leyó cada service completo, como permite la excepción de `how-to-add-rule.md`.
 
 ## Resumen por service
 

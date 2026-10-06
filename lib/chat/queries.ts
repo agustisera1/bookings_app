@@ -107,7 +107,7 @@ export async function getChatThread(
 
     const items = await repo.findMessagesByChatId(
       bookingId,
-      from?.toISOString() ?? null,
+      from,
       from ? MAX_THREAD_MESSAGES : MESSAGES_PER_PAGE,
     );
     const olderCursor = items.length

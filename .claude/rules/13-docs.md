@@ -4,12 +4,16 @@
 
 | Carpeta | Qué vive ahí |
 |---------|-------------|
-| `docs/architecture/` | Decisiones de arquitectura (ADRs): transporte realtime, colas BullMQ, rate limiting |
-| `docs/tech_debt/` | **Deuda técnica conocida.** `PERFORMANCE.md` (backlog de tuning, por impacto) + un `<FEATURE>_NEXT_STEPS.md` por feature |
-| `docs/guides/` | Setup de servicios externos |
-| `docs/audit/` | Auditoría del sistema: dimensiones (`DIMENSIONS.md`) y alcance por flujo (`SCOPE.md`); cada una se trabaja en su branch `refactor/*` |
+| `docs/diagrams/` | Diagramas de alto nivel (SVG) de los flujos: chat, SSE, outbox, mailing, rate limiting |
+| `docs/tech-debt/` | **Deuda técnica conocida.** Un `<feature>-next-steps.md` por feature, y `performance.md` cuando hay deuda de performance |
+| `docs/audit/` | Auditoría del sistema: dimensiones (`dimensions.md`) y alcance por flujo (`scope.md`); cada una se trabaja en su branch `refactor/*` |
 
-`docs/tech_debt/` es un backlog de trabajo, no un archivo histórico: un ítem resuelto o descartado se saca.
+**Nombres:** todo archivo y carpeta de `docs/` va en kebab-case y minúsculas (`sse-hl-diagram.svg`,
+`tech-debt/`). Las únicas excepciones son `README.md` y `CLAUDE.md`, por convención de las herramientas.
+
+`docs/tech-debt/` es un backlog de trabajo, no un archivo histórico: un ítem resuelto o descartado se saca.
+Solo registra deuda dentro del alcance de `docs/audit/scope.md`: lo que queda afuera se retoma cuando
+se pule esa feature, no se documenta antes.
 
 ### Regla de sincronía de documentación — parte de "terminar" un cambio
 
@@ -19,8 +23,8 @@ inexacto. El default es que un cambio de feature toca al menos uno.
 
 | Si el cambio… | Revisar y actualizar |
 |---|---|
-| altera una **decisión o un comportamiento** documentado | el ADR de `docs/architecture/` que lo describe |
-| resuelve, agrava o vuelve obsoleta una **deuda** | su doc en `docs/tech_debt/` |
+| altera un **flujo** dibujado | su diagrama en `docs/diagrams/` |
+| resuelve, agrava o vuelve obsoleta una **deuda** | su doc en `docs/tech-debt/` |
 | mueve/renombra archivos, cambia un patrón canónico o una capa | la regla de `.claude/rules/` que lo describe (y el índice de `CLAUDE.md` si cambia el mapa) |
 
 **Una doc que dice que se hizo X cuando se hizo Y es peor que no tener doc:** quien la lee —humano o
@@ -29,12 +33,12 @@ consciente, no un olvido. No hay linter de prosa: este check lo corre quien hace
 
 ### Regla de deuda técnica
 
-**La deuda técnica se documenta en `docs/tech_debt/`, no en comentarios del código.** Cuando
+**La deuda técnica se documenta en `docs/tech-debt/`, no en comentarios del código.** Cuando
 se identifica un costo conocido, una simplificación deliberada o algo que hay que revisitar:
 
-- Va a `PERFORMANCE.md` si es un costo de queries/rendering, siguiendo el formato existente
-  (**Dónde / Qué pasa / Por qué duele / Cómo medirlo / Idea de fix**), ordenado por impacto.
-- Va a `<FEATURE>_NEXT_STEPS.md` si es estructural de una feature (contratos, límites entre
+- Va a `performance.md` si es un costo de queries/rendering, con el formato **Dónde / Qué pasa /
+  Por qué duele / Cómo medirlo / Idea de fix**, ordenado por impacto.
+- Va a `<feature>-next-steps.md` si es estructural de una feature (contratos, límites entre
   servicios, gaps funcionales).
 - En el código queda **como mucho un puntero de una línea** al doc correspondiente.
 
