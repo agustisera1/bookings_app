@@ -128,16 +128,3 @@ responde cada uno**:
 | ver un **flujo** dibujado                                  | `docs/diagrams/` — chat, SSE, outbox, mailing, rate limiting                        |
 | las **convenciones** para extender el código              | `.claude/rules/` — una regla por dimensión; índice en `CLAUDE.md`                   |
 | qué es **deuda conocida**                                  | `docs/tech-debt/`                                                                   |
-
----
-
-## 📄 Licencia
-
-Sin licencia definida todavía: hasta que se agregue un archivo `LICENSE`, se reservan todos los
-derechos. Elegir una es un pendiente para exponer el proyecto públicamente.
-
----
-
-## 👤 Autor
-
-**Agustín Tisera** — proyecto de portfolio. _(Contacto y links: a completar.)_
