@@ -52,7 +52,7 @@ describe("markMessagesAsSeen", () => {
     expect(res).toEqual({ ok: true, data: null });
     expect(repo.upsertReadCursor).toHaveBeenCalledWith(
       "u1",
-      "2026-08-10T12:00:00.000Z",
+      new Date("2026-08-10T12:00:00.000Z"),
     );
     vi.useRealTimers();
   });

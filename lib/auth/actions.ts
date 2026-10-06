@@ -14,7 +14,7 @@ import { signInSchema, signUpSchema, type SignInInput, type SignUpInput } from "
 
 const SALT_ROUNDS = 10;
 
-// Cotas de abuso. Ver docs/architecture/RATE_LIMITING.md.
+// Cotas de abuso. Ver docs/architecture/rate-limiting.md.
 const LOGIN_IP_POLICY: RateLimitPolicy = { limit: 10, windowMs: 10 * 60_000, failMode: "open" };
 const LOGIN_EMAIL_POLICY: RateLimitPolicy = { limit: 5, windowMs: 10 * 60_000, failMode: "open" };
 const SIGNUP_IP_POLICY: RateLimitPolicy = { limit: 5, windowMs: 60 * 60_000, failMode: "closed" };
@@ -85,7 +85,7 @@ export async function authUser(
   const { email, password } = parsed.data;
   const ip = await getClientIp();
   const ipKey = `rl:login:ip:${ip}`;
-  const emailKey = `rl:login:email:${email.toLowerCase()}`;
+  const emailKey = `rl:login:email:${email}`;
 
   // Before the lookup, so the message is identical whether the email exists or not
   // (otherwise the limit becomes an account-enumeration oracle).

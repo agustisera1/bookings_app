@@ -29,6 +29,20 @@
       "when": 1791228070190,
       "tag": "0003_bookings_created_at_not_null",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791311690838,
+      "tag": "0004_users_email_lowercase_data",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1791311698344,
+      "tag": "0005_data_integrity_checks",
+      "breakpoints": true
     }
   ]
 }

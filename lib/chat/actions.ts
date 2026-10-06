@@ -9,7 +9,7 @@ export async function markMessagesAsSeen(): Promise<ServiceResult<null>> {
   if (!auth.ok) return auth;
 
   try {
-    await repo.upsertReadCursor(auth.data.id, new Date().toISOString());
+    await repo.upsertReadCursor(auth.data.id, new Date());
     return { ok: true, data: null };
   } catch (error) {
     console.error("[markMessagesAsSeen]", error);

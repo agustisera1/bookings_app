@@ -12,7 +12,11 @@ export const EVENTS = {
   LEAVE_CHAT: "leave-chat",
 } as const;
 
-export type DeliveredMessage = Omit<SerializableMessageDocument, "_id"> & { id: string };
+// Over the wire the timestamp is ISO-8601: JSON has no Date.
+export type DeliveredMessage = Omit<SerializableMessageDocument, "_id" | "timestamp"> & {
+  id: string;
+  timestamp: string;
+};
 
 // The server stamps everything else: the client is never trusted with it.
 export type ClientMessage = Pick<DeliveredMessage, "chat_id" | "body">;

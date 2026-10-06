@@ -41,6 +41,10 @@ export const bookings = pgTable(
       "booking_status_valid",
       sql`status IN ('pending', 'accepted', 'rejected', 'cancelled')`,
     ),
+    check("booking_dates_ordered", sql`end_date > start_date`),
+    check("booking_guests_positive", sql`guests >= 1`),
+    check("booking_total_price_positive", sql`total_price > 0`),
+    check("booking_refund_range", sql`refund_amount BETWEEN 0 AND total_price`),
     check(
       "booking_cancelled_by_valid",
       sql`cancelled_by IS NULL OR cancelled_by IN ('guest', 'host')`,

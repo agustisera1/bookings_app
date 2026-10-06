@@ -35,11 +35,10 @@ export async function findChatByBookingId(
   return document ? { ...document, _id: document._id.toString() } : null;
 }
 
-// Oldest first, sorted descending so the limit cuts the old end. With `from`, everything since
-// that timestamp (ISO-8601 UTC strings compare in time order).
+// Oldest first, sorted descending so the limit cuts the old end. With `from`, everything since then.
 export async function findMessagesByChatId(
   chatId: string,
-  from: string | null,
+  from: Date | null,
   limit: number,
 ): Promise<SerializableMessageDocument[]> {
   const documents = await (await messages())
@@ -53,9 +52,9 @@ export async function findMessagesByChatId(
 // Where the page before `before` starts: null when nothing older exists.
 export async function findOlderCursor(
   chatId: string,
-  before: string,
+  before: Date,
   pageSize: number,
-): Promise<string | null> {
+): Promise<Date | null> {
   const documents = await (await messages())
     .find({ chat_id: chatId, timestamp: { $lt: before } })
     .sort({ timestamp: -1 })
@@ -65,12 +64,12 @@ export async function findOlderCursor(
   return documents.at(-1)?.timestamp ?? null;
 }
 
-export async function findReadCursor(userId: string): Promise<string | null> {
+export async function findReadCursor(userId: string): Promise<Date | null> {
   const document = await (await readCursors()).findOne({ user_id: userId });
   return document?.last_seen_at ?? null;
 }
 
-export async function upsertReadCursor(userId: string, lastSeenAt: string): Promise<void> {
+export async function upsertReadCursor(userId: string, lastSeenAt: Date): Promise<void> {
   await (await readCursors()).updateOne(
     { user_id: userId },
     { $set: { last_seen_at: lastSeenAt } },
@@ -81,12 +80,11 @@ export async function upsertReadCursor(userId: string, lastSeenAt: string): Prom
 export async function countMessagesSince(
   chatIds: string[],
   excludeSenderId: string,
-  since: string | null,
+  since: Date | null,
 ): Promise<number> {
   return (await messages()).countDocuments({
     chat_id: { $in: chatIds },
     sender_id: { $ne: excludeSenderId },
-    // ISO-8601 UTC sorts lexicographically in time order: `$gt` compares strings.
     ...(since ? { timestamp: { $gt: since } } : {}),
   });
 }

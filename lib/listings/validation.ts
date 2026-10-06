@@ -1,9 +1,7 @@
 import { z } from "zod";
 
-// Canonical listing vocabulary. These are the exact values stored in Mongo
-// (see scripts/seed_listings.js), so the create form and the search filters
-// must both draw from here to stay in sync — otherwise a host could pick a
-// value that no filter can ever match.
+// Canonical listing vocabulary, stored as-is in Mongo (and by scripts/seed.ts): the create form
+// and the search filters both draw from here, so no host can pick a value no filter matches.
 
 export const PROPERTY_TYPES = [
   "apartment",
