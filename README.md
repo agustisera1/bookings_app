@@ -88,10 +88,11 @@ pnpm infra:up                   # Postgres, Mongo y Redis en Docker + schema + s
 pnpm dev
 ```
 
-`infra:up` levanta los contenedores con las credenciales y puertos de `.env.local`, espera a que
-estén sanos y corre `db:setup` y `db:seed`. Se puede correr de nuevo: el seed se saltea si ya hay
-datos. Los puertos tienen que estar libres: un Postgres o un Mongo instalado en la máquina con el
-mismo puerto choca con el contenedor. Mongo Express (UI de Mongo) queda en `http://localhost:8081`.
+`infra:up` (script de `package.json` sobre `docker-compose.yml`) levanta los contenedores con las
+credenciales y puertos de `.env.local`, espera a que estén sanos y corre `db:setup` y `db:seed`. Se
+puede correr de nuevo: el seed se saltea si ya hay datos. Mongo Express (UI de Mongo) queda en
+`http://localhost:8081`. Qué hace cada script de base, qué hacer si un puerto está ocupado y los
+usuarios de prueba: [`db/README.md`](db/README.md).
 
 La app queda en `http://localhost:3000`. Con el seed, entrá como `lucia@greenaway.test` (host) o
 `valentina@greenaway.test` (guest), contraseña `greenaway-demo`; el resto de los usuarios de prueba

@@ -25,6 +25,25 @@ pnpm infra:down    # los baja; los datos quedan en los volúmenes
 pnpm infra:reset   # borra contenedores y volúmenes, y vuelve a infra:up
 ```
 
+Los comandos `infra:*` son scripts de `package.json` sobre `docker compose --env-file .env.local`;
+`infra:up` agrega `--wait` (espera los healthchecks) y después corre `db:setup` y `db:seed`.
+
+### Puertos ocupados
+
+Los contenedores publican los puertos de `.env.local` (`PGPORT`, `REDIS_PORT`) y `27017` para Mongo.
+Si `infra:up` falla con *port is already allocated* o *bind: address already in use*, hay otro
+proceso escuchando en ese puerto, en general un Postgres, Mongo o Redis instalado en la máquina o un
+contenedor de otro compose:
+
+- **Servicio local:** detenerlo. En Windows, como administrador, `net stop <servicio>` (p. ej.
+  `MongoDB`, `postgresql-x64-17`), y en `services.msc` pasarlo a "Manual" para que no vuelva a
+  arrancar solo. En macOS, `brew services stop <servicio>`; en Linux, `sudo systemctl stop <servicio>`.
+- **Contenedor viejo:** `docker ps` lo muestra; `docker rm -f <nombre>` lo borra.
+- **O cambiar el puerto:** `PGPORT` y `REDIS_PORT` en `.env.local`; para Mongo, `MONGO_PORT` en
+  `.env.local` y el mismo puerto en `MONGODB_URI`.
+
+Para ver quién ocupa un puerto: `netstat -ano | findstr :5433` (Windows) o `lsof -i :5433`.
+
 ## Orden
 
 1. **`db:setup`** deja el schema listo en las dos bases. Se puede correr las veces que haga falta.
