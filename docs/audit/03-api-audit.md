@@ -1,6 +1,6 @@
 # Auditoría — Contrato de API (dimensión 3)
 
-**Alcance:** las superficies que tocan los flujos 1–3 de [SCOPE.md](SCOPE.md):
+**Alcance:** las superficies que tocan los flujos 1–3 de [scope.md](scope.md):
 - Server Actions de `bookings`, `auth`, `chat` y `notifications`.
 - Schema y resolvers GraphQL de `bookings`, `chat`, `listings` (tipo `Listing` y query `listing`), `notifications` y `users`.
 - `app/api/graphql` y `app/api/subscribe`.

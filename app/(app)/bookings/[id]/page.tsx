@@ -35,7 +35,7 @@ export default async function BookingDetailPage({
 
   const booking = data?.booking ?? null;
   // Hosts can already resolve the booking; what they don't have yet is a view
-  // written for them. See docs/tech_debt/BOOKINGS_NEXT_STEPS.md § 2.
+  // written for them. See docs/tech-debt/bookings-next-steps.md § 1.
   if (error || !booking || booking.party === "host") notFound();
 
   const now = new Date();

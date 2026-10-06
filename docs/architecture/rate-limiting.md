@@ -119,7 +119,7 @@ salto a *sliding window counter* es O(1) y no toca a los callers.
 - **Signup → solo IP:** el email todavía no existe como cuenta.
 - **Normalización:** el email va en minúsculas en la key (si no, variar mayúsculas evade la cota).
 - **La IP sale de `x-forwarded-for`**, que el cliente puede falsificar salvo detrás de un proxy de
-  confianza que lo reescriba. A esta escala se acepta el caveat (documentado en `SECURITY_LAYERS.md`);
+  confianza que lo reescriba. A esta escala se acepta el caveat (documentado en `security-layers.md`);
   a escala mayor, la defensa correcta contra IP spoofing / ataque distribuido está en el borde.
 
 ### Eje 6 — Failure mode: híbrido

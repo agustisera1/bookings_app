@@ -15,7 +15,7 @@ paths:
 # Services (dimensión 2)
 
 Cómo se desarrolla, consume y audita un service. El ejemplo canónico es `reviews`. Auditar un service
-puede requerir leerlo completo (excepción de `docs/audit/HOW_TO_ADD_RULE.md`).
+puede requerir leerlo completo (excepción de `docs/audit/how-to-add-rule.md`).
 
 ## El patrón
 
