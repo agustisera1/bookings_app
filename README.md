@@ -53,8 +53,7 @@ flowchart LR
 - **Redis** — colas (BullMQ), fan-out de sockets, rate limiting y pub/sub de las notificaciones SSE.
 
 **Tiempo real:** SSE para notificaciones (mismo origen, dentro de Next) y socket.io para el chat (en el
-worker). **Auth:** JWT en cookie httpOnly. El _por qué_ de estas decisiones
-está en `docs/architecture/`.
+worker). **Auth:** JWT en cookie httpOnly. Los diagramas de cada flujo están en `docs/diagrams/`.
 
 ---
 
@@ -66,7 +65,7 @@ components/     ui/ (shadcn) · common/ (primitivos propios) · <feature>/ (book
 lib/            <service>/ (auth, bookings, chat, listings, notifications, reviews, users) ·
                 apollo/ (schema raíz y cliente) · infra/ (clientes de DB y servicios) · shared/
 db/migrations/  Migraciones de PostgreSQL, generadas por drizzle-kit desde lib/*/tables.ts
-docs/           ADRs, deuda técnica y auditoría
+docs/           Diagramas, deuda técnica y auditoría
 scripts/        Seeds y utilidades de datos
 ```
 
@@ -126,7 +125,7 @@ responde cada uno**:
 
 | Si querés…                                                | Andá a                                                                              |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| entender **por qué** se tomó una decisión de arquitectura | `docs/architecture/` — ADRs (realtime, colas, rate limiting)                        |
+| ver un **flujo** dibujado                                  | `docs/diagrams/` — chat, SSE, outbox, mailing, rate limiting                        |
 | las **convenciones** para extender el código              | `.claude/rules/` — una regla por dimensión; índice en `CLAUDE.md`                   |
 | qué es **deuda conocida**                                  | `docs/tech-debt/`                                                                   |
 

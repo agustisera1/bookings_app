@@ -4,12 +4,11 @@
 
 | Carpeta | Qué vive ahí |
 |---------|-------------|
-| `docs/architecture/` | Decisiones de arquitectura (ADRs): transporte realtime, colas BullMQ, rate limiting |
+| `docs/diagrams/` | Diagramas de alto nivel (SVG) de los flujos: chat, SSE, outbox, mailing, rate limiting |
 | `docs/tech-debt/` | **Deuda técnica conocida.** Un `<feature>-next-steps.md` por feature, y `performance.md` cuando hay deuda de performance |
-| `docs/guides/` | Setup de servicios externos |
 | `docs/audit/` | Auditoría del sistema: dimensiones (`dimensions.md`) y alcance por flujo (`scope.md`); cada una se trabaja en su branch `refactor/*` |
 
-**Nombres:** todo archivo y carpeta de `docs/` va en kebab-case y minúsculas (`bullmq-queues.md`,
+**Nombres:** todo archivo y carpeta de `docs/` va en kebab-case y minúsculas (`sse-hl-diagram.svg`,
 `tech-debt/`). Las únicas excepciones son `README.md` y `CLAUDE.md`, por convención de las herramientas.
 
 `docs/tech-debt/` es un backlog de trabajo, no un archivo histórico: un ítem resuelto o descartado se saca.
@@ -24,7 +23,7 @@ inexacto. El default es que un cambio de feature toca al menos uno.
 
 | Si el cambio… | Revisar y actualizar |
 |---|---|
-| altera una **decisión o un comportamiento** documentado | el ADR de `docs/architecture/` que lo describe |
+| altera un **flujo** dibujado | su diagrama en `docs/diagrams/` |
 | resuelve, agrava o vuelve obsoleta una **deuda** | su doc en `docs/tech-debt/` |
 | mueve/renombra archivos, cambia un patrón canónico o una capa | la regla de `.claude/rules/` que lo describe (y el índice de `CLAUDE.md` si cambia el mapa) |
 

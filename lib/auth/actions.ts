@@ -14,7 +14,7 @@ import { signInSchema, signUpSchema, type SignInInput, type SignUpInput } from "
 
 const SALT_ROUNDS = 10;
 
-// Cotas de abuso. Ver docs/architecture/rate-limiting.md.
+// Cotas de abuso.
 const LOGIN_IP_POLICY: RateLimitPolicy = { limit: 10, windowMs: 10 * 60_000, failMode: "open" };
 const LOGIN_EMAIL_POLICY: RateLimitPolicy = { limit: 5, windowMs: 10 * 60_000, failMode: "open" };
 const SIGNUP_IP_POLICY: RateLimitPolicy = { limit: 5, windowMs: 60 * 60_000, failMode: "closed" };
