@@ -32,8 +32,9 @@ Dos procesos que comparten los mismos datastores:
 flowchart LR
   U[Cliente] --> APP["greenaway<br/>Next.js · GraphQL · SSE"]
   U --> WRK["greenaway-worker<br/>socket.io · BullMQ"]
-  APP -->|encola jobs| RD
-  APP --> PG & MG
+  APP -->|escribe el outbox| PG
+  APP --> MG
+  APP -->|pub/sub · rate limit| RD
   WRK --> PG & MG & RD
   subgraph Datos
     PG[(PostgreSQL)]
@@ -43,11 +44,11 @@ flowchart LR
 ```
 
 - **`greenaway`** (este repo) — UI, API GraphQL, Server Actions y el borde SSE de notificaciones;
-  encola el trabajo asíncrono.
-- **`greenaway-worker`** (repo aparte) — consumers de BullMQ (emails, notificaciones) y el servidor
-  socket.io del chat. Es un proceso persistente (no serverless): sostiene conexiones y loops de larga
+  registra el trabajo asíncrono como filas de outbox, en la misma transacción que la entidad.
+- **`greenaway-worker`** (repo aparte) — el relay que publica el outbox en BullMQ, sus consumers
+  (emails, notificaciones) y el servidor socket.io del chat. Es un proceso persistente (no serverless): sostiene conexiones y loops de larga
   vida, y ese requisito es lo que justifica el split app/worker.
-- **PostgreSQL** — núcleo transaccional: usuarios, sesiones, reservas, reseñas.
+- **PostgreSQL** — núcleo transaccional: usuarios, reservas, reseñas y el outbox.
 - **MongoDB** — documentos heterogéneos: listados, chats, mensajes, notificaciones.
 - **Redis** — colas (BullMQ), fan-out de sockets, rate limiting y pub/sub de las notificaciones SSE.
 
@@ -60,12 +61,13 @@ está en `docs/architecture/`.
 ## 📁 Estructura
 
 ```
-app/            Rutas de Next.js (App Router) + route handlers (graphql, auth, subscribe, s3)
+app/            Rutas de Next.js (App Router) + route handlers (graphql, subscribe, s3)
 components/     ui/ (shadcn) · common/ (primitivos propios) · <feature>/ (bookings, chat, search…)
-lib/            services/ (negocio) · repositories/ (datos) · types/ · apollo/ · dominio
-db/migrations/  Migraciones de PostgreSQL, versionadas (up/down)
+lib/            <service>/ (auth, bookings, chat, listings, notifications, reviews, users) ·
+                apollo/ (schema raíz y cliente) · infra/ (clientes de DB y servicios) · shared/
+db/migrations/  Migraciones de PostgreSQL, generadas por drizzle-kit desde lib/*/tables.ts
 docs/           ADRs, deuda técnica y auditoría
-scripts/        Migraciones, seeds y utilidades
+scripts/        Seeds y utilidades de datos
 ```
 
 ---
@@ -99,7 +101,7 @@ separado (ver su repo).
 | `pnpm dev` / `build`                            | desarrollo / build de producción              |
 | `pnpm lint` · `pnpm test`                       | linting · tests (Vitest)                      |
 | `pnpm codegen`                                  | regenera los tipos de GraphQL desde el schema |
-| `pnpm db:migrate` · `db:rollback` · `db:status` | migraciones de PostgreSQL                     |
+| `pnpm db:generate` · `db:migrate`              | genera / aplica migraciones de PostgreSQL     |
 
 ---
 
