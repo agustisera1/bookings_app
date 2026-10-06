@@ -1,23 +1,29 @@
 type ChatMeta {
-  _id: ID!
-  booking_id: String!
-  started_at: String!
-  guest_id: String!
-  host_id: String!
+  id: ID!
+  booking_id: ID!
+  started_at: DateTime!
+  guest_id: ID!
+  host_id: ID!
 }
 
 type ChatMessage {
-  _id: ID!
-  chat_id: String!
-  sender_id: String!
+  id: ID!
+  chat_id: ID!
+  sender_id: ID!
   body: String!
-  timestamp: String!
+  timestamp: DateTime!
+}
+
+# The newest messages of a thread. `olderCursor` loads one more page: null when there is none.
+type ChatMessagePage {
+  items: [ChatMessage!]!
+  olderCursor: DateTime
 }
 
 # `chat` is null until someone speaks; `party` is the viewer's side of the booking.
 type ChatThread {
   chat: ChatMeta
-  messages: [ChatMessage!]!
+  messages: ChatMessagePage!
   party: BookingParty!
 }
 
@@ -34,5 +40,6 @@ type Conversation {
 extend type Query {
   conversations: [Conversation!]
   unreadMessagesCount: Int
-  chatThread(bookingId: ID!): ChatThread
+  # A chat is keyed by its booking's id. `from` widens the thread back to that cursor.
+  chatThread(id: ID!, from: DateTime): ChatThread
 }

@@ -6,11 +6,11 @@ import {
   LogIn,
 } from "lucide-react";
 import { describe, expect, it } from "vitest";
-import type { NotificationDocument } from "@/lib/notifications/types";
 import {
   isUnreadNudge,
   notificationVisual,
   partitionByRead,
+  type Notification,
 } from "./notifications-model";
 
 describe("notificationVisual", () => {
@@ -35,9 +35,9 @@ describe("notificationVisual", () => {
   });
 });
 
-function notification(overrides: Partial<NotificationDocument>): NotificationDocument {
+function notification(overrides: Partial<Notification>): Notification {
   return {
-    _id: "n",
+    id: "n",
     listing_id: "l",
     host_id: "h",
     guest_id: "g",
@@ -74,14 +74,14 @@ describe("isUnreadNudge", () => {
 describe("partitionByRead", () => {
   it("overlays the optimistic read-set on top of the server flag", () => {
     const notifications = [
-      notification({ _id: "n1", is_read: false }),
-      notification({ _id: "n2", is_read: true }),
-      notification({ _id: "n3", is_read: false }),
+      notification({ id: "n1", is_read: false }),
+      notification({ id: "n2", is_read: true }),
+      notification({ id: "n3", is_read: false }),
     ];
 
     const { unread, older } = partitionByRead(notifications, new Set(["n3"]));
 
-    expect(unread.map((n) => n._id)).toEqual(["n1"]);
-    expect(older.map((n) => n._id)).toEqual(["n2", "n3"]);
+    expect(unread.map((n) => n.id)).toEqual(["n1"]);
+    expect(older.map((n) => n.id)).toEqual(["n2", "n3"]);
   });
 });

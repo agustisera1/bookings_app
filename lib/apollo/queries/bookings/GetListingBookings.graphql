@@ -1,6 +1,6 @@
-query GetListingBookings($listing_id: String!) {
-  listing(listing_id: $listing_id) {
-    _id
+query GetListingBookings($id: ID!) {
+  listing(id: $id) {
+    id
     bookings {
       id
       created_at

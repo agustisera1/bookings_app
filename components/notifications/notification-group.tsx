@@ -21,10 +21,10 @@ export function NotificationGroup({
       <ul className="flex flex-col gap-3">
         {notifications.map((notification) => (
           <NotificationRow
-            key={notification._id}
+            key={notification.id}
             notification={notification}
             read={read}
-            onMarkAsRead={() => onMarkAsRead(notification._id)}
+            onMarkAsRead={() => onMarkAsRead(notification.id)}
           />
         ))}
       </ul>

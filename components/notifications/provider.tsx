@@ -9,6 +9,7 @@ import {
   useState,
   type PropsWithChildren,
 } from "react";
+import { useRouter } from "next/navigation";
 import { isUnreadNudge } from "./notifications-model";
 
 type NotificationsContextValue = {
@@ -65,8 +66,17 @@ export function NotificationsProvider({
   initialMessages,
   children,
 }: PropsWithChildren<{ initialCount: number; initialMessages: number }>) {
+  const router = useRouter();
   const [count, setCount] = useState(initialCount);
   const [messages, setMessages] = useState(initialMessages);
+
+  // A refresh hands down fresh counts from the server: they replace the local ones.
+  const [seeded, setSeeded] = useState({ initialCount, initialMessages });
+  if (seeded.initialCount !== initialCount || seeded.initialMessages !== initialMessages) {
+    setSeeded({ initialCount, initialMessages });
+    setCount(initialCount);
+    setMessages(initialMessages);
+  }
 
   const increment = useCallback(() => setCount((c) => c + 1), []);
   const decrement = useCallback(() => setCount((c) => Math.max(0, c - 1)), []);
@@ -74,6 +84,12 @@ export function NotificationsProvider({
 
   useEffect(() => {
     const es = new EventSource("/api/subscribe");
+    let opened = false;
+    es.onopen = () => {
+      // Frames published while the stream was down never arrived: reload the counts.
+      if (opened) router.refresh();
+      opened = true;
+    };
     es.onmessage = (event) => {
       // A nudge means one unread message; anything else is a freshly-created
       // notification. Each bumps its own badge.
@@ -81,7 +97,7 @@ export function NotificationsProvider({
       else setCount((c) => c + 1);
     };
     return () => es.close();
-  }, []);
+  }, [router]);
 
   const value = useMemo(
     () => ({ count, messages, increment, decrement, clearMessages }),

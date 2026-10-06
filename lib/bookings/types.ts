@@ -1,3 +1,4 @@
+import type { Listing } from "@/lib/listings/types";
 import type { bookings } from "./tables";
 
 // Mirrors the `booking_status_valid` CHECK. `completed` is derived, see `isCompleted`.
@@ -21,3 +22,6 @@ export type BookingUpdate = Partial<
 >;
 
 export type BookedRange = Pick<Booking, "start_date" | "end_date">;
+
+// A booking as GraphQL resolves it: the caller's side, and its listing when the query loaded it.
+export type BookingNode = Booking & { party: BookingParty; listing?: Listing | null };

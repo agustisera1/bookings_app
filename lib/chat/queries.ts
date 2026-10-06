@@ -1,5 +1,5 @@
 import { authorize } from "@/lib/auth/session";
-import { partyOf } from "@/lib/bookings/policy";
+import { MAX_BOOKINGS_PER_LIST, partyOf } from "@/lib/bookings/policy";
 import * as bookingsRepo from "@/lib/bookings/repository";
 import type { Booking, BookingParty } from "@/lib/bookings/types";
 import * as listingsRepo from "@/lib/listings/repository";
@@ -9,6 +9,10 @@ import * as repo from "./repository";
 import type { ChatThread, Conversation } from "./types";
 import { chatIdSchema } from "./validation";
 
+const MESSAGES_PER_PAGE = 50;
+// Cap on a thread widened with `from`: past it, the oldest messages fall off again.
+const MAX_THREAD_MESSAGES = 500;
+
 // Derived from bookings, not the chats collection: a booking is a conversation
 // whether or not anyone wrote in it, so rows carry no last message or unread state.
 export async function getUserConversations(): Promise<ServiceResult<Conversation[]>> {
@@ -17,12 +21,15 @@ export async function getUserConversations(): Promise<ServiceResult<Conversation
   const user = auth.data;
 
   try {
-    const guestBookings = await bookingsRepo.findBookingsByGuestId(user.id);
+    const guestBookings = await bookingsRepo.findBookingsByGuestId(user.id, MAX_BOOKINGS_PER_LIST);
 
     // Booking your own listing is legal: dropped here so it isn't listed once per side.
     const hostListings = user.is_host ? await listingsRepo.findListings({ host_id: user.id }) : [];
     const hostBookings = (
-      await bookingsRepo.findBookingsByListingIds(hostListings.map((listing) => listing._id))
+      await bookingsRepo.findBookingsByListingIds(
+        hostListings.map((listing) => listing._id),
+        MAX_BOOKINGS_PER_LIST,
+      )
     ).filter((booking) => booking.guest_id !== user.id);
 
     const guestListings = await listingsRepo.findListingsByIds([
@@ -77,7 +84,10 @@ export async function getUnreadMessagesCount(): Promise<ServiceResult<number>> {
 }
 
 // A thread the caller isn't party to reads as NOT_FOUND: never confirms the booking exists.
-export async function getChatThread(bookingId: string): Promise<ServiceResult<ChatThread>> {
+export async function getChatThread(
+  bookingId: string,
+  from: Date | null,
+): Promise<ServiceResult<ChatThread>> {
   const auth = await authorize("chat:view-own");
   if (!auth.ok) return auth;
 
@@ -93,8 +103,17 @@ export async function getChatThread(bookingId: string): Promise<ServiceResult<Ch
     if (!party) return notFound;
 
     const chat = await repo.findChatByBookingId(bookingId);
-    const messages = chat ? await repo.findMessagesByChatId(bookingId) : [];
-    return { ok: true, data: { chat, messages, party } };
+    if (!chat) return { ok: true, data: { chat, messages: { items: [], olderCursor: null }, party } };
+
+    const items = await repo.findMessagesByChatId(
+      bookingId,
+      from?.toISOString() ?? null,
+      from ? MAX_THREAD_MESSAGES : MESSAGES_PER_PAGE,
+    );
+    const olderCursor = items.length
+      ? await repo.findOlderCursor(bookingId, items[0].timestamp, MESSAGES_PER_PAGE)
+      : null;
+    return { ok: true, data: { chat, messages: { items, olderCursor }, party } };
   } catch (error) {
     console.error("[getChatThread]", error);
     return { ok: false, error: "Could not load this conversation", code: "UNEXPECTED" };

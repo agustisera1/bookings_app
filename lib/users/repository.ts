@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { db } from "@/lib/infra/postgres";
 import { insertOutboxEvent } from "@/lib/outbox/repository";
 import type { OutboxEvent } from "@/lib/outbox/types";
@@ -10,9 +10,9 @@ export async function findUserByEmail(email: string): Promise<User | null> {
   return user ?? null;
 }
 
-export async function findUserById(id: string): Promise<User | null> {
-  const [user] = await db.select().from(users).where(eq(users.id, id));
-  return user ?? null;
+export async function findUsersByIds(ids: string[]): Promise<User[]> {
+  if (ids.length === 0) return [];
+  return db.select().from(users).where(inArray(users.id, ids));
 }
 
 export async function insertUser(

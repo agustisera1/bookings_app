@@ -41,7 +41,7 @@ lib/
     resolvers.ts      resolvers de GraphQL del service
     actions.test.ts
   bookings/  listings/  auth/  chat/  notifications/   (misma forma)
-  apollo/             server + client: solo junta los schemas y resolvers de cada service
+  apollo/             cliente en proceso + loaders: solo junta los schemas, resolvers y loaders de cada service
   infra/
     postgres.ts  mongo.ts  redis.ts  s3.ts
   shared/
@@ -281,7 +281,7 @@ sola query, sin que `listings` sepa que existen las reviews.
 ```graphql
 type Review {
   id: ID!
-  listing_id: String!
+  listing_id: ID!
   author_name: String!
   rating: Int!
   comment: String!
@@ -317,8 +317,9 @@ export const reviewsResolvers: Resolvers = {
 
 `lib/apollo` no tiene types ni resolvers de ningún service: su `schema.graphql` declara solo la raíz
 (`scalar DateTime` y `type Query`), y `schema.ts` junta lo que aporta cada service en un único schema
-ejecutable. Lo sirve `/api/graphql` y lo ejecuta en el mismo proceso el cliente de Server Components
-(`SchemaLink`), sin request HTTP de por medio.
+ejecutable. Lo ejecuta en el mismo proceso el cliente de Server Components (`SchemaLink`): no hay
+endpoint HTTP. Los field resolvers que se alcanzan desde una lista leen por un DataLoader del contexto
+(`apollo/context.ts`), creado una vez por request junto con el cliente.
 
 ```ts
 import { makeExecutableSchema } from "@graphql-tools/schema";
@@ -337,7 +338,6 @@ import { usersResolvers } from "@/lib/users/resolvers";
 import { rootResolvers } from "./resolvers";
 import rootTypeDefs from "./schema.graphql";
 
-// One executable schema: served by /api/graphql and run in-process by the RSC client.
 export const schema = makeExecutableSchema({
   typeDefs: [
     rootTypeDefs,
@@ -363,7 +363,11 @@ export const schema = makeExecutableSchema({
 ```ts
 // lib/apollo/client.ts
 export const { getClient, query, PreloadQuery } = registerApolloClient(
-  () => new ApolloClient({ cache: new InMemoryCache(), link: new SchemaLink({ schema }) }),
+  () =>
+    new ApolloClient({
+      cache: new InMemoryCache(),
+      link: new SchemaLink({ schema, context: createContext() }),
+    }),
 );
 ```
 
@@ -372,6 +376,9 @@ export const { getClient, query, PreloadQuery } = registerApolloClient(
 schema: "./lib/*/schema.graphql",
 scalars: { DateTime: { input: "Date", output: "Date | string" } }, // resolvers-types
 scalars: { DateTime: "string" },                                    // operations
+// resolvers-types: el resolver recibe el documento de dominio (Mongo trae `_id`) y el schema expone
+// `id` con un field resolver (`Listing: { id: (listing) => listing._id }`)
+mappers: { Listing: "@/lib/listings/types#Listing", Booking: "@/lib/bookings/types#BookingNode", … },
 ```
 
 ### `shared/revalidate.ts`
@@ -396,7 +403,7 @@ export function revalidatePaths(targets: RevalidationTarget[]) {
 // (reviews) llega como null en vez de tirar la query entera.
 const { data } = await query({
   query: GetListingDocument,
-  variables: { listing_id: id },
+  variables: { id },
   errorPolicy: "all",
 });
 ```

@@ -1,6 +1,6 @@
-query GetListing($listing_id: String!) {
-  listing(listing_id: $listing_id) {
-    _id
+query GetListing($id: ID!) {
+  listing(id: $id) {
+    id
     description
     host_id
     location {

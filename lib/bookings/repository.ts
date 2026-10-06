@@ -1,4 +1,4 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { db } from "@/lib/infra/postgres";
 import { insertOutboxEvent } from "@/lib/outbox/repository";
 import type { OutboxEvent } from "@/lib/outbox/types";
@@ -10,27 +10,60 @@ export async function findBookingById(id: string): Promise<Booking | null> {
   return booking ?? null;
 }
 
-export async function findBookingsByGuestId(guestId: string): Promise<Booking[]> {
-  return db.select().from(bookings).where(eq(bookings.guest_id, guestId));
-}
-
-export async function findBookingsByListingId(listingId: string): Promise<Booking[]> {
-  return db.select().from(bookings).where(eq(bookings.listing_id, listingId));
-}
-
-export async function findBookingsByListingIds(listingIds: string[]): Promise<Booking[]> {
-  if (listingIds.length === 0) return [];
-  return db.select().from(bookings).where(inArray(bookings.listing_id, listingIds));
-}
-
-export async function findBookedRanges(
-  listingId: string,
-  statuses: BookingStatus[],
-): Promise<BookedRange[]> {
+export async function findBookingsByGuestId(guestId: string, limit: number): Promise<Booking[]> {
   return db
-    .select({ start_date: bookings.start_date, end_date: bookings.end_date })
+    .select()
     .from(bookings)
-    .where(and(eq(bookings.listing_id, listingId), inArray(bookings.status, statuses)));
+    .where(eq(bookings.guest_id, guestId))
+    .orderBy(desc(bookings.start_date))
+    .limit(limit);
+}
+
+export async function findBookingsByListingIds(
+  listingIds: string[],
+  limit: number,
+): Promise<Booking[]> {
+  if (listingIds.length === 0) return [];
+  return db
+    .select()
+    .from(bookings)
+    .where(inArray(bookings.listing_id, listingIds))
+    .orderBy(desc(bookings.start_date))
+    .limit(limit);
+}
+
+export async function findBookedRangesByListingIds(
+  listingIds: string[],
+  statuses: BookingStatus[],
+): Promise<(BookedRange & Pick<Booking, "listing_id">)[]> {
+  if (listingIds.length === 0) return [];
+  return db
+    .select({
+      listing_id: bookings.listing_id,
+      start_date: bookings.start_date,
+      end_date: bookings.end_date,
+    })
+    .from(bookings)
+    .where(and(inArray(bookings.listing_id, listingIds), inArray(bookings.status, statuses)));
+}
+
+export async function findBookingForStay(
+  stay: Pick<Booking, "listing_id" | "guest_id" | "start_date" | "end_date">,
+  statuses: BookingStatus[],
+): Promise<Pick<Booking, "id" | "created_at"> | null> {
+  const [booking] = await db
+    .select({ id: bookings.id, created_at: bookings.created_at })
+    .from(bookings)
+    .where(
+      and(
+        eq(bookings.listing_id, stay.listing_id),
+        eq(bookings.guest_id, stay.guest_id),
+        eq(bookings.start_date, stay.start_date),
+        eq(bookings.end_date, stay.end_date),
+        inArray(bookings.status, statuses),
+      ),
+    );
+  return booking ?? null;
 }
 
 // Listings with a booking overlapping [from, to] (inclusive, like `no_overlap`).
@@ -69,6 +102,7 @@ export async function insertBooking(
 
 export async function updateBooking(
   id: string,
+  expectedStatus: BookingStatus,
   values: BookingUpdate,
   event: OutboxEvent,
 ): Promise<boolean> {
@@ -78,7 +112,7 @@ export async function updateBooking(
     const updated = await tx
       .update(bookings)
       .set(values)
-      .where(eq(bookings.id, id))
+      .where(and(eq(bookings.id, id), eq(bookings.status, expectedStatus)))
       .returning({ id: bookings.id });
     if (updated.length === 0) return false;
     await insertOutboxEvent(tx, { type: "booking", id }, event);

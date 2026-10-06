@@ -31,7 +31,7 @@ export default async function ListingDetailPage({
   // "all": a failed nested field (reviews) still returns the listing.
   const { data } = await query({
     query: GetListingDocument,
-    variables: { listing_id: id },
+    variables: { id },
     errorPolicy: "all",
   });
 
@@ -46,7 +46,7 @@ export default async function ListingDetailPage({
   const bookingsPromise = isHostMode
     ? query({
         query: GetListingBookingsDocument,
-        variables: { listing_id: id },
+        variables: { id },
         errorPolicy: "all",
       }).then(({ data }) => data?.listing?.bookings ?? null)
     : undefined;
@@ -64,12 +64,12 @@ export default async function ListingDetailPage({
             isHostMode && (
               <>
                 <DeleteListingButton
-                  listingId={listing._id}
+                  listingId={listing.id}
                   listingTitle={listing.title}
                   variant="button"
                 />
                 <EditListingButton
-                  listingId={listing._id}
+                  listingId={listing.id}
                   defaultValues={{
                     title: listing.title,
                     description: listing.description,
@@ -113,7 +113,7 @@ export default async function ListingDetailPage({
           <ListingPhotos
             photos={(listing.photos ?? []).filter((p): p is string => !!p)}
             title={listing.title}
-            listingId={listing._id}
+            listingId={listing.id}
             isHostMode={isHostMode}
           />
 
@@ -175,7 +175,7 @@ export default async function ListingDetailPage({
             card
           >
             <BookingForm
-              listingId={listing._id}
+              listingId={listing.id}
               pricePerNight={listing.price}
               bookedRanges={listing.availability ?? null}
             />

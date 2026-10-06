@@ -1,4 +1,5 @@
 import { Suspense, type ReactNode } from "react";
+import { ChatConnection } from "@/components/chat/chat-connection";
 import { ConversationRail } from "@/components/chat/conversation-rail";
 import { ConversationListSkeleton } from "@/components/chat/conversation-list-skeleton";
 import { MarkMessagesSeen } from "@/components/chat/mark-messages-seen";
@@ -8,6 +9,7 @@ import { MarkMessagesSeen } from "@/components/chat/mark-messages-seen";
 export default function MessagesLayout({ children }: { children: ReactNode }) {
   return (
     <div className="flex h-full min-h-0 flex-col md:flex-row">
+      <ChatConnection />
       <MarkMessagesSeen />
       <aside className="flex shrink-0 flex-col border-b border-foreground/10 bg-sidebar text-sidebar-foreground md:order-2 md:w-80 md:border-b-0 md:border-l lg:w-96">
         <header className="border-b border-foreground/10 px-5 py-5">

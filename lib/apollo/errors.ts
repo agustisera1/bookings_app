@@ -8,13 +8,14 @@ const GRAPHQL_CODE_BY_ERROR_CODE: Record<ErrorCode, string> = {
   NOT_FOUND: "NOT_FOUND",
   CONFLICT: "CONFLICT",
   RATE_LIMITED: "TOO_MANY_REQUESTS",
+  UNAVAILABLE: "SERVICE_UNAVAILABLE",
   UNEXPECTED: "INTERNAL_SERVER_ERROR",
 };
 
 /**
  * Converts a failed ServiceResult into a GraphQLError for resolvers.
  *
- * Mirrors `toHttpResponse` in `lib/http.ts`: the one place that maps the
+ * Mirrors `toHttpResponse` in `lib/shared/http.ts`: the one place that maps the
  * service layer's semantic `code` to a transport-level error shape. The
  * service's friendly `error` message is reused as-is (it's already safe to
  * expose to the client), so resolvers never need to invent their own copy.

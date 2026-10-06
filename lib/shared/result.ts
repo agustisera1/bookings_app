@@ -1,5 +1,5 @@
 /**
- * Discriminated result returned by every function in `lib/services/*`.
+ * Discriminated result returned by every function in `lib/<service>/actions.ts` and `queries.ts`.
  *
  * This is NOT an HTTP response. Service functions are plain functions that
  * get called from two very different places:
@@ -11,7 +11,7 @@
  * 2. Route Handlers (`app/api/.../route.ts`) — this IS a real HTTP boundary.
  *    `code` is a semantic error kind, not a number — it only becomes a real
  *    HTTP status when explicitly converted, see `toHttpResponse` in
- *    `lib/http.ts`. The service itself never needs to know HTTP exists.
+ *    `lib/shared/http.ts`. The service itself never needs to know HTTP exists.
  *
  * The `ok` discriminant (instead of `data: T | null` + `error: string | null`)
  * means TypeScript narrows `data`'s type for free and the impossible states
@@ -24,6 +24,7 @@ export type ErrorCode =
   | "NOT_FOUND"
   | "CONFLICT"
   | "RATE_LIMITED"
+  | "UNAVAILABLE"
   | "UNEXPECTED";
 
 export type ServiceResult<T = unknown> =

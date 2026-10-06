@@ -1,6 +1,6 @@
 query GetNotifications {
   notifications {
-    _id
+    id
     listing_id
     host_id
     guest_id

@@ -7,6 +7,7 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   NOT_FOUND: 404,
   CONFLICT: 409,
   RATE_LIMITED: 429,
+  UNAVAILABLE: 503,
   UNEXPECTED: 500,
   FORBIDDEN: 403,
 };

@@ -14,13 +14,14 @@ async function getCollection() {
     );
 }
 
-export async function getNotifications(userId: string) {
+export async function getNotifications(userId: string, limit: number) {
   const client = await getCollection();
   // Both read and unread: the UI splits them into "new" vs. "older" sections.
   // `created_at` is derived from the ObjectId's embedded creation timestamp.
   const docs = await client
     .find({ target_id: userId })
     .sort({ _id: -1 })
+    .limit(limit)
     .toArray();
   return docs.map((doc) => ({
     ...doc,
@@ -44,11 +45,12 @@ export async function updateNotification(
   if (Object.keys(values).length === 0) return false;
 
   const client = await getCollection();
-  // Scoped by target_id so a user can only update their own notifications.
+  // Scoped by target_id: a user only updates their own. Matched, not modified:
+  // re-reading an already-read notification still counts as found.
   const result = await client.updateOne(
     { _id: new ObjectId(notificationId), target_id: userId },
     { $set: values },
   );
 
-  return result.modifiedCount > 0;
+  return result.matchedCount > 0;
 }

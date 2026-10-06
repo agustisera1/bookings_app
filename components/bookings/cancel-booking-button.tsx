@@ -34,7 +34,7 @@ export function CancelBookingButton({
   if (!check.allowed) return null;
 
   async function handleCancel() {
-    const result = await cancelBooking(bookingId);
+    const result = await cancelBooking({ bookingId });
     if (!result.ok) {
       toast.error(result.error);
       return false; // keep the dialog open to retry

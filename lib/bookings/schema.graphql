@@ -25,7 +25,7 @@ type Booking {
   cancelled_by: BookingParty
   cancelled_at: DateTime
   # Which side of this booking the caller is on.
-  party: BookingParty
+  party: BookingParty!
   listing: Listing
 }
 

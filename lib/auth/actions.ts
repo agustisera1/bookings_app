@@ -9,7 +9,7 @@ import type { ServiceResult } from "@/lib/shared/result";
 import * as usersRepo from "@/lib/users/repository";
 import type { PublicUser, User } from "@/lib/users/types";
 import { getPermissionsForRoles, getUserRoles } from "./policy";
-import { getCurrentUser } from "./session";
+import { authorize } from "./session";
 import { signInSchema, signUpSchema, type SignInInput, type SignUpInput } from "./validation";
 
 const SALT_ROUNDS = 10;
@@ -121,19 +121,23 @@ export async function logoutUser(): Promise<ServiceResult<null>> {
 
 // Short-lived credential for the socket handshake: the client can't read the
 // httpOnly cookie, and handing it the access token would park it in JS.
-export async function getUserToken(): Promise<string | null> {
-  const user = await getCurrentUser();
-  if (!user) return null;
+export async function getUserToken(): Promise<ServiceResult<string>> {
+  const auth = await authorize("chat:view-own");
+  if (!auth.ok) return auth;
+  const user = auth.data;
 
-  return signToken(
-    {
-      user_id: user.id,
-      email: user.email,
-      name: user.name,
-      is_host: user.is_host,
-      roles: user.roles,
-      permissions: user.permissions,
-    },
-    { expiresIn: "5m" },
-  );
+  return {
+    ok: true,
+    data: signToken(
+      {
+        user_id: user.id,
+        email: user.email,
+        name: user.name,
+        is_host: user.is_host,
+        roles: user.roles,
+        permissions: user.permissions,
+      },
+      { expiresIn: "5m" },
+    ),
+  };
 }

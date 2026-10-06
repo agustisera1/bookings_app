@@ -17,6 +17,8 @@ export const TERMINAL_STATUSES: BookingStatus[] = ["rejected", "cancelled"];
 // Statuses that still hold the listing's dates: the positive form of `no_overlap`.
 export const SLOT_HOLDING_STATUSES: BookingStatus[] = ["pending", "accepted"];
 
+export const MAX_BOOKINGS_PER_LIST = 100;
+
 /** Guests cancelling within this window of check-in forfeit their refund. */
 export const FREE_CANCELLATION_WINDOW_HOURS = 48;
 

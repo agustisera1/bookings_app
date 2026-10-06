@@ -14,7 +14,6 @@ import { usersResolvers } from "@/lib/users/resolvers";
 import { rootResolvers } from "./resolvers";
 import rootTypeDefs from "./schema.graphql";
 
-// One executable schema: served by /api/graphql and run in-process by the RSC client.
 export const schema = makeExecutableSchema({
   typeDefs: [
     rootTypeDefs,

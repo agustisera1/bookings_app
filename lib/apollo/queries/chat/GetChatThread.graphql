@@ -1,19 +1,22 @@
-query GetChatThread($bookingId: ID!) {
-  chatThread(bookingId: $bookingId) {
+query GetChatThread($id: ID!, $from: DateTime) {
+  chatThread(id: $id, from: $from) {
     party
     chat {
-      _id
+      id
       booking_id
       started_at
       guest_id
       host_id
     }
     messages {
-      _id
-      chat_id
-      sender_id
-      body
-      timestamp
+      items {
+        id
+        chat_id
+        sender_id
+        body
+        timestamp
+      }
+      olderCursor
     }
   }
 }

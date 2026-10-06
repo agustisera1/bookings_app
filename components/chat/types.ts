@@ -3,10 +3,10 @@ import type {
   GetChatThreadQuery,
   GetConversationsQuery,
 } from "@/lib/apollo/__generated__/operations";
-import type { SerializableMessageDocument } from "@/lib/chat/types";
+import type { DeliveredMessage } from "@/lib/chat/socket";
 
 // `pending` and `failed` are client-only states of an optimistic message; never persisted.
-export type ThreadMessage = SerializableMessageDocument & {
+export type ThreadMessage = DeliveredMessage & {
   pending?: boolean;
   failed?: boolean;
 };

@@ -25,10 +25,15 @@ export type MessageReadCursor = {
   last_seen_at: string;
 };
 
+export type ChatMessagePage = {
+  items: SerializableMessageDocument[];
+  olderCursor: string | null;
+};
+
 // `chat` is null until someone speaks: an empty thread, not a failure.
 export type ChatThread = {
   chat: SerializableChatDocument | null;
-  messages: SerializableMessageDocument[];
+  messages: ChatMessagePage;
   party: BookingParty;
 };
 

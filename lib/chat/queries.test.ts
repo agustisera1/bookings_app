@@ -9,6 +9,7 @@ vi.mock("./repository", () => ({
   upsertReadCursor: vi.fn(),
   countMessagesSince: vi.fn(),
   findMessagesByChatId: vi.fn(),
+  findOlderCursor: vi.fn(),
 }));
 vi.mock("@/lib/bookings/repository", () => ({
   findBookingById: vi.fn(),
@@ -119,9 +120,9 @@ describe("getChatThread", () => {
   });
 
   it("returns the viewer's side and an empty thread before anyone speaks", async () => {
-    expect(await getChatThread(BOOKING_ID)).toEqual({
+    expect(await getChatThread(BOOKING_ID, null)).toEqual({
       ok: true,
-      data: { chat: null, messages: [], party: "guest" },
+      data: { chat: null, messages: { items: [], olderCursor: null }, party: "guest" },
     });
     expect(repo.findMessagesByChatId).not.toHaveBeenCalled();
   });
@@ -130,9 +131,9 @@ describe("getChatThread", () => {
   it("gives a bystander the same NOT_FOUND as a missing booking", async () => {
     const notFound = { ok: false, error: "Conversation not found", code: "NOT_FOUND" };
     vi.mocked(bookingsRepo.findBookingById).mockResolvedValue({ ...booking, guest_id: "other" });
-    expect(await getChatThread(BOOKING_ID)).toEqual(notFound);
+    expect(await getChatThread(BOOKING_ID, null)).toEqual(notFound);
 
     vi.mocked(bookingsRepo.findBookingById).mockResolvedValue(null);
-    expect(await getChatThread(BOOKING_ID)).toEqual(notFound);
+    expect(await getChatThread(BOOKING_ID, null)).toEqual(notFound);
   });
 });

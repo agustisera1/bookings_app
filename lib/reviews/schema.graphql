@@ -1,6 +1,6 @@
 type Review {
   id: ID!
-  listing_id: String!
+  listing_id: ID!
   author_name: String!
   rating: Int!
   comment: String!

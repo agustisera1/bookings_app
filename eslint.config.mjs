@@ -23,6 +23,23 @@ const eslintConfig = defineConfig([
       "react-hooks/set-state-in-effect": "off",
     },
   },
+  // `react-hooks/set-state-in-effect` solo mira los setters de `useState`: esto cubre el
+  // `dispatch` de `useReducer`. Ver "Efectos y estado externo" en .claude/rules/07-frontend.md.
+  {
+    files: ["components/**/*.{ts,tsx}", "app/**/*.{ts,tsx}"],
+    ignores: ["components/ui/**"],
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector:
+            "CallExpression[callee.name='useEffect'] > :function :matches(BlockStatement > ExpressionStatement, IfStatement > ExpressionStatement, IfStatement > BlockStatement > ExpressionStatement) > CallExpression[callee.name='dispatch']:not(:function :function :function CallExpression)",
+          message:
+            "dispatch síncrono en un Effect: derivá en el render o ajustá el estado durante el render (react.dev, 'You Might Not Need an Effect').",
+        },
+      ],
+    },
+  },
   // `__generated__/**` es salida de `pnpm codegen`, no se escribe a mano: los
   // plugins de graphql-codegen emiten `any` en algunas firmas de resolver/scalar.
   // No se lintea código regenerable por una regla que no podemos satisfacer sin

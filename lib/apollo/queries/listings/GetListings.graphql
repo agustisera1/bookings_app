@@ -1,13 +1,11 @@
 query GetListings($filters: FiltersInput) {
   listings(filters: $filters) {
-    _id
+    id
     type
     price
     title
     description
     photos
-    rating
-    availabilityRange
     location {
       address
       city

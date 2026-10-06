@@ -1,17 +1,10 @@
-import { io, Socket } from "socket.io-client";
-import type { SerializableMessageDocument } from "@/lib/chat/types";
+import { io, type Socket } from "socket.io-client";
 import { getUserToken } from "@/lib/auth/actions";
+import type { ServiceResult } from "@/lib/shared/result";
+import type { SerializableMessageDocument } from "@/lib/chat/types";
 
-declare global {
-  var chatSocket: Socket | undefined;
-}
-
-/**
- * The chat wire contract, mirroring `EVENTS` and its companions in the worker
- * (`greenaway-worker/src/chat/types.ts`). The two repos deploy separately,
- * so this is replicated by hand — same convention the BullMQ payloads follow.
- * It lives beside the connection because that's what carries it.
- */
+// The chat wire contract, mirrored by hand in greenaway-worker/src/chat/types.ts
+// (the repos deploy separately). It travels as the socket's generics.
 export const EVENTS = {
   CLIENT_MESSAGE: "client-message",
   SERVER_MESSAGE: "server-message",
@@ -19,49 +12,55 @@ export const EVENTS = {
   LEAVE_CHAT: "leave-chat",
 } as const;
 
-/** Reply the server acks a join with, so the client knows if it was let in. */
-export type JoinAck = { ok: boolean };
+export type DeliveredMessage = Omit<SerializableMessageDocument, "_id"> & { id: string };
 
-/**
- * What the client sends on `CLIENT_MESSAGE`. Only the room and the body: the
- * server stamps `_id`, `sender_id` and `timestamp`, which is why this is the
- * delivered message minus everything a client isn't trusted to set.
- */
-export type ClientMessage = Pick<
-  SerializableMessageDocument,
-  "chat_id" | "body"
->;
+// The server stamps everything else: the client is never trusted with it.
+export type ClientMessage = Pick<DeliveredMessage, "chat_id" | "body">;
 
-/**
- * Reply to a `CLIENT_MESSAGE`. The server excludes the sender from the
- * broadcast, so this ack is the only confirmation the sender gets — and it
- * carries the real `_id`, which replaces the temporary one used to render the
- * message optimistically.
- */
-export type MessageAck =
-  | { ok: true; message: SerializableMessageDocument }
-  | { ok: false };
+export type Ack<T> = ServiceResult<T>;
 
-export function getSocketConnection() {
+export interface ServerToClientEvents {
+  [EVENTS.SERVER_MESSAGE]: (message: DeliveredMessage) => void;
+}
+
+export interface ClientToServerEvents {
+  [EVENTS.JOIN_CHAT]: (chatId: string, ack: (res: Ack<null>) => void) => void;
+  [EVENTS.LEAVE_CHAT]: (chatId: string) => void;
+  [EVENTS.CLIENT_MESSAGE]: (
+    payload: ClientMessage,
+    ack: (res: Ack<DeliveredMessage>) => void,
+  ) => void;
+}
+
+type ChatSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
+
+declare global {
+  var chatSocket: ChatSocket | undefined;
+}
+
+// Built idle: ChatConnection decides when it's connected.
+export function getChatSocket(): ChatSocket {
   if (!globalThis.chatSocket) {
     const url =
       process.env.NEXT_PUBLIC_CHAT_SERVER_URL || "http://localhost:4000";
 
-    const socket = io(url, {
+    const socket: ChatSocket = io(url, {
+      autoConnect: false,
       withCredentials: true,
+      // Runs on every connect, so a new session hands over its own token.
       auth(cb) {
         getUserToken()
-          .then((token) => cb({ token }))
+          .then((result) => cb({ token: result.ok ? result.data : null }))
           .catch(() => cb({ token: null }));
       },
     });
 
     // Handle auth, telemetry, logging here because they don't need cleanup and detach
     socket.on("connect", () =>
-      console.info("[getSocketConnection]: socket connected"),
+      console.info("[getChatSocket]: socket connected"),
     );
     socket.on("disconnect", () => {
-      console.info("[getSocketConnection]: socket disconnected");
+      console.info("[getChatSocket]: socket disconnected");
     });
 
     globalThis.chatSocket = socket;
@@ -71,10 +70,7 @@ export function getSocketConnection() {
   }
 }
 
-// Pure read of the current connection state — never constructs the socket, so
-// it's safe as a `useSyncExternalStore` snapshot. The connection is opened by
-// whoever calls `getSocketConnection` (the status hook's `subscribe`, the chat
-// effects), never by reading this.
+// Never constructs the socket, so it's a safe `useSyncExternalStore` snapshot.
 export function isSocketConnected() {
   return globalThis.chatSocket?.connected ?? false;
 }

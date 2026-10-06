@@ -48,8 +48,8 @@ function BookingActionDialog({
 
   async function onSubmit(data: HostMessageValues) {
     const result = isAccept
-      ? await acceptBooking(bookingId, data.hostMessage)
-      : await rejectBooking(bookingId, data.hostMessage);
+      ? await acceptBooking({ bookingId, hostMessage: data.hostMessage })
+      : await rejectBooking({ bookingId, hostMessage: data.hostMessage });
 
     if (!result.ok) {
       toast.error(result.error);

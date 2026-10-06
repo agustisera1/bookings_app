@@ -29,7 +29,7 @@ export function useNotifications(
   async function handleMarkAsRead(id: string) {
     setReadIds((prev) => new Set(prev).add(id)); // optimistic
     decrement(); // optimistic: drop the sidebar badge right away
-    const result = await markAsRead(id);
+    const result = await markAsRead({ notificationId: id });
     if (!result.ok) {
       setReadIds((prev) => {
         const next = new Set(prev);
