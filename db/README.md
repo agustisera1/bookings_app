@@ -74,7 +74,7 @@ definición, hay que dropear el viejo antes.
 ## Seed
 
 `pnpm db:seed` carga un set determinístico, con fechas relativas al día en que corre, que cubre
-los tres flujos del alcance (`docs/audit/scope.md`):
+los tres flujos principales (reservar, chat y login):
 
 | Qué | Cuánto |
 |---|---|

@@ -346,8 +346,7 @@ Los ejemplos usan TypeScript. `fail(code, msg)` abrevia `{ ok: false, code, erro
 
 ## En este repo
 
-Ejemplos canónicos de los criterios que ya se cumplen. Los hallazgos y los condicionales que no
-aplican están en `docs/audit/03-api-audit.md`.
+Ejemplos canónicos de los criterios que ya se cumplen.
 
 | Criterio | Ref |
 |---|---|
