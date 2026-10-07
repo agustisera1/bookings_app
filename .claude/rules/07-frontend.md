@@ -252,7 +252,7 @@ export function MyActionButton({ id }: { id: string }) {
 
 ## Web Interface Guidelines
 
-Subconjunto aplicable de [vercel.com/design/guidelines](https://vercel.com/design/guidelines). Formato: `docs/audit/how-to-add-rule.md`. Todas las verificaciones excluyen `components/ui/`.
+Subconjunto aplicable de [vercel.com/design/guidelines](https://vercel.com/design/guidelines). Todas las verificaciones excluyen `components/ui/`.
 
 ### Accesibilidad y semántica
 
@@ -287,7 +287,7 @@ Subconjunto aplicable de [vercel.com/design/guidelines](https://vercel.com/desig
 
 ## Consistencia visual
 
-Reglas que salieron de `docs/audit/07-frontend-audit.md`. Mismo formato que la sección anterior.
+Mismo formato que la sección anterior.
 
 ### Color, tema y tipografía
 

@@ -215,8 +215,7 @@ Ref: [PG 11.12][pg-examine].
 
 ## En este repo
 
-Ejemplos canónicos de los criterios que ya se cumplen. Los hallazgos y los condicionales que no
-aplican están en `docs/audit/04-datos-audit.md`.
+Ejemplos canónicos de los criterios que ya se cumplen.
 
 | Criterio | Ref |
 |---|---|

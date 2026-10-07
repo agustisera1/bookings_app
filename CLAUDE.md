@@ -1,6 +1,6 @@
 # Greenaway — CLAUDE.md
 
-Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Objetivo de aprendizaje: persistencia políglota, procesamiento asíncrono y APIs GraphQL.
+Marketplace de reservas de alojamientos (estilo Airbnb simplificado). Proyecto de portfolio y de estudio: persistencia políglota, procesamiento asíncrono, realtime y APIs GraphQL. Las soluciones son simples: cubren el caso probable y lo remoto va a "Limitaciones conocidas".
 
 ## Stack
 
@@ -47,17 +47,19 @@ de arreglar otra cosa.
 
 **Antes de modificar código, leé las reglas de `.claude/rules/` de las dimensiones que toca la tarea y alineá el cambio con ellas.**
 
-Las directivas viven en un archivo por dimensión (numeradas como en `docs/audit/dimensions.md`). Las que tienen `paths:` se cargan solo al tocar archivos que matchean. Para escribir una regla nueva: `docs/audit/how-to-add-rule.md`.
+Un archivo por área. Las que tienen `paths:` se cargan solo al tocar archivos que matchean.
 
 | Archivo | Cubre | Se carga |
 |---|---|---|
-| `00-convenciones.md` | `/lib` y DRY, cohesión/acoplamiento, tipos, comentarios | Siempre |
-| `01-dominio.md` | Roles, reglas clave (RNF), reglas puras compartidas | Siempre |
 | `02-services.md` | Estructura de un service, tipos, lecturas (GraphQL) y escrituras (actions), errores, repository | `lib/<service>/*`, `lib/apollo` |
 | `03-api.md` | Criterios de contrato (común, REST/RPC, GraphQL, realtime) y tipos generados | Actions, resolvers, schemas, `lib/apollo`, `app/api`, socket, `codegen.ts` |
 | `04-datos.md` | Modelo de datos de PostgreSQL y MongoDB | Repos, clientes de DB, `db/`, `scripts/` |
-| `05-async.md` | Outbox y colas | Services, repos, `lib/types/outbox.ts` |
+| `05-async.md` | Outbox, relay, colas BullMQ, idempotencia, runtime del worker y Redis como almacén de colas | `lib/outbox/`, repos |
 | `07-frontend.md` | Capas de UI, tokens, primitivos, estados, efectos y estado externo, partición, forms, `ConfirmDialog` | `components/`, `app/**/*.tsx`, `globals.css` |
-| `09-seguridad.md` | Cómo fluye la identidad (cookies, `authorize`) | Auth, JWT, permisos, rate limit, `app/api` |
-| `11-testing.md` | Qué se testea y cómo (capa pura, services) | `*.test.ts`, `vitest.config.ts` |
-| `13-docs.md` | `/docs`, sincronía de documentación, deuda técnica | Siempre |
+
+## Comentarios y docs
+
+- **Comentarios:** solo lo que no se deduce del código, máximo 2 líneas por bloque (lo aplica el hook
+  `.claude/hooks/check-comments.mjs`).
+- **Docs:** `README.md` (qué es, cómo correrlo, limitaciones conocidas) y `db/README.md`. Una
+  limitación nueva va a "Limitaciones conocidas" del README, no a un comentario.

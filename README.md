@@ -12,18 +12,6 @@ usuario puede ser ambos.
 
 ---
 
-## 🚦 Estado
-
-**Construido:** autenticación (JWT) y RBAC; listados en
-MongoDB con múltiples tipos; reservas sin solapamiento; reseñas; API GraphQL (schema en proceso, sin endpoint HTTP);
-notificaciones por email asíncronas (worker + BullMQ); chat host↔guest en vivo (socket.io);
-notificaciones in-app (SSE); y rate limiting en el borde de autenticación.
-
-**Entorno:** reproducible con Docker + seed (`pnpm infra:up`). La auditoría del sistema vive en
-`docs/audit/` y la deuda técnica conocida, en `docs/tech-debt/`.
-
----
-
 ## 🏗️ Arquitectura
 
 Dos procesos que comparten los mismos datastores:
@@ -53,7 +41,7 @@ flowchart LR
 - **Redis** — colas (BullMQ), fan-out de sockets, rate limiting y pub/sub de las notificaciones SSE.
 
 **Tiempo real:** SSE para notificaciones (mismo origen, dentro de Next) y socket.io para el chat (en el
-worker). **Auth:** JWT en cookie httpOnly. Los diagramas de cada flujo están en `docs/diagrams/`.
+worker). **Auth:** JWT en cookie httpOnly.
 
 ---
 
@@ -65,7 +53,6 @@ components/     ui/ (shadcn) · common/ (primitivos propios) · <feature>/ (book
 lib/            <service>/ (auth, bookings, chat, listings, notifications, reviews, users) ·
                 apollo/ (schema raíz y cliente) · infra/ (clientes de DB y servicios) · shared/
 db/migrations/  Migraciones de PostgreSQL, generadas por drizzle-kit desde lib/*/tables.ts
-docs/           Diagramas, deuda técnica y auditoría
 scripts/        Seeds y utilidades de datos
 ```
 
@@ -105,29 +92,16 @@ separado (ver su repo).
 
 ## ⚙️ Comandos
 
-|                                                 |                                               |
-| ----------------------------------------------- | --------------------------------------------- |
-| `pnpm dev` / `build`                            | desarrollo / build de producción              |
-| `pnpm lint` · `pnpm test`                       | linting · tests (Vitest)                      |
-| `pnpm codegen`                                  | regenera los tipos de GraphQL desde el schema |
-| `pnpm infra:up`                                 | infra en Docker + schema + seed               |
-| `pnpm infra:down` · `infra:reset`               | baja la infra / la borra con sus datos y la levanta de cero |
-| `pnpm db:setup`                                 | schema completo: `db:migrate` + `db:indexes`  |
-| `pnpm db:generate` · `db:migrate`              | genera / aplica migraciones de PostgreSQL     |
-| `pnpm db:indexes`                               | crea los índices de MongoDB                   |
-| `pnpm db:seed` · `db:reset`                     | carga / borra los datos de demo               |
+|                                   |                                                             |
+| --------------------------------- | ----------------------------------------------------------- |
+| `pnpm dev` / `build`              | desarrollo / build de producción                            |
+| `pnpm lint` · `pnpm test`         | linting · tests (Vitest)                                    |
+| `pnpm codegen`                    | regenera los tipos de GraphQL desde el schema               |
+| `pnpm infra:up`                   | infra en Docker + schema + seed                             |
+| `pnpm infra:down` · `infra:reset` | baja la infra / la borra con sus datos y la levanta de cero |
+| `pnpm db:setup`                   | schema completo: `db:migrate` + `db:indexes`                |
+| `pnpm db:generate` · `db:migrate` | genera / aplica migraciones de PostgreSQL                   |
+| `pnpm db:indexes`                 | crea los índices de MongoDB                                 |
+| `pnpm db:seed` · `db:reset`       | carga / borra los datos de demo                             |
 
 Detalle de migraciones, índices, seed y reset: `db/README.md`.
-
----
-
-## 📚 Documentación
-
-El README solo orienta; el detalle vive en `/docs` y `.claude/rules/`, organizado por **qué pregunta
-responde cada uno**:
-
-| Si querés…                                                | Andá a                                                                              |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| ver un **flujo** dibujado                                  | `docs/diagrams/` — chat, SSE, outbox, mailing, rate limiting                        |
-| las **convenciones** para extender el código              | `.claude/rules/` — una regla por dimensión; índice en `CLAUDE.md`                   |
-| qué es **deuda conocida**                                  | `docs/tech-debt/`                                                                   |
